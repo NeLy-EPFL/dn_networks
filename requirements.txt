@@ -1,0 +1,2 @@
+numpy
+twoppp @ git+https://github.com/NeLy-EPFL/twoppp.git
