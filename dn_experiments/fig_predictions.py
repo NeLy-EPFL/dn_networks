@@ -193,7 +193,7 @@ def summarise_predictions_one_genotype(GAL4, overwrite=False, allflies_only=Fals
     add_str = "_allflies_only" if allflies_only else ""
     
     predictions_save = os.path.join(data_save_location, f"predictions_{GAL4}_{return_var}.pkl")
-    all_fly_data = load_data_one_genotype(df, figure_params, predictions_save)
+    all_fly_data = load_data_one_genotype(df, figure_params, predictions_save, overwrite=overwrite)
     fig = plot_data_one_genotype(figure_params, all_fly_data)
     if plot_save_location is not None:
         fig.savefig(os.path.join(plot_save_location, f"{GAL4}_predictions_{return_var}{add_str}.pdf"), transparent=True)
@@ -201,7 +201,7 @@ def summarise_predictions_one_genotype(GAL4, overwrite=False, allflies_only=Fals
 
 
 if __name__ == "__main__":
-    fig = summarise_predictions_one_genotype("DNp18")
+    fig = summarise_predictions_one_genotype("DNp18", overwrite=True)
     
     
 
