@@ -389,6 +389,13 @@ def get_headless_df(path=params.data_headless_summary_csv_dir, q_check=params.q_
         ))]
     return df
 
+def get_predictions_df(path=params.data_predictions_summary_csv_dir, q_check=params.q_check_headless,
+                    q_thres_legs_intact=params.q_thres_headless_legs_intact,
+                    q_thres_beh=params.q_thres_headless_beh,
+                    q_thres_stim=params.q_thres_headless_stim):
+    return get_headless_df(path=path, q_check=q_check, q_thres_legs_intact=q_thres_legs_intact,
+                           q_thres_beh=q_thres_beh, q_thres_stim=q_thres_stim)
+
 def plot_trial_number_summary(dfs, df_names, plot_base_dir=params.data_summary_dir):
     n_flies = np.array([len(np.unique(this_df.fly_dir)) for this_df in dfs])
     n_trials = np.array([len(this_df) for this_df in dfs])

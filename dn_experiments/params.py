@@ -12,6 +12,9 @@ data_headless_summary_csv_dir = os.path.join(data_summary_dir, "fly_selection_no
 data_predictions_summary_csv_dir = os.path.join(data_summary_dir, "fly_selection_predictions_230712.csv")
 plot_base_dir = os.path.join(data_summary_dir, "plots")
 plotdata_base_dir = os.path.join(data_summary_dir, "plotdata")
+predictionsdata_base_dir = os.path.join(data_summary_dir, "predictionsdata")
+predictionsplot_base_dir = os.path.join(data_summary_dir, "predictionsplots")
+
 video_base_dir = os.path.join(data_summary_dir, "videos")
 twop_df_save_name="twop_df_comp.pkl"
 beh_df_save_name="beh_df_comp.pkl"
