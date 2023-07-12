@@ -9,9 +9,9 @@ import pickle
 from scipy.ndimage import gaussian_filter1d, gaussian_filter, median_filter
 
 from twoppp import load, rois, utils
-from twoppp.behaviour import synchronisation, fictrac
+from twoppp.behaviour import synchronisation, fictrac, sleap
 
-import params, behaviour, baselines, stimulation, motionenergy, sleap
+import params, behaviour, baselines, stimulation, motionenergy  # , sleap
 
 
 def get_background_image(fly_dir, background_crop=params.background_crop, background_key=params.background_key,
