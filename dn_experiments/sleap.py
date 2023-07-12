@@ -6,6 +6,8 @@ from scipy.ndimage import gaussian_filter1d, median_filter
 
 import params
 
+# TODO: remove this file. This processing is now part of twoppp
+
 def fill_nans_with_previous(array):
     print(f"found {np.sum(np.isnan(array))} nans. will replace them with previous value")
     array = array.copy()
