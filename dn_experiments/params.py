@@ -4,6 +4,9 @@ Parameters used for analysis of 2p and behavioural data
 import os
 import matplotlib.pyplot as plt
 
+from datetime import date
+today = date.today().strftime("%y%m%d")
+
 
 # handling summary data of all recording
 data_summary_dir = "/mnt/nas2/JB/_data_summary"

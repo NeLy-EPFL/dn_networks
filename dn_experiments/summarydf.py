@@ -5,11 +5,14 @@ from glob import glob
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import cv2
+import json
 
 from datetime import date
 today = date.today().strftime("%y%m%d")
 
 from twoppp import load, rois
+from utils2p import find_seven_camera_metadata_file
 
 sys.path.append(os.path.dirname(__file__))
 import params
@@ -27,6 +30,36 @@ def find_genotyp_dirs(nas_base_dir="/mnt/nas2/JB", min_date: int=None, max_date:
         all_dirs = [this_dir for this_dir in all_dirs if exclude not in this_dir]
     all_genotype_dirs = [os.path.join(nas_base_dir, this_dir) for this_dir in all_dirs]
     return all_genotype_dirs
+
+def frame_count(video_path, manual=False):
+    """Counts the number of frames in a video file.
+    Args:
+        video_path (str): Path to video file.
+        manual (bool): Whether to use the slow but accurate method or the fast but inaccurate method.
+    Returns:
+        frames (int): Number of frames in video.
+    """
+    def manual_count(handler):
+        frames = 0
+        while True:
+            status, frame = handler.read()
+            if not status:
+                break
+            frames += 1
+        return frames 
+
+    cap = cv2.VideoCapture(video_path)
+    # Slow, inefficient but 100% accurate method 
+    if manual:
+        frames = manual_count(cap)
+    # Fast, efficient but inaccurate method
+    else:
+        try:
+            frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+        except:
+            frames = manual_count(cap)
+    cap.release()
+    return frames
 
 def add_flies_to_data_summary(genotype_dir, path=None, headless=False, predictions=False):
     if path is None and not headless and not predictions:
@@ -207,6 +240,18 @@ def get_trial_info_headless(base_df, all_trial_dirs, min_fly_id):
                 trial_df["head"] = False
             else:
                 trial_df["head"] = True
+
+            # camera frame counts to see if there has been an aqcuisisiton issue
+            seven_camera_metadata_file = find_seven_camera_metadata_file(
+                trial_dir
+            )
+            with open(seven_camera_metadata_file, "r") as f:
+                capture_info = json.load(f)
+            list_of_cameras = [cam_idx
+                for cam_idx in capture_info["Frame Counts"].keys()]
+            for cam_num in list_of_cameras:
+                video_path = os.path.join(trial_dir, "behData", "images", f"camera_{cam_num}.mp4")
+                trial_df[f"frames_{cam_num}"] = frame_count(video_path)
                 
             trial_df["n_trials"] = len(fly_trial_dirs)
             trial_df["fly_id"] = min_fly_id + i_fly
@@ -425,7 +470,7 @@ def plot_trial_number_summary(dfs, df_names, plot_base_dir=params.data_summary_d
 
 
 if __name__ == "__main__":
-    genotype_dirs = find_genotyp_dirs(nas_base_dir="/mnt/nas2/JB", min_date=230607, max_date=None, contains="CsChrimson", exclude="headless")
+    genotype_dirs = find_genotyp_dirs(nas_base_dir="/mnt/nas2/FH", min_date=230703, max_date=None, contains="CsChrimson", exclude="copy") # exclude = "headless"
     add_flies_to_data_summary(genotype_dir=genotype_dirs, path=None, headless=False, predictions=True)
 
     

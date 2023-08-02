@@ -10,7 +10,7 @@ import pickle
 from tqdm import tqdm
 from scipy.stats import mannwhitneyu
 
-import params, summarydf, loaddata, stimulation, behaviour, plotpanels, fig_headless
+import params, summarydf, loaddata, stimulation, behaviour, plotpanels, fig_headless, filters
 
 from twoppp import plot as myplt
 
@@ -42,15 +42,16 @@ def load_data_one_genotype(exp_df, figure_params, predictions_save=None, overwri
         all_fly_data = []
         summary_fly_data = base_fly_data.copy()
 
-        for i_fly, (fly_id, fly_df) in enumerate(exp_df.groupby("fly_id")):
-                    
+        for i_fly, (fly_id, fly_df) in enumerate(exp_df.groupby("fly_id")):                    
             fly_data = base_fly_data.copy()
             fly_data["fly_df"] = fly_df
             fly_data["fly_dir"] = np.unique(fly_df.fly_dir)[0]
             fly_data["trial_names"] = fly_df.trial_name.values
             headless_trial_exists = False
             for index, trial_df in fly_df.iterrows():
-                if not trial_df.walkon == "ball":
+
+                if (not trial_df.walkon == "ball" and
+                    not figure_params['include_noball_data']):
                     continue  # TODO: make no ball analysis
                 else:
                     if trial_df["head"]:
@@ -83,15 +84,23 @@ def load_data_one_genotype(exp_df, figure_params, predictions_save=None, overwri
                 fly_data[beh_key] = beh_responses
                 fly_data[beh_class_key] = beh_class_responses
                 del beh_df
+                
 
             if not headless_trial_exists and figure_params["accept_headless_only_flies"]:
-                fly_data["beh_responses_pre"] = np.zeros_like(fly_data["beh_responses_post"])
-                fly_data["beh_class_responses_pre"] = np.zeros_like(fly_data["beh_class_responses_post"])
-                print(f"WARNING: Setting intact behavioural response to 0 because no data for fly {fly_data['fly_dir']}")
+                fly_data["beh_responses_pre"] = np.zeros_like(fly_data["beh_responses_post"])*np.nan
+                fly_data["beh_class_responses_pre"] = np.zeros_like(fly_data["beh_class_responses_post"])*np.nan
+                print(f"WARNING: Setting intact behavioural response to NaN because no data for fly {fly_data['fly_dir']}")
             elif not headless_trial_exists:
                 del fly_data
                 continue
 
+            
+            # filter data if needed
+            if figure_params["filter_pre_stim_beh"] is not None:
+                fly_data = filters.remove_trials_beh_pre(
+                    fly_data,
+                    figure_params["filter_pre_stim_beh"]
+                    )
 
             all_fly_data.append(fly_data.copy())
             del fly_data
@@ -101,6 +110,17 @@ def load_data_one_genotype(exp_df, figure_params, predictions_save=None, overwri
                 pickle.dump(all_fly_data, f)
 
     return all_fly_data
+
+def concatenate(
+    all_fly_data,
+    column: str,
+    ):
+    data_list = [fly_data[column] for fly_data in all_fly_data
+        if (
+        (fly_data[column] is not None and not np.all(np.isnan(fly_data[column])))
+        )]
+    return np.concatenate(
+        data_list, axis=-1)
 
 def plot_data_one_genotype(figure_params, all_fly_data):
     nrows = len(all_fly_data) + 1 if not figure_params["allflies_only"] else 1
@@ -118,10 +138,10 @@ def plot_data_one_genotype(figure_params, all_fly_data):
     summary_fly_data["fly_df"] = all_fly_data[0]["fly_df"]
     summary_fly_data["fly_df"].date = ""
     summary_fly_data["fly_df"].fly_number = "all"
-    summary_fly_data["beh_responses_pre"] = np.concatenate([fly_data["beh_responses_pre"] for fly_data in all_fly_data], axis=-1)
-    summary_fly_data["beh_responses_post"] = np.concatenate([fly_data["beh_responses_post"] for fly_data in all_fly_data], axis=-1)
-    summary_fly_data["beh_class_responses_pre"] = np.concatenate([fly_data["beh_class_responses_pre"] for fly_data in all_fly_data], axis=-1)
-    summary_fly_data["beh_class_responses_post"] = np.concatenate([fly_data["beh_class_responses_post"] for fly_data in all_fly_data], axis=-1)
+    summary_fly_data["beh_responses_pre"] = concatenate(all_fly_data, "beh_responses_pre")
+    summary_fly_data["beh_responses_post"] = concatenate(all_fly_data, "beh_responses_post")  #np.concatenate([fly_data["beh_responses_post"] for fly_data in all_fly_data], axis=-1)
+    summary_fly_data["beh_class_responses_pre"] = concatenate(all_fly_data, "beh_class_responses_pre")
+    summary_fly_data["beh_class_responses_post"] = concatenate(all_fly_data, "beh_class_responses_post")
     
     fig_headless.get_one_fly_headless_panel(fig, axds[-1], summary_fly_data, figure_params)
 
@@ -129,12 +149,22 @@ def plot_data_one_genotype(figure_params, all_fly_data):
     return fig
 
 
-def summarise_predictions_one_genotype(GAL4, overwrite=False, allflies_only=False, beh_name="walk",
-                                       return_var="v_forw", return_var_flip=False, return_var_multiply=None,
-                                       return_var_baseline=None, return_var_ylabel=r"$v_{||}$ (mm/s)",
-                                       data_save_location=params.predictionsdata_base_dir,
-                                       plot_save_location=params.predictionsplot_base_dir,
-                                       accept_headless_only_flies=True):
+def summarise_predictions_one_genotype(
+        GAL4,
+        overwrite=False,
+        allflies_only=False,
+        beh_name="walk",
+        return_var="v_forw",
+        return_var_flip=False,
+        return_var_multiply=None,
+        return_var_baseline=None,
+        return_var_ylabel=r"$v_{||}$ (mm/s)",
+        data_save_location=params.predictionsdata_base_dir,
+        plot_save_location=params.predictionsplot_base_dir,
+        accept_headless_only_flies=True,
+        include_noball_data=False,
+        filter_pre_stim_beh=None,
+    ):
     """make a figure for one genotype and one behavioural response
 
     Parameters
@@ -164,7 +194,11 @@ def summarise_predictions_one_genotype(GAL4, overwrite=False, allflies_only=Fals
     accept_headless_only_flies : bool, optional
         whether to also consider flies that have only headless experiments and no intact experiments.
         This will set the intact data to zero when it encounters a fly with only headless data, by default True
-
+    filter_pre_stim_beh : str, optional
+        whether to filter the pre-stimulus behaviour.
+        E.g. "rest" will only consider trials where the fly was resting before
+        the stimulus onset with p > 0.75, by default 'None',
+        
     Returns
     -------
     fig
@@ -172,6 +206,9 @@ def summarise_predictions_one_genotype(GAL4, overwrite=False, allflies_only=Fals
     """
     df = summarydf.get_predictions_df()
     df = summarydf.get_selected_df(df, select_dicts=[{"CsChrimson": GAL4}])
+    #df = summarydf.get_selected_df(df, select_dicts=[{"experimenter": 'FH'}])
+    #df = summarydf.get_selected_df(df, select_dicts=[{"date": 230704}])
+    print(df)
 
     figure_params = {
         "trigger": "laser_start",
@@ -189,6 +226,8 @@ def summarise_predictions_one_genotype(GAL4, overwrite=False, allflies_only=Fals
         "allflies_only": allflies_only,
         "ylim": None,
         "accept_headless_only_flies": accept_headless_only_flies,
+        "filter_pre_stim_beh": filter_pre_stim_beh,
+        "include_noball_data": include_noball_data,
     }
     add_str = "_allflies_only" if allflies_only else ""
     
@@ -201,8 +240,14 @@ def summarise_predictions_one_genotype(GAL4, overwrite=False, allflies_only=Fals
 
 
 if __name__ == "__main__":
-    fig = summarise_predictions_one_genotype("DNp18", overwrite=True)
-    
-    
-
-
+    fig = summarise_predictions_one_genotype(
+        "DNb02",
+        beh_name='rest',
+        return_var='v_forw',
+        #return_var_ylabel='FeTi y (px)',
+        overwrite=True,
+        accept_headless_only_flies=True,
+        return_var_flip=False,
+        include_noball_data=True,
+        filter_pre_stim_beh=None,  # 'rest'
+    )

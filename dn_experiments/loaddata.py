@@ -83,12 +83,17 @@ def get_beh_df_with_me(fly_dir, all_trial_dirs, q_me=params.q_me, add_sleap=True
     if "v_forw" not in beh_df.keys() and "delta_rot_lab_forward" in beh_df.keys():
         v_forw = fictrac.filter_fictrac(beh_df["delta_rot_lab_forward"], 5, 10)
         beh_df["v_forw"] = v_forw
-    elif "v_forw" not in beh_df.keys():  # wheel trials
+    elif "v_forw" not in beh_df.keys() and hasattr(beh_df, 'v'):  # wheel trials
         v = beh_df.v.values
         v_forw = v.copy()
         v = np.abs(v_forw)
         beh_df["v_forw"] = v_forw
         beh_df["v"] = v
+    elif "v_forw" not in beh_df.keys() and not hasattr(beh_df, 'v'):  # no ball trials
+        beh_df["v_forw"] = np.zeros(beh_df.shape[0])
+        beh_df["v"] = np.zeros(beh_df.shape[0])
+        print(f"Warning: missing 'v' and 'v_forw' in fly {fly_dir} with trials {all_trial_dirs}")
+
 
     if add_me:
         beh_df["me_front_q"] = utils.normalise_quantile(beh_df["me_front"].values, q=q_me)
@@ -99,6 +104,7 @@ def get_beh_df_with_me(fly_dir, all_trial_dirs, q_me=params.q_me, add_sleap=True
                                                 beh_df["me_all_q"] < params.thres_silent_me_all,
                                                 beh_df["v"] < params.thres_silent_v))
         beh_df["fast"] = beh_df["me_all_q"] > params.thres_fast_me_all
+
     return beh_df
 
 

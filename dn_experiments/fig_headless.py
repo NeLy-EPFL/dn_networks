@@ -30,6 +30,11 @@ mosaic_headless_summary_panel = """
 """
 
 def get_one_fly_headless_panel(fig, axd, fly_data, figure_params):
+
+    if (not isinstance(fly_data["beh_class_responses_pre"], np.ndarray) or (
+        np.isnan(fly_data["beh_class_responses_pre"].all()))):
+        return
+
     if figure_params["allflies_only"]:
         if fly_data['fly_df'].CsChrimson.values[0] == "PR":
             response_name = f"__ > CsChrimson"
