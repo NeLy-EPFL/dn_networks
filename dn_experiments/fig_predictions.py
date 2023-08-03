@@ -241,13 +241,13 @@ def summarise_predictions_one_genotype(
 
 if __name__ == "__main__":
     fig = summarise_predictions_one_genotype(
-        "DNb02",
+        "mute",
         beh_name='rest',
-        return_var='v_forw',
-        #return_var_ylabel='FeTi y (px)',
+        return_var='anus_x_rel_neck',
+        return_var_ylabel="anal plate x (px)",
         overwrite=True,
         accept_headless_only_flies=True,
         return_var_flip=False,
-        include_noball_data=True,
+        include_noball_data=False,
         filter_pre_stim_beh=None,  # 'rest'
     )
