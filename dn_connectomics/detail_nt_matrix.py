@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 import params
+import plot_params
 
 from loaddata import (
     load_graph_and_matrices,
@@ -63,7 +64,7 @@ def draw_nt_specific_matrices(
         vmax=1,
         vmin=0,
     )
-    ax[0].set_title("Glutamatergic", color="purple")
+    ax[0].set_title("Glutamatergic", color=plot_params["GLUT"]["color"])
 
     nt_matrix = def_matrix_neurotransmitter(edges_, rid_order, nt_type="GABA")
     ax[1].imshow(
@@ -73,7 +74,7 @@ def draw_nt_specific_matrices(
         vmax=1,
         vmin=0,
     )
-    ax[1].set_title("GABA", color="blue")
+    ax[1].set_title("GABA", color=plot_params["GABA"]["color"])
 
     nt_matrix = def_matrix_neurotransmitter(edges_, rid_order, nt_type="ACH")
     ax[2].imshow(
@@ -83,7 +84,7 @@ def draw_nt_specific_matrices(
         vmax=1,
         vmin=0,
     )
-    ax[2].set_title("Acetylcholine", color="red")
+    ax[2].set_title("Acetylcholine", color=plot_params["ACH"]["color"])
     if working_folder is not None:
         plt.savefig(os.path.join(working_folder, "nt_matrix_glut.pdf"))
     return
@@ -108,33 +109,38 @@ def get_fraction_neuropil(edges_, neuropil="GNG", subset: list = None):
     neuropil_count = neuropil_edges["syn_count"].sum()
     # compute the fraction
     fraction = neuropil_count / total
-    print(
-        f"Fraction of connections in {neuropil}: {neuropil_count} / {total} = {fraction}"
+
+    if not os.path.exists(plot_params.STATS_ARGS["folder"]):
+        os.makedirs(plot_params.STATS_ARGS["folder"])
+    filename = os.path.join(
+        plot_params.STATS_ARGS["folder"], "fraction_neuropil.txt"
     )
+    with open(filename, "w") as f:
+        f.write(
+            "Fraction of connections in {}: {} / {} = {}".format(
+                neuropil, neuropil_count, total, fraction
+            )
+        )
+    f.close()
     return fraction
 
 
-if __name__ == "__main__":
-    working_folder = os.path.join(
-        params.FIGURES_DIR,
-        "network_visualisations",
-        "whole_network",
-        "louvain_glut_positive",
-    )
+def detail_neurotransmitters_matrix():
+    working_folder = plot_params.CLUSTERING_ARGS["folder"]
 
-    # open the 'clustering.csv' file in pd
+    ## --- load data --- ##
     clustering = pd.read_csv(
         os.path.join(working_folder, "clustering.csv"), index_col=0
     )
     order = clustering["node_index"]
-
     (
-        graph,
+        _,
         unn_matrix,
-        nn_matrix,
+        _,
         equiv_index_rootid,
     ) = load_graph_and_matrices("dn")
-    nodes, edges = load_nodes_and_edges()
+    _, edges = load_nodes_and_edges()
+
     ## --- Draw the matrix with only a neurotransmitter type --- ##
     draw_nt_specific_matrices(
         edges, unn_matrix, equiv_index_rootid, order, working_folder
@@ -142,5 +148,8 @@ if __name__ == "__main__":
 
     ## --- Compute the fraction of connections in a given neuropil --- ##
     list_dns = convert_index_root_id(equiv_index_rootid, order)
-
     get_fraction_neuropil(edges, neuropil="GNG", subset=list_dns)
+
+
+if __name__ == "__main__":
+    detail_neurotransmitters_matrix()

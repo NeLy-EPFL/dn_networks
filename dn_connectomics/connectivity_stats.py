@@ -249,10 +249,10 @@ def make_gng_dn_plot(dns_info):
     """
     _, ax = plt.subplots(1, 2, figsize=(8, 6), width_ratios=[3, 1])
     plotting_args_gng = {
-        "x_arg": "DN_connected_out_sorting",
-        "y_arg": "GNG_DN_connected_out",
+        "x_arg": plot_params.STATS_ARGS['measured_feature']+"_sorting",
+        "y_arg": "GNG_"+plot_params.STATS_ARGS["measured_feature"],
         "x_label": "DNs sorted by connectivity",
-        "y_label": "Number of connected DNs",
+        "y_label": plot_params.STATS_ARGS["measured_feature_label"],
         "data_label": "GNG DNs",
         "black_dots_label": "DNs tested",
         "scatter_color": plot_params.DARKORANGE,
@@ -265,10 +265,10 @@ def make_gng_dn_plot(dns_info):
         plotting_args=plotting_args_gng,
     )
     plotting_args_dn = {
-        "x_arg": "DN_connected_out_sorting",
-        "y_arg": "DN_connected_out",
+        "x_arg": plot_params.STATS_ARGS['measured_feature']+"_sorting",
+        "y_arg": plot_params.STATS_ARGS["measured_feature"],
         "x_label": "DNs sorted by connectivity",
-        "y_label": "Number of connected DNs",
+        "y_label": plot_params.STATS_ARGS["measured_feature_label"],
         "data_label": "all DNs",
         "black_dots_label": "DNs tested",
         "scatter_color": plot_params.LIGHTGREY,
@@ -286,10 +286,10 @@ def make_specific_neurons_plot(dns_info):
     _, ax = plt.subplots(1, 2, figsize=(8, 6), width_ratios=[3, 1])
 
     plotting_args_dn = {
-        "x_arg": "DN_connected_out_sorting",
-        "y_arg": "DN_connected_out",
+        "x_arg": plot_params.STATS_ARGS['measured_feature']+"_sorting",
+        "y_arg": plot_params.STATS_ARGS["measured_feature"],
         "x_label": "DNs sorted by connectivity",
-        "y_label": "Number of connected DNs",
+        "y_label": plot_params.STATS_ARGS["measured_feature_label"],
         "data_label": "all DNs",
         "black_dots_label": "DNs tested",
         "scatter_color": plot_params.LIGHTGREY,
@@ -302,81 +302,104 @@ def make_specific_neurons_plot(dns_info):
         plotting_args=plotting_args_dn,
     )
 
-
-if __name__ == "__main__":
+def compute_connectivity_stats()
     # Load the data
-    nodes, edges = load_nodes_and_edges()
-
+    _, edges = load_nodes_and_edges()
     (
-        graph,
+        _,
         unn_matrix,
-        nn_matrix,
+        _,
         equiv_index_rootid,
     ) = load_graph_and_matrices("dn")
-    nodes, edges = load_nodes_and_edges()
 
-    working_folder = os.path.join(
-        params.FIGURES_DIR,
-        "statistics",
-    )
+    working_folder = plot_params.STATS_ARGS["folder"]
+    if not os.path.exists(working_folder):
+        os.makedirs(working_folder)
 
     dns_info = prepare_table(equiv_index_rootid, marker="DNg")
     dns_info = connectivity_stats(unn_matrix, dns_info)
-    # dns_info.to_csv(os.path.join(working_folder, "dns_info.csv"))
+    dns_info.to_csv(os.path.join(working_folder, "dns_info.csv"))
 
     ## --- Plot the number of connected DNs as a function of the connectivity of the DNs --- ##
-
     make_gng_dn_plot(dns_info)
-    # plt.savefig(os.path.join(working_folder, "gng_dn_plot.pdf"))
+    plt.savefig(os.path.join(working_folder, "gng_dn_plot.pdf"))
 
     make_specific_neurons_plot(dns_info)
-    # plt.savefig(os.path.join(working_folder, "tested_neurons_plot.pdf"))
+    plt.savefig(os.path.join(working_folder, "tested_neurons_plot.pdf"))
 
-    ## --- Print some stats for the paper --- ##
-
-    n_zero_input = dns_info[dns_info["DN_connected_in"] == 0]
-    print(f"Number of DNs with no input: {len(n_zero_input)}")
-    n_one_input = dns_info[dns_info["DN_connected_in"] == 1]
-    print(f"Number of DNs with one input: {len(n_one_input)}")
-
-    dn_edges = edges[
-        edges["pre_root_id"].isin(dns_info["root_id"])
-        & edges["post_root_id"].isin(dns_info["root_id"])
-    ]
-
-    for nt_type in dn_edges["nt_type"].unique():
-        print(
-            f"Number of {nt_type} synapses: {len(dn_edges[dn_edges['nt_type'] == nt_type])}"
+    ## --- Print some stats for the paper to a file --- ##
+    file_name = os.path.join(working_folder, "stats.txt")
+    with open(file_name, "w") as f:
+        # number of connections
+        f.write("Number of DNs: {}\n".format(len(dns_info)))
+        n_zero_input = dns_info[dns_info["DN_connected_in"] == 0]
+        f.write(
+            "Number of DNs with no input: {}\n".format(len(n_zero_input))
         )
-        print(
-            f"Number of {nt_type} neurons: {len(dn_edges[dn_edges['nt_type'] == nt_type]['pre_root_id'].unique())}"
+        n_one_input = dns_info[dns_info["DN_connected_in"] == 1]
+        f.write(
+            "Number of DNs with one input: {}\n".format(len(n_one_input))
         )
-    print("Verification: total number of synapses: ", len(dn_edges))
-    print(
-        "Verification: total number of neurons: ",
-        len(dn_edges["pre_root_id"].unique()),
-    )
+        f.write('\n')
 
-    ## --- Check that comDNs are statistically different from the rest --- ##
-    print(dns_info.columns)
-    feature = "DN_connected_out"  # "DN_connected_out"
-    down_neurons = dns_info[feature][
-        ~dns_info["root_id"].isin(neuron_params.REF_DNS.keys())
-    ].values
-    # get mean and std of the distribution
-    mean = down_neurons.mean()
-    median = np.median(down_neurons)
-    std = down_neurons.std()
-    print(
-        f"Overall DNs downstream excited mean: {mean}, std: {std}, median: {median}"
-    )
+        dn_edges = edges[
+            edges["pre_root_id"].isin(dns_info["root_id"])
+            & edges["post_root_id"].isin(dns_info["root_id"])
+        ]
 
-    for neuron in neuron_params.REF_DNS.keys():
-        n_down = dns_info[dns_info["root_id"] == neuron][feature].values[0]
-        name = neuron_params.REF_DNS[neuron]["name"]
-        print(f"Number of connections for {name} ({neuron}): {n_down}")
-        # compute the z-score
-        z_score = (n_down - mean) / std
-        # compute the p-value
-        p_value = 1 - stats.norm.cdf(z_score)
-        print(f"p-value on z-score: {p_value}")
+        for nt_type in dn_edges["nt_type"].unique():
+            f.write(
+                "Number of {nt_type} synapses: {}\n".format(
+                    len(dn_edges[dn_edges["nt_type"] == nt_type])
+                )
+            )
+            f.write(
+                "Number of {nt_type} neurons: {}\n".format(
+                    len(
+                        dn_edges[dn_edges["nt_type"] == nt_type][
+                            "pre_root_id"
+                        ].unique()
+                    )
+                )
+            )
+        f.write("Verification: total number of synapses: {}\n".format(
+            len(dn_edges)))
+        f.write("Verification: total number of neurons: {}\n".format(
+            len(dn_edges["pre_root_id"].unique())))
+        f.write('\n')
+
+        ## --- Check that comDNs are statistically different from the rest --- ##
+        feature = plot_params.STATS_ARGS['measured_feature']
+        down_neurons = dns_info[feature][
+            ~dns_info["root_id"].isin(neuron_params.REF_DNS.keys())
+        ].values
+        # get mean and std of the distribution
+        mean = down_neurons.mean()
+        median = np.median(down_neurons)
+        std = down_neurons.std()
+        f.write(
+            "Overall DNs downstream excited mean: {}, std: {}, median: {}\n".format(
+                mean, std, median
+            )
+        )
+        f.write('\n')
+
+        for neuron in neuron_params.REF_DNS.keys():
+            n_down = dns_info[dns_info["root_id"] == neuron][feature].values[0]
+            name = neuron_params.REF_DNS[neuron]["name"]
+            f.write(
+                "Number of connections for {} ({}) : {}\n".format(
+                    name, neuron, n_down
+                )
+            )
+            # compute the z-score
+            z_score = (n_down - mean) / std
+            # compute the p-value
+            p_value = 1 - stats.norm.cdf(z_score)
+            f.write("p-value on z-score: {}\n".format(p_value))
+    f.close()
+    return
+
+
+if __name__ == "__main__":
+    compute_connectivity_stats()

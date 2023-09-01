@@ -6,7 +6,7 @@ import numpy as np
 from scipy.stats import bootstrap
 
 import neuron_params
-import params
+import plot_params
 from graph_plot_utils import (
     plot_graph_diffusion,
     make_nice_spines,
@@ -167,14 +167,12 @@ def plot_cumulative_diffusion(
     plt.savefig(os.path.join(working_folder, "cumulative_diffusion.png"))
     plt.savefig(os.path.join(working_folder, "cumulative_diffusion.pdf"))
 
+def cumulative_diffusion_plot()
 
-if __name__ == "__main__":
-    nodes, edges = load_nodes_and_edges()
+    _, edges = load_nodes_and_edges()
     list_dns = load_names()["root_id"].values
 
-    working_folder = os.path.join(
-        params.FIGURES_DIR, "network_visualisations", "layers"
-    )
+    working_folder = plot_params.NETWORK_STATS_ARGS["layers_folder"]
 
     connection_df = edges[
         (edges["syn_count"] > 5)
@@ -186,7 +184,11 @@ if __name__ == "__main__":
     plot_cumulative_diffusion(
         layers,
         working_folder,
-        method="bootstrap",
+        method=plot_params.NETWORK_STATS_ARGS["method"],
         all_lines=False,
         range_stats=0.25,
     )
+
+
+if __name__ == "__main__":
+    cumulative_diffusion_plot()

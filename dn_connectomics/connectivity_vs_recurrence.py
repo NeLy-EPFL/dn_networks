@@ -5,14 +5,13 @@ import seaborn as sns
 import os
 from tqdm import tqdm
 import pickle
-
+import math
 
 from loaddata import load_graph_and_matrices, load_nodes_and_edges
 from statistics import connectivity_stats_to_dict
 from graph_plot_utils import get_downstream_specs
-import params
-import code.neuron_params as neuron_params
-import math
+import plot_params
+import neuron_params
 
 
 def sigmoid(x):
@@ -119,7 +118,7 @@ def compute_downstream_density(
 
     for key, value in tqdm(connectivity_dict.items()):
         rid = {value["root_id"]: {"name": "neuron", "color": "k"}}
-        direct_network, network_downstream = get_downstream_specs(
+        _, network_downstream = get_downstream_specs(
             edges, rid, list_dns
         )
         # Number of neurons downstream
@@ -139,19 +138,19 @@ def compute_downstream_density(
 
     return connectivity_dict
 
+def connectivity_vs_recurrence_plots()
 
-if __name__ == "__main__":
     # Draw a 2d plot with number of neurons downstream vs density of the
     # downstream graph
 
     # Load the data
     graph_selected = "dn"  # "dn" # "dn_gng" # "central_an_dn"
-    graph, unn_matrix, nn_matrix, equiv_index_rootid = load_graph_and_matrices(
+    _, unn_matrix, _, equiv_index_rootid = load_graph_and_matrices(
         graph_selected
     )
-    nodes, edges = load_nodes_and_edges()
+    _, edges = load_nodes_and_edges()
 
-    working_folder = os.path.join(params.FIGURES_DIR, "statistics")
+    working_folder = plot_params.STATS_ARGS["folder"]
 
     # Create a dictionary with the number of neurons downstream for each neuron
     # in the graph
@@ -186,13 +185,6 @@ if __name__ == "__main__":
         os.path.join(working_folder, "connectivity_dict.pkl"), "wb"
     ) as f:
         pickle.dump(connectivity_dict, f)
-
-    ## --- Number of DNs with less than 2 downstream partners --- ##
-    n_dns = 0
-    for key, value in connectivity_dict.items():
-        if value["n_neurons_downstream"] <= 2:
-            n_dns += 1
-    print(f"Number of DNs with less than 2 downstream partners: {n_dns}")
 
     ## ----------------- Plot the results ----------------- ##
 
@@ -276,3 +268,8 @@ if __name__ == "__main__":
     ax.set_ylabel("Topness metric")
     plt.show()
     fig.savefig(os.path.join(working_folder, "feedforward_metric_violin.pdf"))
+
+
+
+if __name__ == "__main__":
+    connectivity_vs_recurrence_plots()

@@ -12,3 +12,6 @@ The raw data is taken from the FlyWire project (https://www.flywire.ai/). The da
 
 ## Preprocessed data
 The data is preprocessed using the `data_prep.py` script. This script takes the raw data and converts it to a format that is easier to work with. This dat is stored in the `data` folder as .pkl files. 
+
+## Processed data
+To generate all the connectomics plots displayed in the paper, run the script `make_all_plots.py`. This script will generate all the plots and store them in the `figures` folder, along with the data used to generate the plots.

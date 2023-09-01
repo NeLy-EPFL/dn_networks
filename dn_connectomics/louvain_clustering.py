@@ -4,19 +4,18 @@ import numpy as np
 import os
 import pickle
 import multiprocessing as mp
+
+mp.set_start_method("spawn")
+
 import pandas as pd
-
-# import nngt  # https://journals.aps.org/prresearch/pdf/10.1103/PhysRevResearch.3.043124
-
 from loaddata import (
     load_graph_and_matrices,
-    load_nodes_and_edges,
-    load_names,
     get_name_from_rootid,
 )
 from processing_utils import run_function_with_timeout
 import params
-from common import cluster_matrix, convert_index_root_id, generate_random
+import plot_params
+from common import cluster_matrix, generate_random
 from graph_plot_utils import cluster_graph_louvain, make_nice_spines
 
 
@@ -473,7 +472,7 @@ def confusion_matrix_communities(
     if not normalise_by_size:
         confusion_matrix = confusion_matrix.astype(int)
     if ax is None:
-        fig, ax = plt.subplots(1, 1, figsize=(6, 6))
+        _, ax = plt.subplots(1, 1, figsize=(6, 6))
     if connection_type != "relative":
         m = ax.imshow(confusion_matrix, cmap=color_map[connection_type])
         for i in range(nb_modules):
@@ -494,7 +493,7 @@ def confusion_matrix_communities(
         m = ax.imshow(confusion_matrix, cmap="RdBu_r", vmin=-extr, vmax=extr)
 
     # colorbar
-    cbar = plt.colorbar(m, ax=ax)
+    plt.colorbar(m, ax=ax)
     ax.set_xticks(np.arange(nb_modules))
     ax.set_yticks(np.arange(nb_modules))
     ax.set_xticklabels(np.arange(1, nb_modules + 1))
@@ -513,49 +512,58 @@ def confusion_matrix_communities(
     return confusion_matrix
 
 
-if __name__ == "__main__":
-    CONTROL = False
-
-    names = load_names()
-
-    mp.set_start_method("spawn")
+def run_louvain_custering(control: bool = False):
     ## -- Data Loading -- ##
     (
-        graph,
+        _,
         unn_matrix,
-        nn_matrix,
-        equiv_index_rootid,
+        _,
+        _,
     ) = load_graph_and_matrices("dn")
-    nodes, edges = load_nodes_and_edges()
 
     DNgraph = nx.from_scipy_sparse_array(unn_matrix, create_using=nx.DiGraph)
-    shuffled_mat = generate_random(unn_matrix)
-    shuffled_graph = nx.from_scipy_sparse_array(
-        shuffled_mat, create_using=nx.DiGraph
-    )
+
+    if control:
+        shuffled_mat = generate_random(unn_matrix)
+        shuffled_graph = nx.from_scipy_sparse_array(
+            shuffled_mat, create_using=nx.DiGraph
+        )
+        # save the shuffled matrix
+        shuffled_dir = os.path.join(
+            plot_params.CLUSTERING_ARGS["folder"],
+            "shuffled_control",
+        )
+        if not os.path.exists(shuffled_dir):
+            os.makedirs(shuffled_dir)
+        np.save(
+            os.path.join(
+                shuffled_dir,
+                "shuffled_matrix.npy",
+            ),
+            shuffled_mat,
+        )
     # Control or not
-    network_graph = shuffled_graph if CONTROL else DNgraph
-    network_matrix = shuffled_mat if CONTROL else unn_matrix
-    network_folder = "shuffled_control" if CONTROL else "data"
+    network_graph = shuffled_graph if control else DNgraph
+    network_matrix = shuffled_mat if control else unn_matrix
+    network_folder = "shuffled_control" if control else "data"
 
     # Parameters
     args = {
         "graph": network_graph,
         "visualise_matrix": False,
-        "connection_type": "excitatory",
+        "connection_type": plot_params.CLUSTERING_ARGS["positive_connections"],
     }
 
-    time_limit = 3  # seconds
-    iterations = 100
-    cutoff = 0.25
+    time_limit = plot_params.CLUSTERING_ARGS["time_limit"]
+    iterations = plot_params.CLUSTERING_ARGS["iterations"]
+    cutoff = plot_params.CLUSTERING_ARGS["cutoff"]
 
-    working_folder = os.path.join(
-        params.FIGURES_DIR,
-        "network_visualisations",
-        "whole_network",
-        "louvain",
-    )
+    working_folder = plot_params.CLUSTERING_ARGS["folder"]
+    if not os.path.exists(working_folder):
+        os.makedirs(working_folder)
     processing_folder = os.path.join(working_folder, network_folder)
+    if not os.path.exists(processing_folder):
+        os.makedirs(processing_folder)
 
     ## -- Clustering -- ##
 
@@ -567,7 +575,7 @@ if __name__ == "__main__":
     meta_clusters, edges_matrix = detect_clusters(
         meta_similarity_matrix, cutoff=cutoff, draw_edges=True
     )
-    save_clustering_in_table(meta_clusters, working_folder)
+    save_clustering_in_table(meta_clusters, processing_folder)
 
     # compute additional statistics on the clustered graph
     communities = [set(cluster) for cluster in meta_clusters]
@@ -587,15 +595,21 @@ if __name__ == "__main__":
     )
 
     ## --- plot the confusion matrix --- ##
-    fig, ax = plt.subplots(1, 1, figsize=(6, 6))
+    _, ax = plt.subplots(1, 1, figsize=(6, 6))
     _, ax = confusion_matrix_communities(
         network_graph,
         communities,
         ax,
-        "relative",
-        size_threshold=10,
-        count_synapses=True,
-        normalise_by_size=True,
+        plot_params.CLUSTERING_ARGS["confusion_mat_values"],
+        size_threshold=plot_params.CLUSTERING_ARGS[
+            "confusion_mat_size_threshold"
+        ],
+        count_synapses=plot_params.CLUSTERING_ARGS[
+            "confusion_mat_count_synpases"
+        ],
+        normalise_by_size=plot_params.CLUSTERING_ARGS[
+            "confusion_mat_normalise"
+        ],
         return_ax=True,
     )
     make_nice_spines(ax)
@@ -607,3 +621,12 @@ if __name__ == "__main__":
         ),
         dpi=300,
     )
+
+
+def draw_louvain_custering():
+    run_louvain_custering()
+    run_louvain_custering(control=True)
+
+
+if __name__ == "__main__":
+    draw_louvain_custering()

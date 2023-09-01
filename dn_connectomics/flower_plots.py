@@ -127,15 +127,16 @@ def make_flower_plot(
     return fig
 
 
-if __name__ == "__main__":
+def draw_all_flower_plots():
+    """
+    Draw all flower plots for the neurons of interest. Create plots with the
+    direct connections and plots with the downstream connections.
+    """
     # Load the data
     nodes, edges = load_nodes_and_edges()
-
-    working_folder = os.path.join(
-        params.FIGURES_DIR,
-        "network_visualisations",
-        "flower_plots",
-    )
+    working_folder = plot_params.FLOWER_PLOT_PARAMS["folder"]
+    if not os.path.exists(working_folder):
+        os.makedirs(working_folder)
 
     dictionary_dns = {
         root_id: {
@@ -148,30 +149,13 @@ if __name__ == "__main__":
         for root_id, label in zip(nodes["root_id"], nodes["name_taken"])
         if not pd.isna(label)
     }
-    # Replace the neurons where the root_ids are laready defined in the neurons.py file
+    # Replace the neurons where the root_ids are already defined
     dictionary_dns.update(neuron_params.REF_DNS)
-    NEURON_NAMES = [
-        "MDN",
-        "DNp09",
-        "aDN2",
-        "aDN1",
-        "DNa01",
-        "DNa02",
-        "DNb02",
-        "DNge172",
-        "DNg14",
-    ]
-    for neuron_name in NEURON_NAMES:
+    neuron_names = [v["name"] for _, v in neuron_params.KNOWN_DNS.items()]
+
+    for neuron_name in neuron_names:
         # ------------------- Flower plot for direct connections -------------------
-        layout_args = {
-            "level": 1,
-            "arrow_norm": 0.1,
-            "other_layer_visible": False,
-            "fig_size": 5,
-            "include_legend": True,
-            "feedback_direct_plot": False,
-            "feedback_downstrean_plot": False,
-        }
+        layout_args = plot_params.FLOWER_PLOT_PARAMS["direct_layout_args"]
 
         fig1 = make_flower_plot(
             neuron_name,
@@ -187,15 +171,8 @@ if __name__ == "__main__":
         )
 
         # ------------------- Flower plot for downstream order connections ---------
-        layout_args = {
-            "level": 2,
-            "arrow_norm": 0.1,
-            "other_layer_visible": False,
-            "fig_size": 5,
-            "include_legend": True,
-            "feedback_direct_plot": False,
-            "feedback_downstrean_plot": True,
-        }
+        layout_args = plot_params.FLOWER_PLOT_PARAMS["indirect_layout_args"]
+
         fig2 = make_flower_plot(
             neuron_name,
             edges=edges,
@@ -208,3 +185,8 @@ if __name__ == "__main__":
                 working_folder, f"{neuron_name}_flower_plot_indirect.pdf"
             )
         )
+    return
+
+
+if __name__ == "__main__":
+    draw_all_flower_plots()

@@ -1,8 +1,8 @@
 import os
 import matplotlib.pyplot as plt
 
-import params
 import neuron_params
+import plot_params
 
 from loaddata import load_graph_and_matrices
 from draw_meta_network import load_communities
@@ -53,29 +53,33 @@ def make_matrix_plots_subsets(
         plt.savefig(savedir, dpi=300)
 
 
-if __name__ == "__main__":
-    working_folder = os.path.join(
-        params.FIGURES_DIR,
-        "network_visualisations",
-        "whole_network",
-        "louvain",
-    )
-
+def draw_subsets_network():
+    working_folder = plot_params.CLUSTERING_ARGS["folder"]
     (
-        graph,
+        _,
         unn_matrix,
         _,
         equiv_index_rootid,
     ) = load_graph_and_matrices("dn")
 
     communities = load_communities(working_folder, return_type="list")
-    communities = [c for c in communities if len(c) > 10]
+    communities = [
+        c
+        for c in communities
+        if len(c) > plot_params.CLUSTERING_ARGS["confusion_mat_size_threshold"]
+    ]
 
     plots_folder = os.path.join(
         working_folder,
         "cluster_zoom",
     )
+    if not os.path.exists(plots_folder):
+        os.makedirs(plots_folder)
 
     make_matrix_plots_subsets(
         unn_matrix, communities, equiv_index_rootid, plots_folder
     )
+
+
+if __name__ == "__main__":
+    draw_subsets_network()

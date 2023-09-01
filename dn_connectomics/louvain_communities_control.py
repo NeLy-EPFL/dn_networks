@@ -4,6 +4,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from scipy import stats
 
+import plot_params
+
 
 def get_cluster_stats(working_folder):
     # Open clustering_stats.csv as pd.DataFrame
@@ -47,16 +49,13 @@ def get_cluster_stats(working_folder):
     return stats_df
 
 
-if __name__ == "__main__":
-    working_folder = os.path.join(
-        params.FIGURES_DIR,
-        "network_visualisations",
-        "whole_network",
-        "louvain",
-    )
-
+def compare_clustering_with_random():
+    working_folder = plot_params.CLUSTERING_ARGS["folder"]
     stats_df = get_cluster_stats(working_folder)
     stats_df.to_csv(
         os.path.join(working_folder, "clustering_stats_comparison.csv")
     )
-    print(stats_df)
+
+
+if __name__ == "__main__":
+    compare_clustering_with_random()

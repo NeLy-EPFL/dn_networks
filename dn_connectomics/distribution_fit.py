@@ -6,13 +6,11 @@ from scipy import optimize
 import pandas as pd
 import seaborn as sns
 
-# sns.set_theme(style="white", rc={"axes.facecolor": (0, 0, 0, 0)})
+import plot_params
 
 from loaddata import load_graph_and_matrices, load_nodes_and_edges
 from connectivity_stats import connectivity_stats, prepare_table
-from graph_plot_utils import make_axis_disappear, make_nice_spines
-
-import params
+from graph_plot_utils import make_nice_spines
 
 
 def get_avg_degree(graph_):
@@ -61,7 +59,7 @@ def get_fit(
             return a * (x + 1) ** (-b)
         raise ValueError(f"Unknown function type: {func_type}")
 
-    if not range_fit is None:
+    if range_fit is not None:
         X_fit = np.arange(*range_fit)
         Y_fit = down_stats[range_fit[0] : range_fit[1]]
     else:
@@ -208,9 +206,7 @@ def plot_curves(list_distributions):
     # TODO: add R2 value to the dictionary of the first distribution compared
 
 
-def compare_distributions(
-    unn_matrix, equiv_index_rootid, working_folder: str = None
-):
+def compare_distributions():
     """
     Compare the distribution of the number of outgoing connections for the
     biological data and models for graphs.
@@ -229,6 +225,19 @@ def compare_distributions(
     -------
     None.
     """
+    working_folder = plot_params.STATS_ARGS["folder"]
+    if not os.path.exists(working_folder):
+        os.makedirs(working_folder)
+
+    # load data
+    (
+        graph,
+        unn_matrix,
+        nn_matrix,
+        equiv_index_rootid,
+    ) = load_graph_and_matrices("dn")
+    nodes, edges = load_nodes_and_edges()
+
     dn_graph = nx.from_scipy_sparse_matrix(unn_matrix, create_using=nx.DiGraph)
 
     dns_info = prepare_table(equiv_index_rootid, marker="DNg")
@@ -287,29 +296,12 @@ def compare_distributions(
     )
 
     # Plot
-    ax = plot_ridges(list_distributions)
-    if working_folder is not None:
-        plt.savefig(
-            os.path.join(working_folder, "dn_outgoing_connections_fitted.pdf")
-        )
-    plt.show()
+    _ = plot_ridges(list_distributions)
+    plt.savefig(
+        os.path.join(working_folder, "dn_outgoing_connections_fitted.pdf")
+    )
+    return
 
 
 if __name__ == "__main__":
-    # Load the data
-    nodes, edges = load_nodes_and_edges()
-
-    (
-        graph,
-        unn_matrix,
-        nn_matrix,
-        equiv_index_rootid,
-    ) = load_graph_and_matrices("dn")
-    nodes, edges = load_nodes_and_edges()
-
-    working_folder = os.path.join(
-        params.FIGURES_DIR,
-        "statistics",
-    )
-
-    compare_distributions(unn_matrix, equiv_index_rootid, working_folder)
+    compare_distributions()

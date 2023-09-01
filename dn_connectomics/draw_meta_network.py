@@ -131,7 +131,8 @@ def plot_meta_graph(
         meta_graph,
         pos,
         node_size=[
-            len(meta_graph.nodes[node]["composition"]) * 10
+            len(meta_graph.nodes[node]["composition"])
+            * plot_params.META_GRAPH["scale_nodes"]
             for node in meta_graph.nodes()
         ],
         node_color=node_colors,
@@ -158,31 +159,36 @@ def plot_meta_graph(
     return
 
 
-if __name__ == "__main__":
+def draw_meta_network():
     working_folder = os.path.join(
-        params.FIGURES_DIR,
-        "network_visualisations",
-        "whole_network",
-        "louvain",
+        plot_params.CLUSTERING_ARGS["folder"], "data"
     )
 
     (
         _,
         unn_matrix,
         _,
-        equiv_index_rootid,
+        _,
     ) = load_graph_and_matrices("dn")
     graph = nx.from_scipy_sparse_array(unn_matrix, create_using=nx.DiGraph)
 
-    size_threshold = 10
+    size_threshold = plot_params.CLUSTERING_ARGS[
+        "confusion_mat_size_threshold"
+    ]
     communities = load_communities(working_folder, threshold=size_threshold)
     confusion_matrix, ax = confusion_matrix_communities(
         graph,
         communities,
-        connection_type="relative",
-        size_threshold=size_threshold,
-        count_synapses=True,
-        normalise_by_size=True,
+        connection_type=plot_params.CLUSTERING_ARGS["confusion_mat_values"],
+        size_threshold=plot_params.CLUSTERING_ARGS[
+            "confusion_mat_size_threshold"
+        ],
+        count_synapses=plot_params.CLUSTERING_ARGS[
+            "confusion_mat_count_synpases"
+        ],
+        normalise_by_size=plot_params.CLUSTERING_ARGS[
+            "confusion_mat_normalise"
+        ],
         return_ax=True,
     )
     make_nice_spines(ax)
@@ -197,9 +203,6 @@ if __name__ == "__main__":
     meta_graph = define_meta_graph(
         confusion_matrix, communities, size_threshold
     )
-    # meta_graph = add_names_to_nodes(meta_graph, equiv_index_rootid)
-
-    ## --- Plotting after literature analysis --- ##
 
     extensions = [".pdf", ".png", ".eps"]
     for extension in extensions:
@@ -208,6 +211,10 @@ if __name__ == "__main__":
             working_folder,
             details=None,
             extension=extension,
-            normalisation=5,
+            normalisation=plot_params.META_GRAPH["edge_normalisation"],
             graph_name="meta_graph_literature_analysis_normalised_cluster_size",
         )
+
+
+if __name__ == "__main__":
+    draw_meta_network()
