@@ -1,3 +1,9 @@
+"""
+2023.08.30
+author: femke.hurtak@epfl.ch
+Helping script to load the data and interact with it
+"""
+
 import pickle
 import os
 import pandas as pd

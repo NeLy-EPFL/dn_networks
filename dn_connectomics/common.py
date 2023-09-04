@@ -1,10 +1,11 @@
+"""
+2023.08.30
+author: femke.hurtak@epfl.ch
+Helping functions for the interfacing between dataframes and matrices
+"""
+
 import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
-import networkx as nx
-import pickle
-from pathlib import Path
-from tqdm import tqdm
 import scipy as sc
 import scipy.cluster.hierarchy as sch
 

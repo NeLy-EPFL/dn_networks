@@ -1,3 +1,10 @@
+"""
+2023.08.30
+author: femke.hurtak@epfl.ch
+Script to compute the connectivity statistics for specific neuron sets.
+"""
+
+
 import os
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -7,7 +14,6 @@ import numpy as np
 from scipy import stats
 
 import plot_params
-import params
 import neuron_params
 from loaddata import load_graph_and_matrices, load_nodes_and_edges, load_names
 from statistics import connectivity_stats
@@ -249,8 +255,8 @@ def make_gng_dn_plot(dns_info):
     """
     _, ax = plt.subplots(1, 2, figsize=(8, 6), width_ratios=[3, 1])
     plotting_args_gng = {
-        "x_arg": plot_params.STATS_ARGS['measured_feature']+"_sorting",
-        "y_arg": "GNG_"+plot_params.STATS_ARGS["measured_feature"],
+        "x_arg": plot_params.STATS_ARGS["measured_feature"] + "_sorting",
+        "y_arg": "GNG_" + plot_params.STATS_ARGS["measured_feature"],
         "x_label": "DNs sorted by connectivity",
         "y_label": plot_params.STATS_ARGS["measured_feature_label"],
         "data_label": "GNG DNs",
@@ -265,7 +271,7 @@ def make_gng_dn_plot(dns_info):
         plotting_args=plotting_args_gng,
     )
     plotting_args_dn = {
-        "x_arg": plot_params.STATS_ARGS['measured_feature']+"_sorting",
+        "x_arg": plot_params.STATS_ARGS["measured_feature"] + "_sorting",
         "y_arg": plot_params.STATS_ARGS["measured_feature"],
         "x_label": "DNs sorted by connectivity",
         "y_label": plot_params.STATS_ARGS["measured_feature_label"],
@@ -286,7 +292,7 @@ def make_specific_neurons_plot(dns_info):
     _, ax = plt.subplots(1, 2, figsize=(8, 6), width_ratios=[3, 1])
 
     plotting_args_dn = {
-        "x_arg": plot_params.STATS_ARGS['measured_feature']+"_sorting",
+        "x_arg": plot_params.STATS_ARGS["measured_feature"] + "_sorting",
         "y_arg": plot_params.STATS_ARGS["measured_feature"],
         "x_label": "DNs sorted by connectivity",
         "y_label": plot_params.STATS_ARGS["measured_feature_label"],
@@ -302,7 +308,8 @@ def make_specific_neurons_plot(dns_info):
         plotting_args=plotting_args_dn,
     )
 
-def compute_connectivity_stats()
+
+def compute_connectivity_stats():
     # Load the data
     _, edges = load_nodes_and_edges()
     (
@@ -333,14 +340,10 @@ def compute_connectivity_stats()
         # number of connections
         f.write("Number of DNs: {}\n".format(len(dns_info)))
         n_zero_input = dns_info[dns_info["DN_connected_in"] == 0]
-        f.write(
-            "Number of DNs with no input: {}\n".format(len(n_zero_input))
-        )
+        f.write("Number of DNs with no input: {}\n".format(len(n_zero_input)))
         n_one_input = dns_info[dns_info["DN_connected_in"] == 1]
-        f.write(
-            "Number of DNs with one input: {}\n".format(len(n_one_input))
-        )
-        f.write('\n')
+        f.write("Number of DNs with one input: {}\n".format(len(n_one_input)))
+        f.write("\n")
 
         dn_edges = edges[
             edges["pre_root_id"].isin(dns_info["root_id"])
@@ -349,27 +352,34 @@ def compute_connectivity_stats()
 
         for nt_type in dn_edges["nt_type"].unique():
             f.write(
-                "Number of {nt_type} synapses: {}\n".format(
-                    len(dn_edges[dn_edges["nt_type"] == nt_type])
+                "Number of {} synapses: {}\n".format(
+                    nt_type, len(dn_edges[dn_edges["nt_type"] == nt_type])
                 )
             )
             f.write(
-                "Number of {nt_type} neurons: {}\n".format(
+                "Number of {} neurons: {}\n".format(
+                    nt_type,
                     len(
                         dn_edges[dn_edges["nt_type"] == nt_type][
                             "pre_root_id"
                         ].unique()
-                    )
+                    ),
                 )
             )
-        f.write("Verification: total number of synapses: {}\n".format(
-            len(dn_edges)))
-        f.write("Verification: total number of neurons: {}\n".format(
-            len(dn_edges["pre_root_id"].unique())))
-        f.write('\n')
+        f.write(
+            "Verification: total number of synapses: {}\n".format(
+                len(dn_edges)
+            )
+        )
+        f.write(
+            "Verification: total number of neurons: {}\n".format(
+                len(dn_edges["pre_root_id"].unique())
+            )
+        )
+        f.write("\n")
 
         ## --- Check that comDNs are statistically different from the rest --- ##
-        feature = plot_params.STATS_ARGS['measured_feature']
+        feature = plot_params.STATS_ARGS["measured_feature"]
         down_neurons = dns_info[feature][
             ~dns_info["root_id"].isin(neuron_params.REF_DNS.keys())
         ].values
@@ -382,7 +392,7 @@ def compute_connectivity_stats()
                 mean, std, median
             )
         )
-        f.write('\n')
+        f.write("\n")
 
         for neuron in neuron_params.REF_DNS.keys():
             n_down = dns_info[dns_info["root_id"] == neuron][feature].values[0]

@@ -1,3 +1,9 @@
+"""
+2023.08.30
+author: femke.hurtak@epfl.ch
+Script to compute the clustering of the graph multiple times.
+"""
+
 import networkx as nx
 import matplotlib.pyplot as plt
 import numpy as np
@@ -5,15 +11,12 @@ import os
 import pickle
 import multiprocessing as mp
 
-mp.set_start_method("spawn")
-
 import pandas as pd
 from loaddata import (
     load_graph_and_matrices,
     get_name_from_rootid,
 )
 from processing_utils import run_function_with_timeout
-import params
 import plot_params
 from common import cluster_matrix, generate_random
 from graph_plot_utils import cluster_graph_louvain, make_nice_spines
@@ -322,7 +325,9 @@ def plot_clustered_network(
 
 
 def save_clustering_in_table(
-    meta_clusters_: list[list[int]], working_folder_: str
+    meta_clusters_: list[list[int]],
+    working_folder_: str,
+    equiv_index_rootid: pd.DataFrame,
 ):
     """
     Save clustering in a table.
@@ -518,7 +523,7 @@ def run_louvain_custering(control: bool = False):
         _,
         unn_matrix,
         _,
-        _,
+        equiv_index_rootid,
     ) = load_graph_and_matrices("dn")
 
     DNgraph = nx.from_scipy_sparse_array(unn_matrix, create_using=nx.DiGraph)
@@ -529,10 +534,7 @@ def run_louvain_custering(control: bool = False):
             shuffled_mat, create_using=nx.DiGraph
         )
         # save the shuffled matrix
-        shuffled_dir = os.path.join(
-            plot_params.CLUSTERING_ARGS["folder"],
-            "shuffled_control",
-        )
+        shuffled_dir = plot_params.CLUSTERING_ARGS["control_folder"]
         if not os.path.exists(shuffled_dir):
             os.makedirs(shuffled_dir)
         np.save(
@@ -545,7 +547,6 @@ def run_louvain_custering(control: bool = False):
     # Control or not
     network_graph = shuffled_graph if control else DNgraph
     network_matrix = shuffled_mat if control else unn_matrix
-    network_folder = "shuffled_control" if control else "data"
 
     # Parameters
     args = {
@@ -561,7 +562,11 @@ def run_louvain_custering(control: bool = False):
     working_folder = plot_params.CLUSTERING_ARGS["folder"]
     if not os.path.exists(working_folder):
         os.makedirs(working_folder)
-    processing_folder = os.path.join(working_folder, network_folder)
+    processing_folder = (
+        plot_params.CLUSTERING_ARGS["control_folder"]
+        if control
+        else plot_params.CLUSTERING_ARGS["data_folder"]
+    )
     if not os.path.exists(processing_folder):
         os.makedirs(processing_folder)
 
@@ -575,7 +580,9 @@ def run_louvain_custering(control: bool = False):
     meta_clusters, edges_matrix = detect_clusters(
         meta_similarity_matrix, cutoff=cutoff, draw_edges=True
     )
-    save_clustering_in_table(meta_clusters, processing_folder)
+    save_clustering_in_table(
+        meta_clusters, processing_folder, equiv_index_rootid
+    )
 
     # compute additional statistics on the clustered graph
     communities = [set(cluster) for cluster in meta_clusters]
@@ -629,4 +636,6 @@ def draw_louvain_custering():
 
 
 if __name__ == "__main__":
+    mp.set_start_method("spawn")
+
     draw_louvain_custering()

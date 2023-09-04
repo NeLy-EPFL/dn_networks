@@ -1,3 +1,10 @@
+"""
+2023.08.30
+author: femke.hurtak@epfl.ch
+Script to compute how for a signal can propagate in the network starting from
+a specific neuron.
+"""
+
 import pandas as pd
 import matplotlib.pyplot as plt
 import os
@@ -167,12 +174,14 @@ def plot_cumulative_diffusion(
     plt.savefig(os.path.join(working_folder, "cumulative_diffusion.png"))
     plt.savefig(os.path.join(working_folder, "cumulative_diffusion.pdf"))
 
-def cumulative_diffusion_plot()
 
+def cumulative_diffusion_plot():
     _, edges = load_nodes_and_edges()
     list_dns = load_names()["root_id"].values
 
     working_folder = plot_params.NETWORK_STATS_ARGS["layers_folder"]
+    if not os.path.exists(working_folder):
+        os.makedirs(working_folder)
 
     connection_df = edges[
         (edges["syn_count"] > 5)

@@ -1,3 +1,9 @@
+"""
+2023.08.30
+author: femke.hurtak@epfl.ch
+Helping script for working with multiprocessing
+"""
+
 import time
 import multiprocessing as mp
 

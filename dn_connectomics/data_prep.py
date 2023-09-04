@@ -1,4 +1,7 @@
 """
+2023.08.30
+author: sibo.wang@epfl.ch
+
 This script sonstructs the following from CSV files from the Codex data dump:
 1. Graph representations of:
      (i)   The full FlyWire dataset;

@@ -1,10 +1,17 @@
+"""
+2023.08.30
+author: femke.hurtak@epfl.ch
+script to draw the meta network, obtained by clustering the neurons. Each node 
+of the meta network is a cluster of neurons, and the edges are the connections
+between the clusters.
+"""
+
 import networkx as nx
 import matplotlib.pyplot as plt
 import os
 import pandas as pd
 import numpy as np
 
-import params
 import plot_params
 
 from louvain_clustering import confusion_matrix_communities

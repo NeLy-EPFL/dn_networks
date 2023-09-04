@@ -1,7 +1,11 @@
+"""
+2023.08.30
+author: femke.hurtak@epfl.ch
+Comparison of the clustering results with a shuffled control.
+"""
+
 import os
-import params
 import pandas as pd
-import matplotlib.pyplot as plt
 from scipy import stats
 
 import plot_params

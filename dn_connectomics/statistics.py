@@ -1,3 +1,9 @@
+"""
+2023.08.30
+author: femke.hurtak@epfl.ch
+Helping script for computing connectivity statistics.
+"""
+
 import numpy as np
 from tqdm import tqdm
 import pandas as pd

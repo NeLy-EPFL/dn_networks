@@ -1,9 +1,14 @@
+"""
+2023.08.30
+author: femke.hurtak@epfl.ch
+Script to overlay the neurotransmitter type on the connectivity matrix.
+"""
+
 import os
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 
-import params
 import plot_params
 
 from loaddata import (
@@ -64,7 +69,9 @@ def draw_nt_specific_matrices(
         vmax=1,
         vmin=0,
     )
-    ax[0].set_title("Glutamatergic", color=plot_params["GLUT"]["color"])
+    ax[0].set_title(
+        "Glutamatergic", color=plot_params.NT_TYPES["GLUT"]["color"]
+    )
 
     nt_matrix = def_matrix_neurotransmitter(edges_, rid_order, nt_type="GABA")
     ax[1].imshow(
@@ -74,7 +81,7 @@ def draw_nt_specific_matrices(
         vmax=1,
         vmin=0,
     )
-    ax[1].set_title("GABA", color=plot_params["GABA"]["color"])
+    ax[1].set_title("GABA", color=plot_params.NT_TYPES["GABA"]["color"])
 
     nt_matrix = def_matrix_neurotransmitter(edges_, rid_order, nt_type="ACH")
     ax[2].imshow(
@@ -84,7 +91,9 @@ def draw_nt_specific_matrices(
         vmax=1,
         vmin=0,
     )
-    ax[2].set_title("Acetylcholine", color=plot_params["ACH"]["color"])
+    ax[2].set_title(
+        "Acetylcholine", color=plot_params.NT_TYPES["ACH"]["color"]
+    )
     if working_folder is not None:
         plt.savefig(os.path.join(working_folder, "nt_matrix_glut.pdf"))
     return
@@ -127,10 +136,11 @@ def get_fraction_neuropil(edges_, neuropil="GNG", subset: list = None):
 
 def detail_neurotransmitters_matrix():
     working_folder = plot_params.CLUSTERING_ARGS["folder"]
+    data_folder = plot_params.CLUSTERING_ARGS["data_folder"]
 
     ## --- load data --- ##
     clustering = pd.read_csv(
-        os.path.join(working_folder, "clustering.csv"), index_col=0
+        os.path.join(data_folder, "clustering.csv"), index_col=0
     )
     order = clustering["node_index"]
     (

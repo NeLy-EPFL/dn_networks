@@ -1,9 +1,14 @@
+"""
+2023.08.30
+author: femke.hurtak@epfl.ch
+Script to compare the network statistics with know graph models.
+"""
+
 import os
 import numpy as np
 import matplotlib.pyplot as plt
 import networkx as nx
 from scipy import optimize
-import pandas as pd
 import seaborn as sns
 
 import plot_params

@@ -1,3 +1,9 @@
+"""
+2023.08.30
+author: femke.hurtak@epfl.ch
+File containing parameters for the plots.
+"""
+
 import os
 import params
 
@@ -35,7 +41,7 @@ FLOWER_PLOT_PARAMS["direct_layout_args"] = {
     "fig_size": 5,
     "include_legend": True,
     "feedback_direct_plot": False,
-    "feedback_downstrean_plot": False,
+    "feedback_downstream_plot": False,
 }
 FLOWER_PLOT_PARAMS["indirect_layout_args"] = {
     "level": 2,
@@ -44,8 +50,9 @@ FLOWER_PLOT_PARAMS["indirect_layout_args"] = {
     "fig_size": 5,
     "include_legend": True,
     "feedback_direct_plot": False,
-    "feedback_downstrean_plot": True,
+    "feedback_downstream_plot": True,
 }
+FLOWER_PLOT_PARAMS["plot_each_neuron"] = False
 
 # --- Plotting parameters for the clustering --- #
 CLUSTERING_ARGS = {}
@@ -58,6 +65,14 @@ CLUSTERING_ARGS["folder"] = os.path.join(
     "network_visualisations",
     "whole_network",
     "louvain",
+)
+CLUSTERING_ARGS["data_folder"] = os.path.join(
+    CLUSTERING_ARGS["folder"],
+    "data",
+)
+CLUSTERING_ARGS["control_folder"] = os.path.join(
+    CLUSTERING_ARGS["folder"],
+    "shuffled_control",
 )
 CLUSTERING_ARGS["confusion_mat_values"] = "relative"
 CLUSTERING_ARGS["confusion_mat_size_threshold"] = 10

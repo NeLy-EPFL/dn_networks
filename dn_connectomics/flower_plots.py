@@ -1,9 +1,15 @@
+"""
+2023.08.30
+author: femke.hurtak@epfl.ch
+Script to draw the neurons directly downstream of a given neuron.
+"""
+
 import os
 import matplotlib.pyplot as plt
 import pandas as pd
+from tqdm import tqdm
 
 
-import params
 import plot_params
 import neuron_params
 from common import identify_rids_from_name
@@ -71,7 +77,7 @@ def make_flower_plot(
                 center,
                 list_dns=list_nodes,
                 feedback_layer_1=layout_args["feedback_direct_plot"],
-                feedback_layer_2=layout_args["feedback_downstrean_plot"],
+                feedback_layer_2=layout_args["feedback_downstream_plot"],
                 named_dns=neurons_of_interest,
             )
             _ = plot_downstream_network(
@@ -106,7 +112,7 @@ def make_flower_plot(
         rids,
         list_dns=list_nodes,
         feedback_layer_1=layout_args["feedback_direct_plot"],
-        feedback_layer_2=layout_args["feedback_downstrean_plot"],
+        feedback_layer_2=layout_args["feedback_downstream_plot"],
         named_dns=neurons_of_interest,
     )
     _ = plot_downstream_network(
@@ -134,6 +140,17 @@ def draw_all_flower_plots():
     """
     # Load the data
     nodes, edges = load_nodes_and_edges()
+    dn_mask = ~nodes["name_taken"].isna() & nodes["name_taken"].str.contains(
+        "DN"
+    )
+    nodes = nodes[dn_mask]
+    edges = edges[
+        (
+            edges["pre_root_id"].isin(nodes["root_id"])
+            & edges["post_root_id"].isin(nodes["root_id"])
+            & (edges["syn_count"] >= 5)
+        )
+    ]
     working_folder = plot_params.FLOWER_PLOT_PARAMS["folder"]
     if not os.path.exists(working_folder):
         os.makedirs(working_folder)
@@ -151,24 +168,28 @@ def draw_all_flower_plots():
     }
     # Replace the neurons where the root_ids are already defined
     dictionary_dns.update(neuron_params.REF_DNS)
-    neuron_names = [v["name"] for _, v in neuron_params.KNOWN_DNS.items()]
+    neuron_names = [
+        v["database_name"] for _, v in neuron_params.KNOWN_DNS.items()
+    ]
 
-    for neuron_name in neuron_names:
+    for neuron_name in tqdm(neuron_names):
         # ------------------- Flower plot for direct connections -------------------
         layout_args = plot_params.FLOWER_PLOT_PARAMS["direct_layout_args"]
-
         fig1 = make_flower_plot(
             neuron_name,
             edges=edges,
             neurons_of_interest=dictionary_dns,
             layout_args=layout_args,
-            plot_all_neurons=False,
+            plot_all_neurons=plot_params.FLOWER_PLOT_PARAMS[
+                "plot_each_neuron"
+            ],
         )
         fig1.savefig(
             os.path.join(
                 working_folder, f"{neuron_name}_flower_plot_direct.pdf"
             )
         )
+        plt.close(fig1)
 
         # ------------------- Flower plot for downstream order connections ---------
         layout_args = plot_params.FLOWER_PLOT_PARAMS["indirect_layout_args"]
@@ -178,13 +199,16 @@ def draw_all_flower_plots():
             edges=edges,
             neurons_of_interest=dictionary_dns,
             layout_args=layout_args,
-            plot_all_neurons=False,
+            plot_all_neurons=plot_params.FLOWER_PLOT_PARAMS[
+                "plot_each_neuron"
+            ],
         )
         fig2.savefig(
             os.path.join(
                 working_folder, f"{neuron_name}_flower_plot_indirect.pdf"
             )
         )
+        plt.close(fig2)
     return
 
 

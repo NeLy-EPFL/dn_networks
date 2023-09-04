@@ -1,3 +1,9 @@
+"""
+2023.08.30
+author: femke.hurtak@epfl.ch
+Helping script for working with the connectivity graphs
+"""
+
 import pandas as pd
 import networkx as nx
 import matplotlib.pyplot as plt
@@ -231,9 +237,13 @@ def plot_downstream_network(
     G.remove_edges_from(network_2["edges"])
 
     # Add the labels for the edges
-    ax = add_edge_legend(
-        ax, normalized_weights, network_1["edge_colors"], arrow_norm
+    all_weights = np.concatenate(
+        (normalized_weights, network_2["weights"] * arrow_norm)
     )
+    all_colors = np.concatenate(
+        (network_1["edge_colors"], network_2["edge_colors"])
+    )
+    ax = add_edge_legend(ax, all_weights, all_colors, arrow_norm)
 
     nx.draw(
         G,

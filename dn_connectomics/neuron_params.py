@@ -1,5 +1,7 @@
 """
-Script to irefer to the neurons used in the experiments.
+2023.08.30
+author: femke.hurtak@epfl.ch
+Script to refer to the neurons used in the experiments.
 """
 
 from loaddata import get_rootids_from_name
@@ -16,6 +18,7 @@ def make_dict_special_neurons(name, database_name, color=plot_params.DARKBLUE):
             "root_id": neuron_id,
             "color": color,
             "name": name,
+            "database_name": database_name,
         }
         for neuron_id in get_rootids_from_name(database_name)
     }

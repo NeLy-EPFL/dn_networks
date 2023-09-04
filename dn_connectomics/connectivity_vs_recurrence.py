@@ -1,3 +1,10 @@
+"""
+2023.08.30
+author: femke.hurtak@epfl.ch
+Script to compute the recurrence of specific subnetworks.
+"""
+
+
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -118,9 +125,7 @@ def compute_downstream_density(
 
     for key, value in tqdm(connectivity_dict.items()):
         rid = {value["root_id"]: {"name": "neuron", "color": "k"}}
-        _, network_downstream = get_downstream_specs(
-            edges, rid, list_dns
-        )
+        _, network_downstream = get_downstream_specs(edges, rid, list_dns)
         # Number of neurons downstream
         n_neurons_downstream = value["n_neurons_downstream"]
         # Number of possible connections
@@ -138,8 +143,8 @@ def compute_downstream_density(
 
     return connectivity_dict
 
-def connectivity_vs_recurrence_plots()
 
+def connectivity_vs_recurrence_plots():
     # Draw a 2d plot with number of neurons downstream vs density of the
     # downstream graph
 
@@ -207,7 +212,6 @@ def connectivity_vs_recurrence_plots()
     )
     ax.set_xlabel("Number of excited neurons downstream")
     ax.set_ylabel("Density of the downstream graph")
-    plt.show()
     fig.savefig(
         os.path.join(
             working_folder,
@@ -239,7 +243,6 @@ def connectivity_vs_recurrence_plots()
     )
     ax.set_xlabel("Number of neurons downstream")
     ax.set_ylabel("Topness metric")
-    plt.show()
     fig.savefig(
         os.path.join(
             working_folder,
@@ -266,9 +269,7 @@ def connectivity_vs_recurrence_plots()
         ax=ax,
     )
     ax.set_ylabel("Topness metric")
-    plt.show()
     fig.savefig(os.path.join(working_folder, "feedforward_metric_violin.pdf"))
-
 
 
 if __name__ == "__main__":

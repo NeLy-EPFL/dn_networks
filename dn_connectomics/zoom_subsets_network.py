@@ -1,3 +1,9 @@
+"""
+2023.08.30
+author: femke.hurtak@epfl.ch
+Script for drawing subsets of the network, zooming in on clusters.
+"""
+
 import os
 import matplotlib.pyplot as plt
 
@@ -55,6 +61,7 @@ def make_matrix_plots_subsets(
 
 def draw_subsets_network():
     working_folder = plot_params.CLUSTERING_ARGS["folder"]
+    data_folder = plot_params.CLUSTERING_ARGS["data_folder"]
     (
         _,
         unn_matrix,
@@ -62,7 +69,7 @@ def draw_subsets_network():
         equiv_index_rootid,
     ) = load_graph_and_matrices("dn")
 
-    communities = load_communities(working_folder, return_type="list")
+    communities = load_communities(data_folder, return_type="list")
     communities = [
         c
         for c in communities
