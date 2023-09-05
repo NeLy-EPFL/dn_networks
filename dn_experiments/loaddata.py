@@ -15,8 +15,12 @@ import params, behaviour, baselines, stimulation, motionenergy  # , sleap
 
 
 def get_background_image(fly_dir, background_crop=params.background_crop, background_key=params.background_key,
-                         background_sigma=params.background_sigma, background_med=params.background_med):
+                         background_sigma=params.background_sigma, background_med=params.background_med, force_new_background=False):
     # print("load and process background image")
+    if os.path.isfile(os.path.join(fly_dir, load.PROCESSED_FOLDER, "background_image.tif")) and not force_new_background:
+        background = utils.get_stack(os.path.join(fly_dir, load.PROCESSED_FOLDER, "background_image.tif"))
+        print("loading pre-computed background image. Params are not applied.")
+        return background
     try:
         with open(os.path.join(fly_dir, load.PROCESSED_FOLDER, "compare_trials.pkl"), "rb") as f:
             summary_stats = pickle.load(f)
