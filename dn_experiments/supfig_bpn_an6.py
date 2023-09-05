@@ -15,8 +15,8 @@ import loaddata, params, plotpanels
 
 overwrite_save = False
 
-driver_lines = ["MDN", "BPN", "AN6"]
-base_dirs = ["/mnt/nas2/JB/220816_MDN3xCsChrimson", "/mnt/nas2/JB/230125_BPNxCsChrimson", "/mnt/nas2/JB/230125_AN6xCsChrimson"]
+driver_lines = ["MDN", "BPN"]  # , "AN6"]
+base_dirs = ["/mnt/nas2/JB/220816_MDN3xCsChrimson", "/mnt/nas2/JB/230125_BPNxCsChrimson"]  # , "/mnt/nas2/JB/230125_AN6xCsChrimson"]
 
 STIM_PS = [1,5,10,20]
 P_COLOURS = [myplt.DARKBLUE, myplt.DARKGREEN, myplt.DARKYELLOW, myplt.DARKRED]

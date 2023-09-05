@@ -12,7 +12,6 @@ from scipy.signal import medfilt
 from twoppp.utils import makedirs_safe, save_stack
 from twoppp import rois
 from twoppp.pipeline import PreProcessParams
-params = PreProcessParams()
 import utils2p
 import summarydf, params, loaddata
 
@@ -25,11 +24,9 @@ HEADLESS_DIR = os.path.join(BASE_DIR, "headless")
 HEADLESS_ZIP_DIR = os.path.join(BASE_DIR, "headless_zip_novideo")
 OTHER_DIR = os.path.join(BASE_DIR, "other")
 
-def copy_stim_control_trials(overwrite=False):
-    pass
-
 def make_roi_center_annotation_file(fly_dir, quantile=0.99):
-    pca_map_file = os.path.join(fly_dir, "processed", params.pca_maps)
+    process_params = PreProcessParams()
+    pca_map_file = os.path.join(fly_dir, "processed", process_params.pca_maps)
     roi_centers = rois.read_roi_center_file(os.path.join(fly_dir, "processed", "ROI_centers.txt"))
     with open(pca_map_file, "rb") as f:
         pca_data = pickle.load(f)
@@ -50,6 +47,7 @@ def make_roi_center_annotation_file(fly_dir, quantile=0.99):
     fig.tight_layout()
     fig.savefig(os.path.join(fly_dir, "processed", "roi_center_annotation.pdf"), dpi=300)
 
+
 def make_background_image(fly_dir):
     background_image = loaddata.get_background_image(fly_dir)
     save_stack(os.path.join(fly_dir, "processed", "background_image.tif"), background_image)
@@ -65,7 +63,7 @@ def copy_all_imaging_trials(overwrite=False):
     fly_ids_DNp09 = [15,18,44,46,61]
     fly_ids_aDN2 = [25,32,60,63,72,74]
     fly_ids_MDN = [3,5,7,20,28,34,42,50,51,62,71]
-    fly_ids_PR = [8,10,65]
+    fly_ids_PR = [8,10,65,11]  # the last one is only used in stimulation power control.
     fly_ids_ball = fly_ids_DNp09 + fly_ids_aDN2 + fly_ids_MDN + fly_ids_PR
     fly_id_natbeh_wheel = 72
 
@@ -111,12 +109,27 @@ def copy_all_predictions_trials(genotypes=["DNa01", "DNa02", "DNb02", "aDN1", "D
         copy_one_fly(trial_dirs, imaging=False, overwrite=overwrite)
 
 
-def copy_one_fly(trial_dirs, imaging=True, overwrite=False):
+def copy_stim_control_trials(overwrite=False):
+    fly_dirs = [
+        "/mnt/nas2/JB/220816_MDN3xCsChrimson/Fly5",
+        "/mnt/nas2/JB/230125_BPNxCsChrimson/Fly1"
+    ]
+    for i_fly, fly_dir in enumerate(fly_dirs):
+        trial_dirs = [os.path.join(fly_dir, folder) for folder in os.listdir(fly_dir) \
+            if folder != "processed" and os.path.isdir(os.path.join(fly_dir, folder))]
+        for trial_dir in trial_dirs:
+            if "led" in trial_dir:
+                trial_dirs.remove(trial_dir)
+        copy_one_fly(trial_dirs, base_dir=OTHER_DIR, overwrite=overwrite, imaging=False)
+
+
+def copy_one_fly(trial_dirs, imaging=True, overwrite=False, base_dir=None):
     fly_dir = os.path.dirname(trial_dirs[0])
     date_genotype_dir, fly_name = os.path.split(fly_dir)
     _, date_genotype_name = os.path.split(date_genotype_dir)
-
-    if imaging:
+    if base_dir is not None:
+        new_fly_dir = os.path.join(base_dir, date_genotype_name + "_" + fly_name)
+    elif imaging:
         new_fly_dir = os.path.join(IMAGING_DIR, date_genotype_name + "_" + fly_name)
     else:
         new_fly_dir = os.path.join(HEADLESS_DIR, date_genotype_name + "_" + fly_name)
@@ -202,6 +215,31 @@ def compress_sleap(overwrite=False):
     compress(tar_file, source_folder)
     os.chdir(old_wd)
 
+
+def compress_stim_control(overwrite=False, keep_videos=False):
+    old_wd = os.getcwd()
+    os.chdir(OTHER_DIR)
+    fly_names = [
+        "220816_MDN3xCsChrimson_Fly5",
+        "230125_BPNxCsChrimson_Fly1"
+    ]
+    for fly_name in fly_names:
+        if keep_videos:
+            source_folder = [fly_name]
+            tar_file = os.path.join(OTHER_DIR, fly_name+".tar.gz")
+        else:
+            source_folder = []
+            for path, subdirs, files in os.walk(os.path.join(OTHER_DIR, fly_name)):
+                for name in files:
+                    if not name.startswith("camera_") and not name.startswith("."):
+                        source_folder.append(os.path.relpath(os.path.join(path, name),start=OTHER_DIR))
+            tar_file = os.path.join(OTHER_DIR, fly_name+"_novideo.tar.gz")
+        if not os.path.isfile(tar_file) or overwrite:
+            compress(tar_file, source_folder)
+    
+    os.chdir(old_wd)
+
+
 def compress_imaging(overwrite=False, keep_videos=False):
     base_dir = IMAGING_DIR
     out_dir = IMAGING_ZIP_DIR
@@ -222,7 +260,7 @@ def compress_one_fly_imaging(fly_dir, out_dir, overwrite=False, keep_videos=Fals
             old_wd = os.getcwd()
             os.chdir(fly_dir)
             tar_file = os.path.join(out_dir, fly_name + "__processed.tar.gz")
-            if True:  # not os.path.isfile(tar_file) or overwrite:  # TODO
+            if not os.path.isfile(tar_file) or overwrite:  # TODO
                 compress(tar_file, ["processed"])
             os.chdir(old_wd)
         else:
@@ -329,9 +367,12 @@ def decompress(tar_file, path, members=None):
 
 if __name__ == "__main__":
     # compress_sleap()
+    copy_stim_control_trials()
+    compress_stim_control(keep_videos=False)
+
     # copy_all_predictions_trials()
     # copy_all_headless_trials()
-    compress_headless_predictions(keep_videos=False)
+    # compress_headless_predictions(keep_videos=False)
     
     # copy_all_imaging_trials()
     # compress_imaging(keep_videos=False)
