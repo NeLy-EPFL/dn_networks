@@ -64,6 +64,7 @@ def draw_subsets_network():
     data_folder = plot_params.CLUSTERING_ARGS["data_folder"]
     (
         _,
+        _,
         unn_matrix,
         _,
         equiv_index_rootid,

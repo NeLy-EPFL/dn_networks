@@ -314,7 +314,8 @@ def compute_connectivity_stats():
     _, edges = load_nodes_and_edges()
     (
         _,
-        unn_matrix,
+        syncount_matrix,
+        _,
         _,
         equiv_index_rootid,
     ) = load_graph_and_matrices("dn")
@@ -324,7 +325,7 @@ def compute_connectivity_stats():
         os.makedirs(working_folder)
 
     dns_info = prepare_table(equiv_index_rootid, marker="DNg")
-    dns_info = connectivity_stats(unn_matrix, dns_info)
+    dns_info = connectivity_stats(syncount_matrix, dns_info)
     dns_info.to_csv(os.path.join(working_folder, "dns_info.csv"))
 
     ## --- Plot the number of connected DNs as a function of the connectivity of the DNs --- ##

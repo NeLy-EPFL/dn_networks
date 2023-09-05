@@ -150,7 +150,7 @@ def connectivity_vs_recurrence_plots():
 
     # Load the data
     graph_selected = "dn"  # "dn" # "dn_gng" # "central_an_dn"
-    _, unn_matrix, _, equiv_index_rootid = load_graph_and_matrices(
+    _, _, unn_matrix, _, equiv_index_rootid = load_graph_and_matrices(
         graph_selected
     )
     _, edges = load_nodes_and_edges()

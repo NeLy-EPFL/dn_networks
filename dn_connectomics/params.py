@@ -7,23 +7,19 @@ from pathlib import Path
 import os
 
 # --- Initial data preparation --- #
-RAW_DATA_DIR = os.path.join(Path(__file__).absolute().parent.parent, "data")
+RAW_DATA_DIR = os.path.join(Path(__file__).absolute().parent, "data")
 CODEX_DUMP_DIR = os.path.join(RAW_DATA_DIR, "codex_dump", "v630-20230803")
 GRAPHS_DIR = os.path.join(RAW_DATA_DIR, "graphs", "v630-20230803")
 
 # --- Data storage --- #
-DATA_DIR = Path(
-    "/home/hurtak/Projects/dn_interactions/dn_connectomics/data/graphs/v630-20230803"
-)
+DATA_DIR = GRAPHS_DIR
 
 NODES_FILE = "node_info.pkl"
 EDGES_FILE = "edge_info.pkl"
 NAMES_FILE = "inferred_names.csv"
 
 # --- Figure storage --- #
-FIGURES_DIR = Path(
-    "/home/hurtak/Projects/dn_interactions/dn_connectomics/figures/"
-)
+FIGURES_DIR = os.path.join(Path(__file__).absolute().parent, "figures")
 
 # --- Biological parameters --- #
 NT_WEIGHTS = {"ACH": +1, "GABA": -1, "GLUT": -1, "SER": 0, "DA": 0, "OCT": 0}

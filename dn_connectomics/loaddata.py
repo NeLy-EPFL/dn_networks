@@ -28,11 +28,12 @@ def load_graph_and_matrices(subset="dn"):
         data_dump = pickle.load(f)
 
     unn_matrix = data_dump["mat_unnorm"].asfptype()
+    syncount_matrix = data_dump["mat_syncount"].asfptype()
     nn_matrix = data_dump["mat_norm"]
     graph = data_dump["nx_graph"]
     equiv_index_rootid = data_dump["lookup"]
 
-    return graph, unn_matrix, nn_matrix, equiv_index_rootid
+    return graph, syncount_matrix, unn_matrix, nn_matrix, equiv_index_rootid
 
 
 def load_nodes_and_edges():
@@ -50,6 +51,11 @@ def load_nodes_and_edges():
 
     with open(edges_file, "rb") as f:
         edges = pd.read_pickle(f)
+
+    # nb: edges are fine-grained such that a single row corresponds to a single
+    # (pre-post root id) pair and a single neuropil. This means that the
+    # synapse count is not the total number of synapses between the two neurons
+    # but the number of synapses in the given neuropil.
 
     return nodes, edges
 

@@ -60,19 +60,29 @@ import params
 data_dir = params.RAW_DATA_DIR
 codex_dump_dir = params.CODEX_DUMP_DIR
 graphs_dir = params.GRAPHS_DIR
+if not os.path.exists(graphs_dir):
+    os.makedirs(graphs_dir)
 
 # Read Codex dump
-neurons = pd.read_csv(codex_dump_dir / "neurons.csv")
-morphology_clusters = pd.read_csv(codex_dump_dir / "morphology_clusters.csv")
-connectivity_clusters = pd.read_csv(
-    codex_dump_dir / "connectivity_clusters.csv"
+neurons = pd.read_csv(os.path.join(codex_dump_dir, "neurons.csv"))
+morphology_clusters = pd.read_csv(
+    os.path.join(codex_dump_dir, "morphology_clusters.csv")
 )
-classification = pd.read_csv(codex_dump_dir / "classification.csv")
-cell_stats = pd.read_csv(codex_dump_dir / "cell_stats.csv")
-labels = pd.read_csv(codex_dump_dir / "labels.csv")
-connections = pd.read_csv(codex_dump_dir / "connections.csv")
-connectivity_tags = pd.read_csv(codex_dump_dir / "connectivity_tags.csv")
-manual_cell_names = pd.read_csv(codex_dump_dir / "manual_cell_names.csv")
+connectivity_clusters = pd.read_csv(
+    os.path.join(codex_dump_dir, "connectivity_clusters.csv")
+)
+classification = pd.read_csv(
+    os.path.join(codex_dump_dir, "classification.csv")
+)
+cell_stats = pd.read_csv(os.path.join(codex_dump_dir, "cell_stats.csv"))
+labels = pd.read_csv(os.path.join(codex_dump_dir, "labels.csv"))
+connections = pd.read_csv(os.path.join(codex_dump_dir, "connections.csv"))
+connectivity_tags = pd.read_csv(
+    os.path.join(codex_dump_dir, "connectivity_tags.csv")
+)
+manual_cell_names = pd.read_csv(
+    os.path.join(codex_dump_dir, "manual_cell_names.csv")
+)
 
 # Select Katharina Eichler's DN labels
 our_friend = "Katharina Eichler"
@@ -188,6 +198,15 @@ for root_id, etr in inferred_names.iterrows():
                 )
     names_taken.append(cell_name)
 inferred_names["name_taken"] = names_taken
+
+# Add manually defined neuron names if they are still missing
+for root_id, row in manual_cell_names.iterrows():
+    if root_id not in inferred_names.index:
+        # add a row to inferred_names with index root_id and "name_taken" column
+        # set to the manually defined name
+        inferred_names.loc[root_id, "name_taken"] = row["cell_name"]
+        names_taken.append(row["cell_name"])
+
 rows_to_check = inferred_names[inferred_names["name_taken"] == "TO_CHECK"]
 print(f"{rows_to_check.shape[0]} names to check manually:")
 for root_id, _ in rows_to_check.iterrows():
@@ -202,7 +221,7 @@ dns_missing_names = dn_ids[~dn_ids.isin(ids_with_name_assigned)]
 print("DNs still missing names:")
 for dn_id in dns_missing_names:
     print(f"*  {dn_id}")
-inferred_names.to_csv(graphs_dir / "inferred_names.csv")
+inferred_names.to_csv(os.path.join(graphs_dir, "inferred_names.csv"))
 
 
 # Build node attributes df
@@ -236,10 +255,11 @@ edge_info["nt_type"] = np.where(
 )
 edge_info = edge_info.drop(columns=["root_id", "nt_type_unified"])
 
+
 # Assign effective weights
 weight_vec = np.array([nt_weights[x] for x in edge_info["nt_type"]])
 edge_info["eff_weight"] = edge_info["syn_count"] * weight_vec
-edge_info = edge_info[edge_info["eff_weight"] != 0]
+# edge_info = edge_info[edge_info["eff_weight"] != 0]
 
 # Calculate effective weights normalized by total incoming synapses
 in_total = edge_info.groupby("post_root_id")["syn_count"].sum()
@@ -332,6 +352,9 @@ for name, graph in nx_graphs.items():
     mat_unnorm = nx.to_scipy_sparse_array(
         graph, nodelist=nodelist, weight="eff_weight", format="csr"
     )
+    mat_syn_count = nx.to_scipy_sparse_array(
+        graph, nodelist=nodelist, weight="syn_count", format="csr"
+    )
     lookup = pd.DataFrame(
         data={"index": np.arange(len(nodelist)), "root_id": nodelist}
     )
@@ -339,11 +362,12 @@ for name, graph in nx_graphs.items():
         "nx_graph": graph,
         "mat_norm": mat_norm,
         "mat_unnorm": mat_unnorm,
+        "mat_syncount": mat_syn_count,
         "lookup": lookup,
     }
 
     # Save graphs
-    with open(graphs_dir / f"graph_{name}.pkl", "wb") as f:
+    with open(os.path.join(graphs_dir, f"graph_{name}.pkl"), "wb") as f:
         pickle.dump(entry, f)
 
 # Save node and edge info tables

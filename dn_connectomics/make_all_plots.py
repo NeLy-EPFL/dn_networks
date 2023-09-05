@@ -3,6 +3,7 @@
 author: femke.hurtak@epfl.ch
 Script to make all the plots for the paper.
 """
+import os
 
 from flower_plots import draw_all_flower_plots
 from connectivity_stats import compute_connectivity_stats
@@ -20,8 +21,7 @@ import params
 
 if __name__ == "__main__":
     figures_path = params.FIGURES_DIR
-    if not figures_path.exists():
-        figures_path.mkdir(parents=True)
+    os.makedirs(figures_path, exist_ok=True)
 
     # --- subnetwork visualisations --- #
     print("=== Drawing flower plots")

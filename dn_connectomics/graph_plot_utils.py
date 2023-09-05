@@ -260,6 +260,8 @@ def plot_downstream_network(
         # font_size=5,
         # font_color="black",
         connectionstyle="arc3,rad=0.1",
+        arrowstyle="->",
+        arrowsize=10,
         ax=ax,
     )
 
@@ -336,7 +338,7 @@ def get_downstream_specs(
         (connectivity_df["pre_root_id"].isin(neurons_of_interest.keys()))
         & (connectivity_df["post_root_id"].isin(list_dns))
         & (connectivity_df["syn_count"] > 5)
-        & (connectivity_df["nt_type"].isin(["ACH", "GABA", "GLUT"]))
+        # & (connectivity_df["nt_type"].isin(["ACH", "GABA", "GLUT"]))
     )
 
     layer1_df = connectivity_df[mask]
@@ -382,7 +384,7 @@ def get_downstream_specs(
         (connectivity_df["pre_root_id"].isin(list_layer_2_dns))
         & (connectivity_df["post_root_id"].isin(list_layer_2_dns))
         & (connectivity_df["syn_count"] > 5)
-        & (connectivity_df["nt_type"].isin(["ACH", "GABA", "GLUT"]))
+        # & (connectivity_df["nt_type"].isin(["ACH", "GABA", "GLUT"]))
     )
 
     connected_down = connectivity_df[mask]["post_root_id"].unique()

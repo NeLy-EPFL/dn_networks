@@ -145,6 +145,7 @@ def detail_neurotransmitters_matrix():
     order = clustering["node_index"]
     (
         _,
+        _,
         unn_matrix,
         _,
         equiv_index_rootid,

@@ -13,7 +13,7 @@ import seaborn as sns
 
 import plot_params
 
-from loaddata import load_graph_and_matrices, load_nodes_and_edges
+from loaddata import load_graph_and_matrices
 from connectivity_stats import connectivity_stats, prepare_table
 from graph_plot_utils import make_nice_spines
 
@@ -173,8 +173,6 @@ def plot_histograms(list_distributions, nb_bins=20):
     fig.tight_layout()
     plt.show()
 
-    # TODO: add R2 value to the dictionary of the first distribution compared
-
 
 def plot_curves(list_distributions):
     """
@@ -236,17 +234,19 @@ def compare_distributions():
 
     # load data
     (
-        graph,
-        unn_matrix,
-        nn_matrix,
+        _,
+        syncount_matrix,
+        _,
+        _,
         equiv_index_rootid,
     ) = load_graph_and_matrices("dn")
-    nodes, edges = load_nodes_and_edges()
 
-    dn_graph = nx.from_scipy_sparse_matrix(unn_matrix, create_using=nx.DiGraph)
+    dn_graph = nx.from_scipy_sparse_matrix(
+        syncount_matrix, create_using=nx.DiGraph
+    )
 
     dns_info = prepare_table(equiv_index_rootid, marker="DNg")
-    dns_info = connectivity_stats(unn_matrix, dns_info)
+    dns_info = connectivity_stats(syncount_matrix, dns_info)
 
     list_distributions = []
 

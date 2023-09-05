@@ -25,6 +25,9 @@ NT_TYPES = {
     "GABA": {"color": INHIB_COLOR, "linestyle": "-"},  # ":"
     "ACH": {"color": EXCIT_COLOR, "linestyle": "-"},  # "--"
     "GLUT": {"color": DARKPINK, "linestyle": "-"},
+    "SER": {"color": LIGHTGREY, "linestyle": "-"},
+    "DA": {"color": LIGHTGREY, "linestyle": "-"},
+    "OCT": {"color": LIGHTGREY, "linestyle": "-"},
 }
 
 # --- Plotting parameters for the flower plots --- #

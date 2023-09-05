@@ -521,6 +521,7 @@ def run_louvain_custering(control: bool = False):
     ## -- Data Loading -- ##
     (
         _,
+        _,
         unn_matrix,
         _,
         equiv_index_rootid,

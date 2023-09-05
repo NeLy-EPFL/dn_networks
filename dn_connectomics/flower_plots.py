@@ -151,6 +151,18 @@ def draw_all_flower_plots():
             & (edges["syn_count"] >= 5)
         )
     ]
+    # if there are pairs of ('pre_root_id', 'post_root_id') that have multiple
+    # entries in the edge_info table, sum up their synapse counts and assign the
+    #  'nt_type' and neuropil with the highest initial weight.
+    edges = edges.groupby(["pre_root_id", "post_root_id"]).agg(
+        {
+            "neuropil": lambda x: x.value_counts().index[0],
+            "syn_count": "sum",
+            "nt_type": lambda x: x.value_counts().index[0],
+        }
+    )
+    edges = edges.reset_index()
+
     working_folder = plot_params.FLOWER_PLOT_PARAMS["folder"]
     if not os.path.exists(working_folder):
         os.makedirs(working_folder)
