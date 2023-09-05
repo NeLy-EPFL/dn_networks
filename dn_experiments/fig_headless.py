@@ -8,7 +8,7 @@ import matplotlib as mpl
 from matplotlib.backends.backend_pdf import PdfPages
 import pickle
 from tqdm import tqdm
-from scipy.stats import mannwhitneyu
+from scipy.stats import mannwhitneyu, wilcoxon, ranksums
 
 import params, summarydf, loaddata, stimulation, behaviour, plotpanels
 
@@ -38,7 +38,7 @@ def get_one_fly_headless_panel(fig, axd, fly_data, figure_params):
     else:
         response_name = f"{fly_data['fly_df'].date.values[0]} {fly_data['fly_df'].CsChrimson.values[0]} Fly {fly_data['fly_df'].fly_number.values[0]}"
     # X: volocity response comparison
-    plotpanels.plot_ax_behavioural_response(fly_data["beh_responses_pre"], ax=axd["X"], x="beh",
+    plotpanels.plot_ax_behavioural_response(fly_data["beh_responses_pre"], ax=axd["X"], x="beh", ylim=figure_params["ylim"],
             response_name=response_name,
             response_ylabel=figure_params["beh_response_ylabel"] if figure_params["allflies_only"] else None,
             beh_responses_2=fly_data["beh_responses_post"], beh_response_2_color=behaviour.get_beh_color(figure_params["beh_name"]))
@@ -199,6 +199,7 @@ def summarise_all_headless(overwrite=False, allflies_only=False):
     figure_params_MDN = figure_params.copy()
     figure_params_MDN["suptitle"] = "MDN3 > CsChrimson"
     figure_params_MDN["beh_name"] = "back"
+    figure_params_MDN["ylim"] = [-3,7]
     fig_MDN = summarise_headless(df_MDN, figure_params_MDN, headless_save=os.path.join(params.plotdata_base_dir, f"headless_MDN3.pkl"),
                                     overwrite=overwrite)
     
@@ -207,18 +208,21 @@ def summarise_all_headless(overwrite=False, allflies_only=False):
     figure_params_DNp09 = figure_params.copy()
     figure_params_DNp09["suptitle"] = "DNp09 > CsChrimson"
     figure_params_DNp09["beh_name"] = "walk"
+    figure_params_DNp09["ylim"] = [-3,7]
     fig_DNp09 = summarise_headless(df_DNp09, figure_params_DNp09, headless_save=os.path.join(params.plotdata_base_dir, f"headless_DNp09.pkl"),
                                     overwrite=overwrite)
     figure_params_DNp09["return_var"] = "anus_dist"
     figure_params_DNp09["return_var_change"] = [400,500]  # show relative changes by computing baseline of 1s before
     figure_params_DNp09["beh_response_ylabel"] = "anal plate (um)"
     figure_params_DNp09["return_var_multiply"] = 4.8  # pixeles -> um
+    figure_params_DNp09["ylim"] = [-75,25]
     fig_DNp09_1 = summarise_headless(df_DNp09, figure_params_DNp09, headless_save=os.path.join(params.plotdata_base_dir, f"headless_DNp09_anus.pkl"),
                                     overwrite=overwrite)
     figure_params_DNp09["return_var"] = "ovum_dist"
     figure_params_DNp09["return_var_change"] = [400,500]  # show relative changes by computing baseline of 1s before
     figure_params_DNp09["beh_response_ylabel"] = "ovipositor (um)"
     figure_params_DNp09["return_var_multiply"] = 4.8  # pixeles -> um
+    figure_params_DNp09["ylim"] = [-75,25]
     fig_DNp09_2 = summarise_headless(df_DNp09, figure_params_DNp09, headless_save=os.path.join(params.plotdata_base_dir, f"headless_DNp09_ovum.pkl"),
                                     overwrite=overwrite)
     
@@ -227,6 +231,7 @@ def summarise_all_headless(overwrite=False, allflies_only=False):
     figure_params_aDN2 = figure_params.copy()
     figure_params_aDN2["suptitle"] = "aDN2 > CsChrimson"
     figure_params_aDN2["beh_name"] = "groom"
+    figure_params_aDN2["ylim"] = [-3,7]
     fig_aDN2 = summarise_headless(df_aDN2, figure_params_aDN2, headless_save=os.path.join(params.plotdata_base_dir, f"headless_aDN2.pkl"),
                                     overwrite=overwrite)
     figure_params_aDN2["return_var"] = "frleg_height"
@@ -234,19 +239,22 @@ def summarise_all_headless(overwrite=False, allflies_only=False):
     figure_params_aDN2["beh_response_ylabel"] = "front leg height (um)"
     figure_params_aDN2["return_var_multiply"] = 4.8  # pixeles -> um
     figure_params_aDN2["return_var_flip"] = True  # make the positive direction more intuitive
+    figure_params_aDN2["ylim"] = None
     fig_aDN2_2 = summarise_headless(df_aDN2, figure_params_aDN2, headless_save=os.path.join(params.plotdata_base_dir, f"headless_aDN2_frleg_height.pkl"),
                                     overwrite=overwrite)
     figure_params_aDN2["return_var"] = "ang_frfemur"
     figure_params_aDN2["return_var_change"] = [400,500]  # show relative changes by computing baseline of 1s before
     figure_params_aDN2["beh_response_ylabel"] = "femur angle (°)"
     figure_params_aDN2["return_var_multiply"] = None
-    figure_params_aDN2["return_var_flip"] = False 
+    figure_params_aDN2["return_var_flip"] = False
+    figure_params_aDN2["ylim"] = None
     fig_aDN2_3 = summarise_headless(df_aDN2, figure_params_aDN2, headless_save=os.path.join(params.plotdata_base_dir, f"headless_aDN2_femur_angle.pkl"),
                                     overwrite=overwrite)
     figure_params_aDN2["return_var"] = "ang_frtibia"
     figure_params_aDN2["return_var_change"] = [400,500]  # show relative changes by computing baseline of 1s before
     figure_params_aDN2["beh_response_ylabel"] = "tibia angle (°)"
     figure_params_aDN2["return_var_flip"] = False 
+    figure_params_aDN2["ylim"] = None
     fig_aDN2_4 = summarise_headless(df_aDN2, figure_params_aDN2, headless_save=os.path.join(params.plotdata_base_dir, f"headless_aDN2_tibia_angle.pkl"),
                                     overwrite=overwrite)
     figure_params_aDN2["return_var"] = "mef_tita"
@@ -254,6 +262,7 @@ def summarise_all_headless(overwrite=False, allflies_only=False):
     figure_params_aDN2["beh_response_ylabel"] = "front leg speed (um)"
     figure_params_aDN2["return_var_multiply"] = 4.8  # pixeles -> um
     figure_params_aDN2["return_var_flip"] = False 
+    figure_params_aDN2["ylim"] = None
     fig_aDN2_5 = summarise_headless(df_aDN2, figure_params_aDN2, headless_save=os.path.join(params.plotdata_base_dir, f"headless_aDN2_mef.pkl"),
                                     overwrite=overwrite)
     # additional kinematics parameters
@@ -262,6 +271,7 @@ def summarise_all_headless(overwrite=False, allflies_only=False):
     figure_params_aDN2["beh_response_ylabel"] = "front leg tita - head dist (um)"
     figure_params_aDN2["return_var_multiply"] = 4.8  # pixeles -> um
     figure_params_aDN2["return_var_flip"] = False 
+    figure_params_aDN2["ylim"] = [-175,100]
     fig_aDN2_6 = summarise_headless(df_aDN2, figure_params_aDN2, headless_save=os.path.join(params.plotdata_base_dir, f"headless_aDN2_frtita_dist.pkl"),
                                     overwrite=overwrite)
     figure_params_aDN2["return_var"] = "frfeti_neck_dist"
@@ -269,6 +279,7 @@ def summarise_all_headless(overwrite=False, allflies_only=False):
     figure_params_aDN2["beh_response_ylabel"] = "front leg feti - head dist (um)"
     figure_params_aDN2["return_var_multiply"] = 4.8  # pixeles -> um
     figure_params_aDN2["return_var_flip"] = False 
+    figure_params_aDN2["ylim"] = None
     fig_aDN2_7 = summarise_headless(df_aDN2, figure_params_aDN2, headless_save=os.path.join(params.plotdata_base_dir, f"headless_aDN2_frfeti_dist.pkl"),
                                     overwrite=overwrite)
     figure_params_aDN2["return_var"] = "ang_frtibia_neck"
@@ -276,6 +287,7 @@ def summarise_all_headless(overwrite=False, allflies_only=False):
     figure_params_aDN2["beh_response_ylabel"] = "tibia - neck angle (°)"
     figure_params_aDN2["return_var_multiply"] = None
     figure_params_aDN2["return_var_flip"] = False 
+    figure_params_aDN2["ylim"] = None
     fig_aDN2_8 = summarise_headless(df_aDN2, figure_params_aDN2, headless_save=os.path.join(params.plotdata_base_dir, f"headless_aDN2_tibia_neck_angle.pkl"),
                                     overwrite=overwrite)
 
@@ -284,6 +296,7 @@ def summarise_all_headless(overwrite=False, allflies_only=False):
     figure_params_PR = figure_params.copy()
     figure_params_PR["suptitle"] = "__ > CsChrimson"
     figure_params_PR["beh_name"] = "rest"
+    figure_params_PR["ylim"] = [-3,7]
     fig_PR = summarise_headless(df_PR, figure_params_PR, headless_save=os.path.join(params.plotdata_base_dir, f"headless_PR.pkl"),
                                     overwrite=overwrite)
     figure_params_PR["beh_name"] = "back"
@@ -296,12 +309,14 @@ def summarise_all_headless(overwrite=False, allflies_only=False):
     figure_params_PR["return_var_change"] = [400,500]  # show relative changes by computing baseline of 1s before
     figure_params_PR["beh_response_ylabel"] = "anal plate (um)"
     figure_params_PR["return_var_multiply"] = 4.8  # pixeles -> um
+    figure_params_PR["ylim"] = [-75,25]
     fig_PR3 = summarise_headless(df_PR, figure_params_PR, headless_save=os.path.join(params.plotdata_base_dir, f"headless_PR_anus.pkl"),
                                     overwrite=overwrite)
     figure_params_PR["return_var"] = "ovum_dist"
     figure_params_PR["return_var_change"] = [400,500]  # show relative changes by computing baseline of 1s before
     figure_params_PR["beh_response_ylabel"] = "ovipositor (px)"
     figure_params_PR["return_var_multiply"] = 4.8  # pixeles -> um
+    figure_params_PR["ylim"] = [-75,25]
     fig_PR4 = summarise_headless(df_PR, figure_params_PR, headless_save=os.path.join(params.plotdata_base_dir, f"headless_PR_ovum.pkl"),
                                     overwrite=overwrite)
 
@@ -311,6 +326,7 @@ def summarise_all_headless(overwrite=False, allflies_only=False):
     figure_params_PR["beh_response_ylabel"] = "front leg height (px)"
     figure_params_PR["return_var_multiply"] = 4.8  # pixeles -> um
     figure_params_PR["return_var_flip"] = True  # make the positive direction more intuitive
+    figure_params_PR["ylim"] = None
     fig_PR5 = summarise_headless(df_PR, figure_params_PR, headless_save=os.path.join(params.plotdata_base_dir, f"headless_PR_frleg_height.pkl"),
                                     overwrite=overwrite)
     figure_params_PR["return_var"] = "ang_frfemur"
@@ -318,12 +334,14 @@ def summarise_all_headless(overwrite=False, allflies_only=False):
     figure_params_PR["beh_response_ylabel"] = "femur angle (°)"
     figure_params_PR["return_var_multiply"] = None
     figure_params_PR["return_var_flip"] = False 
+    figure_params_PR["ylim"] = None
     fig_PR6 = summarise_headless(df_PR, figure_params_PR, headless_save=os.path.join(params.plotdata_base_dir, f"headless_PR_femur_angle.pkl"),
                                     overwrite=overwrite)
     figure_params_PR["return_var"] = "ang_frtibia"
     figure_params_PR["return_var_change"] = [400,500]  # show relative changes by computing baseline of 1s before
     figure_params_PR["beh_response_ylabel"] = "tibia angle (°)"
     figure_params_PR["return_var_flip"] = False 
+    figure_params_PR["ylim"] = None
     fig_PR7 = summarise_headless(df_PR, figure_params_PR, headless_save=os.path.join(params.plotdata_base_dir, f"headless_PR_tibia_angle.pkl"),
                                     overwrite=overwrite)
 
@@ -332,6 +350,7 @@ def summarise_all_headless(overwrite=False, allflies_only=False):
     figure_params_PR["beh_response_ylabel"] = "front leg speed (px)"
     figure_params_PR["return_var_multiply"] = 4.8  # pixeles -> um
     figure_params_PR["return_var_flip"] = False 
+    figure_params_PR["ylim"] = None
     fig_PR8 = summarise_headless(df_PR, figure_params_PR, headless_save=os.path.join(params.plotdata_base_dir, f"headless_PR_mef.pkl"),
                                     overwrite=overwrite)
     figure_params_PR["return_var"] = "frtita_neck_dist"
@@ -339,6 +358,7 @@ def summarise_all_headless(overwrite=False, allflies_only=False):
     figure_params_PR["beh_response_ylabel"] = "front leg tita - head dist (px)"
     figure_params_PR["return_var_multiply"] = 4.8  # pixeles -> um
     figure_params_PR["return_var_flip"] = False 
+    figure_params_PR["ylim"] = [-175,100]
     fig_PR9 = summarise_headless(df_PR, figure_params_PR, headless_save=os.path.join(params.plotdata_base_dir, f"headless_PR_frtita_dist.pkl"),
                                     overwrite=overwrite)
     figure_params_PR["return_var"] = "frfeti_neck_dist"
@@ -346,6 +366,7 @@ def summarise_all_headless(overwrite=False, allflies_only=False):
     figure_params_PR["beh_response_ylabel"] = "front leg feti - head dist (px)"
     figure_params_PR["return_var_multiply"] = 4.8  # pixeles -> um
     figure_params_PR["return_var_flip"] = False 
+    figure_params_PR["ylim"] = None
     fig_PR10 = summarise_headless(df_PR, figure_params_PR, headless_save=os.path.join(params.plotdata_base_dir, f"headless_PR_frfeti_dist.pkl"),
                                     overwrite=overwrite)
     figure_params_PR["return_var"] = "ang_frtibia_neck"
@@ -353,6 +374,7 @@ def summarise_all_headless(overwrite=False, allflies_only=False):
     figure_params_PR["beh_response_ylabel"] = "tibia - neck angle (°)"
     figure_params_PR["return_var_multiply"] = None
     figure_params_PR["return_var_flip"] = False 
+    figure_params_PR["ylim"] = None
     fig_PR11 = summarise_headless(df_PR, figure_params_PR, headless_save=os.path.join(params.plotdata_base_dir, f"headless_PR_tibia_neck_angle.pkl"),
                                     overwrite=overwrite)
 
@@ -365,6 +387,60 @@ def summarise_all_headless(overwrite=False, allflies_only=False):
         _ = [pdf.savefig(fig) for fig in figs]
     _ = [plt.close(fig) for fig in figs]
 
+def test_stats_pre_post(all_flies, i_beh, GAL4, beh_name, var_name="v", i_0=500, i_1=750):
+    v_pre = []
+    v_pre_paired = []
+    p_pre = []
+    p_pre_paired = []
+    v_post = []
+    v_post_paired = []
+    p_post = []
+    p_post_paired = []
+    for fly in all_flies:
+        if fly["beh_responses_pre"] is not None and not isinstance(fly["beh_responses_pre"], float):
+            v_pre.append(np.mean(fly["beh_responses_pre"][i_0:i_1], axis=0))
+            p_pre.append(np.mean(fly["beh_class_responses_pre"][i_0:i_1] == i_beh, axis=0))
+            v_pre_paired.append(np.mean(fly["beh_responses_pre"][i_0:i_1]))
+            p_pre_paired.append(np.mean(fly["beh_class_responses_pre"][i_0:i_1] == i_beh))
+        if fly["beh_responses_post"] is not None and not isinstance(fly["beh_responses_post"], float):
+            v_post.append(np.mean(fly["beh_responses_post"][i_0:i_1], axis=0))
+            p_post.append(np.mean(fly["beh_class_responses_post"][i_0:i_1] == i_beh, axis=0))
+            v_post_paired.append(np.mean(fly["beh_responses_post"][i_0:i_1]))
+            p_post_paired.append(np.mean(fly["beh_class_responses_post"][i_0:i_1] == i_beh))
+    v_pre = np.concatenate(v_pre).flatten()
+    v_post = np.concatenate(v_post).flatten()
+    v_pre_paired = np.array(v_pre_paired).flatten()
+    v_post_paired = np.array(v_post_paired).flatten()
+    p_pre = np.concatenate(p_pre).flatten()
+    p_post = np.concatenate(p_post).flatten()
+    p_pre_paired = np.array(p_pre_paired).flatten()
+    p_post_paired = np.array(p_post_paired).flatten()
+    # print(f"{GAL4} {var_name} pre (n={len(v_pre)}) post (n={len(v_post)}). {i_0}-{i_1}: on trials", mannwhitneyu(v_pre, v_post))
+    print(f"{GAL4} {var_name} pre (n={len(v_pre_paired)}) post (n={len(v_post_paired)}). {i_0}-{i_1}: on flies ", mannwhitneyu(v_pre_paired, v_post_paired))
+    
+    if beh_name is not None:
+        # print(f"{GAL4} {beh_name} beh class pre (n={len(p_pre)}) post (n={len(p_post)}). {i_0}-{i_1}: on trials", mannwhitneyu(p_pre, p_post))
+        print(f"{GAL4} {beh_name} beh class pre (n={len(p_pre_paired)}) post (n={len(p_post_paired)}). {i_0}-{i_1}: on flies ", mannwhitneyu(p_pre_paired, p_post_paired))
+
+def test_stats_beh_control(all_flies, all_flies_control, GAL4, beh_name, i_0=500, i_1=750):
+    beh = []
+    beh_paired = []
+    beh_control = []
+    beh_control_paired = []
+    for fly in all_flies:
+        if fly["beh_responses_post"] is not None and not isinstance(fly["beh_responses_post"], float):
+            beh.append(np.mean(fly["beh_responses_post"][i_0:i_1], axis=0))
+            beh_paired.append(np.mean(fly["beh_responses_post"][i_0:i_1]))
+    for fly in all_flies_control:
+        if fly["beh_responses_post"] is not None and not isinstance(fly["beh_responses_post"], float):
+            beh_control.append(np.mean(fly["beh_responses_post"][i_0:i_1], axis=0))
+            beh_control_paired.append(np.mean(fly["beh_responses_post"][i_0:i_1]))
+    beh = np.concatenate(beh).flatten()
+    beh_control = np.concatenate(beh_control).flatten()
+    beh_paired = np.array(beh_paired).flatten()
+    beh_control_paired = np.array(beh_control_paired).flatten()
+    # print(f"{GAL4} (n={len(beh)}) vs. control (n={len(beh_control)}) {beh_name}. {i_0}-{i_1}: on trials", mannwhitneyu(beh, beh_control))
+    print(f"{GAL4} (n={len(beh_paired)}) vs. control (n={len(beh_control_paired)}) {beh_name}. {i_0}-{i_1}: on flies", mannwhitneyu(beh_paired, beh_control_paired))
 
 def headless_stat_test():
     headless_files = {
@@ -381,23 +457,6 @@ def headless_stat_test():
         aDN2 = pickle.load(f)
     with open(headless_files["PR"], "rb") as f:
         PR = pickle.load(f)
-    
-    def test_stats_pre_post(all_flies, i_beh, GAL4, beh_name, i_0=500, i_1=750):
-        v_pre = []
-        p_pre = []
-        v_post = []
-        p_post = []
-        for fly in all_flies:
-            v_pre.append(np.mean(fly["beh_responses_pre"][i_0:i_1], axis=0))
-            v_post.append(np.mean(fly["beh_responses_post"][i_0:i_1], axis=0))
-            p_pre.append(np.mean(fly["beh_class_responses_pre"][i_0:i_1] == i_beh, axis=0))
-            p_post.append(np.mean(fly["beh_class_responses_post"][i_0:i_1] == i_beh, axis=0))
-        v_pre = np.concatenate(v_pre).flatten()
-        v_post = np.concatenate(v_post).flatten()
-        p_pre = np.concatenate(p_pre).flatten()
-        p_post = np.concatenate(p_post).flatten()
-        print(f"{GAL4} v:", mannwhitneyu(v_pre, v_post))
-        print(f"{GAL4} {beh_name} beh class:", mannwhitneyu(p_pre, p_post))
         
     test_stats_pre_post(MDN, i_beh=3, GAL4="MDN", beh_name="back")
     test_stats_pre_post(DNp09, i_beh=1, GAL4="DNp09", beh_name="walk")
@@ -407,6 +466,8 @@ def headless_stat_test():
     detailled_files = {
         "DNp09_anus": os.path.join(params.plotdata_base_dir, "headless_DNp09_anus.pkl"),
         "PR_anus": os.path.join(params.plotdata_base_dir, "headless_PR_anus.pkl"),
+        "DNp09_ovum": os.path.join(params.plotdata_base_dir, "headless_DNp09_ovum.pkl"),
+        "PR_ovum": os.path.join(params.plotdata_base_dir, "headless_PR_ovum.pkl"),
         "aDN2_height": os.path.join(params.plotdata_base_dir, "headless_aDN2_frleg_height.pkl"),
         "PR_height": os.path.join(params.plotdata_base_dir, "headless_PR_frleg_height.pkl"),
         "aDN2_angle": os.path.join(params.plotdata_base_dir, "headless_aDN2_tibia_angle.pkl"),
@@ -420,6 +481,10 @@ def headless_stat_test():
         DNp09_anus = pickle.load(f)
     with open(detailled_files["PR_anus"], "rb") as f:
         PR_anus = pickle.load(f)
+    with open(detailled_files["DNp09_ovum"], "rb") as f:
+        DNp09_ovum = pickle.load(f)
+    with open(detailled_files["PR_ovum"], "rb") as f:
+        PR_ovum = pickle.load(f)
     with open(detailled_files["aDN2_height"], "rb") as f:
         aDN2_height = pickle.load(f)
     with open(detailled_files["PR_height"], "rb") as f:
@@ -437,22 +502,13 @@ def headless_stat_test():
     with open(detailled_files["PR_dist_feti"], "rb") as f:
         PR_dist_feti = pickle.load(f)
 
-    def test_stats_beh_control(all_flies, all_flies_control, GAL4, beh_name, i_0=500, i_1=750):
-        beh = []
-        beh_control = []
-        for fly, fly_control in zip(all_flies, all_flies_control):
-            beh.append(np.mean(fly["beh_responses_post"][i_0:i_1], axis=0))
-            beh_control.append(np.mean(fly_control["beh_responses_post"][i_0:i_1], axis=0))
-        beh = np.concatenate(beh).flatten()
-        beh_control = np.concatenate(beh_control).flatten()
-        print(f"{GAL4} {beh_name}:", mannwhitneyu(beh, beh_control))
-
     test_stats_beh_control(DNp09_anus, PR_anus, GAL4="DNp09", beh_name="anus", i_0=500, i_1=750)
+    # test_stats_beh_control(DNp09_ovum, PR_ovum, GAL4="DNp09", beh_name="ovum", i_0=500, i_1=750)
 
     # test_stats_beh_control(aDN2_height, PR_height, GAL4="aDN2", beh_name="height", i_0=750, i_1=1000)
     # test_stats_beh_control(aDN2_angle, PR_angle, GAL4="aDN2", beh_name="angle", i_0=750, i_1=1000)
     test_stats_beh_control(aDN2_dist_tita, PR_dist_tita, GAL4="aDN2", beh_name="dist tita", i_0=500, i_1=750)
-    test_stats_beh_control(aDN2_dist_feti, PR_dist_feti, GAL4="aDN2", beh_name="dist feti", i_0=500, i_1=750)
+    # test_stats_beh_control(aDN2_dist_feti, PR_dist_feti, GAL4="aDN2", beh_name="dist feti", i_0=500, i_1=750)
 
 
 if __name__ == "__main__":

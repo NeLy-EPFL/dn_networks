@@ -44,7 +44,7 @@ def plot_ax_behavioural_response(beh_responses, response_name=None, response_yla
                                                            np.zeros((response_t_params[2])))),
                                     x=x,colors=[myplt.WHITE, myplt.BLACK], ax=ax)
 
-    if beh_responses is not None:
+    if beh_responses is not None and beh_responses != [] and not np.all(np.isnan(beh_responses)):
         myplt.plot_mu_sem(mu=np.mean(beh_responses, axis=-1), err=utils.conf_int(beh_responses, axis=-1),
                             x=x, ax=ax, color=myplt.BLACK, linewidth=2*linewidth)
     if beh_responses_2 is not None:
@@ -254,7 +254,8 @@ def plot_ax_behprob(labels, ax=None, cmap=behaviour.beh_cmaplist.copy(), beh_map
                     collapse_groom=behaviour.collapse_groom, xlabel="Time (s)", ylabel="Behaviour\nprobability", labels_2=None, beh_2=None):
     ax = plt.gca() if ax is None else ax
     x = np.arange(np.sum(params.response_t_params_beh))/params.fs_beh-params.response_t_params_2p_label[0]
-
+    if labels is None or np.all(np.isnan(labels)):
+        return ax
     n_beh = len(cmap)
     beh_prob = np.zeros((labels.shape[0], n_beh))
     for i in range(n_beh):
@@ -276,7 +277,7 @@ def plot_ax_behprob(labels, ax=None, cmap=behaviour.beh_cmaplist.copy(), beh_map
                                                            np.zeros((params.response_t_params_beh[2])))),
                                     x=x,colors=[myplt.WHITE, myplt.BLACK], ax=ax)
 
-    if labels_2 is None and beh_2 is None:
+    if labels_2 is None or beh_2 is None:
          _ = [ax.plot(x, beh_prob[:,i], color=cmap[i], linewidth=2*linewidth) for i in range(len(cmap))]
     else:
         beh_prob_2 = np.zeros((labels_2.shape[0], n_beh))

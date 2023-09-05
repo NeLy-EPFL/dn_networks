@@ -17,27 +17,28 @@ import params, summarydf, loaddata, stimulation, behaviour, plotpanels, baseline
 from twoppp.plot import videos
 from twoppp import load, utils
 
+out_dir = os.path.join(params.video_base_dir, "presentation")
+
+presentation_flies = {
+    "DNp09": 46,
+    "aDN2": 32,
+    "MDN": 50,
+    "PR": 8,
+}
+presentation_natbeh_flies_MDN = {
+    "MDN": 72,
+}
+presentation_natbeh_flies_aDN2 = {
+    "aDN2": 32,
+}
+presentation_natbeh_flies_DNp09 = {
+    "DNp09": 15,
+}
 
 def make_functional_example_stim_video(pre_stim="walk", overwrite=False, subtract_pre=False, clim=[0,1],
                                        show_centers=False, show_mask=False, show_beh=False,
                                        make_fig=False, make_vid=True, select_group_of_flies="presentation", trigger="laser_start"):
-    out_dir = os.path.join(params.video_base_dir, "presentation")
 
-    presentation_flies = {
-        "DNp09": 46,
-        "aDN2": 32,
-        "MDN": 50,
-        "PR": 8,
-    }
-    presentation_natbeh_flies_MDN = {
-        "MDN": 72,
-    }
-    presentation_natbeh_flies_aDN2 = {
-        "aDN2": 32,
-    }
-    presentation_natbeh_flies_DNp09 = {
-        "DNp09": 15,
-    }
     if select_group_of_flies == "presentation":
         selected_flies = presentation_flies
     elif select_group_of_flies == "natbeh_DNp09":
@@ -61,7 +62,10 @@ def make_functional_example_stim_video(pre_stim="walk", overwrite=False, subtrac
 
     df = summarydf.load_data_summary()
     df = summarydf.filter_data_summary(df, no_co2=False)
-    df = summarydf.get_selected_df(df, [{"walkon": "ball"}])
+    if select_group_of_flies == "natbeh_MDN":
+        df = summarydf.get_selected_df(df, [{"walkon": "wheel"}])
+    else:
+        df = summarydf.get_selected_df(df, [{"walkon": "ball"}])
 
     for GAL4, fly_id in selected_flies.items():
         stim_p = stim_ps[GAL4]
@@ -162,21 +166,36 @@ def make_functional_example_stim_video(pre_stim="walk", overwrite=False, subtrac
                     f0_qmax = np.quantile(stacks, q=params.baseline_qmax, axis=0)
                 if baseline_save is not None:
                     utils.save_stack(qmax_save, f0_qmax)
-
-            dff = (stacks - f0_rest) / (f0_qmax - f0_rest)
-            if dff_save is not None:
-                utils.save_stack(dff_save, dff)
+            
+            if stacks.shape[0] < 50000:
+                dff = (stacks - f0_rest) / (f0_qmax - f0_rest)
+                if dff_save is not None:
+                    utils.save_stack(dff_save, dff)
+            else:
+                print(datetime.now().strftime('%Y-%m-%d %H:%M:%S'), "den = f0_qmax - f0_rest")
+                den = f0_qmax.astype(np.float16) - f0_rest.astype(np.float16)
+                del f0_qmax
+                print(datetime.now().strftime('%Y-%m-%d %H:%M:%S'), "num = stacks - f0_rest")
+                num = stacks.astype(np.float16) - f0_rest.astype(np.float16)
+                del stacks, f0_rest
+                print(datetime.now().strftime('%Y-%m-%d %H:%M:%S'), "dff = num / den")
+                dff = np.divide(num, den, dtype=np.float16)
+                del num, den
+                print(datetime.now().strftime('%Y-%m-%d %H:%M:%S'), "save dff")
+            
+            print(datetime.now().strftime('%Y-%m-%d %H:%M:%S'), "dff handling complete")
 
         # get stim trig average
         N_samples_pre = params.n_s_2p_1s
         N_samples_stim = params.n_s_2p_5s
-        N_samples_post = params.n_s_2p_5s
+        N_samples_post = 1  # params.n_s_2p_5s
         N_samples = N_samples_pre + N_samples_stim + N_samples_post
         stim_trig_stack = np.zeros((N_samples,) + dff.shape[1:], dtype=dff.dtype)
 
         for stim_start in stim_starts_twop_sel:
             stim_trig_stack += dff[stim_start-N_samples_pre:stim_start+N_samples_stim+N_samples_post,:,:]
         del dff
+        stim_trig_stack = stim_trig_stack.astype(np.float32)
         stim_trig_stack /= len(stim_starts_twop_sel)
 
         # subtract baseline
@@ -194,42 +213,66 @@ def make_functional_example_stim_video(pre_stim="walk", overwrite=False, subtrac
 
         if make_fig:
             fig = make_stim_resp_figure(stim_trig_stack=stim_trig_stack, start_stim=N_samples_pre)
-            fig.savefig(os.path.join(out_dir, f"{GAL4}_{fly_id}_neural_resp_avg.pdf"), dpi=300)
+            fig.savefig(os.path.join(out_dir, f"{GAL4}_{fly_id}_neural_resp_avg_{trigger}.pdf"), dpi=300)
 
 
         if make_vid:
             generator_2p = videos.generator_dff(stack=stim_trig_stack,
-                                    vmin=-1, vmax=1,  # clim[0], vmax=clim[1],
+                                    vmin=-0.8, vmax=0.8,  # clim[0], vmax=clim[1],
                                     text="",
                                     show_colorbar=True,
                                     colorbarlabel=r"$\frac{\Delta F}{F}$")
-            generator_2p = videos.stimulus_dot_generator(generator_2p, start_stim=[N_samples_pre], stop_stim=[N_samples_pre+N_samples_stim])
+            if trigger == "laser_start":
+                color = (255,0,0)
+                generator_2p = videos.stimulus_dot_generator(generator_2p, start_stim=[N_samples_pre], stop_stim=[N_samples_pre+N_samples_stim], color=color)  # red dot
+            elif trigger == "olfac_start":
+                color = (255,255,255)
+                generator_2p = videos.stimulus_dot_generator(generator_2p, start_stim=[N_samples_pre], stop_stim=[N_samples_pre+N_samples_stim], color=color)  # blue dot
+            else:
+                color = (255,255,255)
+                generator_2p = videos.stimulus_dot_generator(generator_2p, start_stim=[N_samples_pre], stop_stim=[N_samples_pre+params.n_s_2p_1s], color=color)  # only show green dot for 1s for natural behaviour
             if not show_beh:
-                videos.make_video(os.path.join(out_dir, f"{GAL4}_{fly_id}_neural_resp_example.mp4"), generator_2p, fps=params.fs_2p, n_frames=N_samples)
+                videos.make_video(os.path.join(out_dir, f"{GAL4}_{fly_id}_neural_resp_example_{trigger}.mp4"), generator_2p, fps=params.fs_2p, n_frames=N_samples)
             else:
                 N_beh_repeats = 4
                 N_samples_beh_pre = params.n_s_beh_1s
                 N_samples_beh_stim = params.n_s_beh_5s
-                N_samples_beh_post = params.n_s_beh_5s
+                N_samples_beh_post = 10  # params.n_s_beh_5s
                 N_samples_beh = N_samples_beh_pre + N_samples_beh_stim + N_samples_beh_post
 
                 # sel_trials
-                i_trial = sel_trials[0]
-                if i_trial != unique_trials[0]:
-                    raise NotImplementedError
-                beh_trial_dir = os.path.join(fly_dir, fly_df.trial_name.values[0])
-                beh_video_dir = os.path.join(beh_trial_dir, "behData", "images", "camera_5.mp4")
+                # i_trial = sel_trials[0]
+                beh_start_trials = beh_df.iloc[stim_starts_beh_sel].index.get_level_values("Trial")
+                for i_trial in sel_trials:
+                    if np.sum(beh_start_trials == i_trial) >= N_beh_repeats:
+                        break
 
+
+                # if i_trial != unique_trials[0]:
+                #     raise NotImplementedError
+                beh_trial_dir = os.path.join(fly_dir, fly_df.trial_name.values[i_trial])
+                beh_video_dir = os.path.join(beh_trial_dir, "behData", "images", "camera_5.mp4")
+                if trigger == "laser_start" or trigger == "olfac_start":
+                    stim_range = [N_samples_beh_pre, N_samples_beh_pre+N_samples_beh_stim]
+                else:
+                    stim_range = [N_samples_beh_pre, N_samples_beh_pre+params.n_s_beh_1s]  # only show dot for 1s for natural behaviour
+                beh_start_df = beh_df.iloc[stim_starts_beh_sel]
+                beh_start_df = beh_start_df[beh_start_df.index.get_level_values("Trial") == i_trial]
+                beh_start_frames = beh_start_df.index.get_level_values("Frame").values
+                # beh_start_frames = beh_df.index.get_level_values("Frame")[stim_starts_beh_sel].values
                 beh_generators = videos.make_behaviour_grid_video(
                     video_dirs=[beh_video_dir],
-                    start_frames=[stim_starts_beh_sel[:N_beh_repeats]-N_samples_beh_pre],
+                    start_frames=[beh_start_frames[:N_beh_repeats]-N_samples_beh_pre],
                     N_frames=N_samples_beh,
-                    stim_range=[N_samples_beh_pre, N_samples_beh_pre+N_samples_beh_stim],
+                    stim_range=stim_range,
                     out_dir=None,
                     video_name=None,
                     frame_rate=params.fs_beh,
                     asgenerator=True,
-                    size=(100,-1))
+                    size=(100,-1),
+                    color=color,
+                    brighter=2.5 if "wheel" in beh_trial_dir else None)
+
 
                 t_beh = (np.arange(N_samples_beh) - N_samples_beh_pre) / params.fs_beh
                 t_2p = (np.arange(N_samples) - N_samples_pre) / params.fs_2p
@@ -239,6 +282,13 @@ def make_functional_example_stim_video(pre_stim="walk", overwrite=False, subtrac
                     beh_samples.append(closest_beh_sample)
                 beh_generators = [videos.utils_video.generators.resample(beh_generator, beh_samples) for beh_generator in beh_generators]
 
+                # def brighter_generator(generator, factor=1):
+                #     for i, img in enumerate(generator):
+                #         img = np.clip(np.array(img*factor, dtype=np.uint8), 0, 255)
+                #         yield img
+
+                # if "wheel" in beh_trial_dir:
+                #     beh_generators = [brighter_generator(beh_generator, 2.5) for beh_generator in beh_generators]
                 rows = [generator_2p]
                 for i in range(N_beh_repeats//2):
                     i_start = i * 2
@@ -247,6 +297,15 @@ def make_functional_example_stim_video(pre_stim="walk", overwrite=False, subtrac
                 videos.make_video(os.path.join(out_dir, f"{GAL4}_{fly_id}_neural_beh_resp_example_{trigger}.mp4"), generator, fps=params.fs_2p, n_frames=N_samples)
 
 
+def merge_two_videos(vid_1,vid_2,out_dir, video_name, fps=params.fs_2p, n_frames=-1, text_1=None, text_2=None, c_1=(255,255,255), c_2=(255,255,255), tex_pos=(10,725)):
+    gen_1 = videos.generator_video(vid_1)
+    gen_2 = videos.generator_video(vid_2)
+    if text_1 is not None:
+        gen_1 = videos.utils_video.generators.add_text(gen_1, text=text_1, pos=tex_pos, color=c_1)
+    if text_2 is not None:
+        gen_2 = videos.utils_video.generators.add_text(gen_2, text=text_2, pos=tex_pos, color=c_2)
+    generator = videos.utils_video.generators.stack([gen_1,gen_2], axis=1)
+    videos.make_video(os.path.join(out_dir, video_name), generator, fps=fps, n_frames=n_frames)
 
         
 def make_stim_resp_figure(stim_trig_stack, start_stim, clim=[-0.8,0.8], n_avg=params.response_n_avg, n_latest_max=params.response_n_latest_max):
@@ -290,28 +349,70 @@ if __name__ == "__main__":
     # make_functional_example_stim_video(pre_stim="walk", overwrite=False,
     #     subtract_pre=True, show_centers=False, show_mask=False, show_beh=True,
     #     make_fig=True, make_vid=False, select_group_of_flies="presentation", trigger="laser_start")
-
+    # """
     make_functional_example_stim_video(pre_stim="not_walk", overwrite=False,
         subtract_pre=True, show_centers=False, show_mask=False, show_beh=True,
-        make_fig=True, make_vid=False, select_group_of_flies="natbeh_DNp09", trigger="laser_start")
+        make_fig=True, make_vid=True, select_group_of_flies="natbeh_DNp09", trigger="laser_start")
+    
     make_functional_example_stim_video(pre_stim="not_walk", overwrite=False,
         subtract_pre=True, show_centers=False, show_mask=False, show_beh=True,
-        make_fig=True, make_vid=False, select_group_of_flies="natbeh_DNp09", trigger="walk_trig_start")
+        make_fig=True, make_vid=True, select_group_of_flies="natbeh_DNp09", trigger="walk_trig_start")
+    
+    GAL4 = "DNp09"
+    fly_id = 15
+    trigger = "laser_start"
+    vid_1 = os.path.join(out_dir, f"{GAL4}_{fly_id}_neural_beh_resp_example_{trigger}.mp4")
+    text_1 = "DNp09 stimulation"
+    c_1 = (255,255,255)
+    trigger = "walk_trig_start"
+    vid_2 = os.path.join(out_dir, f"{GAL4}_{fly_id}_neural_beh_resp_example_{trigger}.mp4")
+    text_2 = "spontaneous forward walking"
+    c_2 = (255,255,255)
+    video_name = f"{GAL4}_{fly_id}_compare.mp4"
+    merge_two_videos(vid_1,vid_2,out_dir, video_name, fps=params.fs_2p, n_frames=-1, text_1=text_1, text_2=text_2, c_1=c_1, c_2=c_2, tex_pos=(10,725))
+    # """
+    # """
+    # make_functional_example_stim_video(pre_stim=None, overwrite=False,
+    #     subtract_pre=True, show_centers=False, show_mask=False, show_beh=True,
+    #     make_fig=True, make_vid=True, select_group_of_flies="natbeh_aDN2", trigger="laser_start")
+    make_functional_example_stim_video(pre_stim=None, overwrite=False,
+        subtract_pre=True, show_centers=False, show_mask=False, show_beh=True,
+        make_fig=True, make_vid=True, select_group_of_flies="natbeh_aDN2", trigger="olfac_start")
 
+    GAL4 = "aDN2"
+    fly_id = 32
+    trigger = "laser_start"
+    vid_1 = os.path.join(out_dir, f"{GAL4}_{fly_id}_neural_beh_resp_example_{trigger}.mp4")
+    text_1 = "aDN2 stimulation"
+    c_1 = (255,255,255)
+    trigger = "olfac_start"  # "groom_trig_start"
+    vid_2 = os.path.join(out_dir, f"{GAL4}_{fly_id}_neural_beh_resp_example_{trigger}.mp4")
+    text_2 = "puff elicited grooming"
+    c_2 = (255,255,255)
+    video_name = f"{GAL4}_{fly_id}_compare.mp4"
+    merge_two_videos(vid_1,vid_2,out_dir, video_name, fps=params.fs_2p, n_frames=-1, text_1=text_1, text_2=text_2, c_1=c_1, c_2=c_2, tex_pos=(10,725))
+    """
+    # """
     make_functional_example_stim_video(pre_stim=None, overwrite=False,
         subtract_pre=True, show_centers=False, show_mask=False, show_beh=True,
-        make_fig=True, make_vid=False, select_group_of_flies="natbeh_aDN2", trigger="laser_start")
+        make_fig=False, make_vid=True, select_group_of_flies="natbeh_MDN", trigger="laser_start")
     make_functional_example_stim_video(pre_stim=None, overwrite=False,
         subtract_pre=True, show_centers=False, show_mask=False, show_beh=True,
-        make_fig=True, make_vid=False, select_group_of_flies="natbeh_aDN2", trigger="groom_trig_start")
+        make_fig=False, make_vid=True, select_group_of_flies="natbeh_MDN", trigger="back_trig_start")
 
-    make_functional_example_stim_video(pre_stim=None, overwrite=False,
-        subtract_pre=True, show_centers=False, show_mask=False, show_beh=True,
-        make_fig=True, make_vid=False, select_group_of_flies="natbeh_MDN", trigger="laser_start")
-    make_functional_example_stim_video(pre_stim=None, overwrite=False,
-        subtract_pre=True, show_centers=False, show_mask=False, show_beh=True,
-        make_fig=True, make_vid=False, select_group_of_flies="natbeh_MDN", trigger="back_trig_start")
-
+    GAL4 = "MDN"
+    fly_id = 72
+    trigger = "laser_start"
+    vid_1 = os.path.join(out_dir, f"{GAL4}_{fly_id}_neural_beh_resp_example_{trigger}.mp4")
+    text_1 = "MDN stimulation"
+    c_1 = (255,255,255)
+    trigger = "back_trig_start" 
+    vid_2 = os.path.join(out_dir, f"{GAL4}_{fly_id}_neural_beh_resp_example_{trigger}.mp4")
+    text_2 = "spontaneous backward walking"
+    c_2 = (255,255,255)
+    video_name = f"{GAL4}_{fly_id}_compare.mp4"
+    merge_two_videos(vid_1,vid_2,out_dir, video_name, fps=params.fs_2p, n_frames=-1, text_1=text_1, text_2=text_2, c_1=c_1, c_2=c_2, tex_pos=(10,725))
+    # """
     
 
 

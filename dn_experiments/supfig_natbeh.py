@@ -181,7 +181,7 @@ def analyse_natbehaviour_responses_singlefly(GAL4="MDN3", min_n_resp=15, pre_sti
     data_file = os.path.join(params.plotdata_base_dir, f"natbeh_{pre_stim}_resp_{GAL4}.pkl")
     with open(data_file, "rb") as f:
         all_fly_data = pickle.load(f)
-    if fly_id is not None:
+    if fly_id is None:
         all_fly_data = [fly_data for fly_data in all_fly_data if fly_data["nat_n_sel_responses"] > min_n_resp and fly_data["n_sel_responses"] > min_n_resp]
     else:
         all_fly_data = [fly_data for fly_data in all_fly_data if fly_data["fly_df"].fly_id.values[0] == fly_id]
@@ -238,7 +238,7 @@ def analyse_natbehaviour_responses_singlefly(GAL4="MDN3", min_n_resp=15, pre_sti
     return fig
 
 def analyse_natbehaviour_responses_all_genotypes(min_n_resp=15):
-    fig_DNp09 = analyse_natbehaviour_responses_singlefly(GAL4="DNp09", min_n_resp=min_n_resp, pre_stim="rest",
+    fig_DNp09 = analyse_natbehaviour_responses_singlefly(GAL4="DNp09", min_n_resp=min_n_resp, pre_stim="not_walk",  # "rest",
                                                         fly_id=fig_functional.presentation_natbeh_flies["DNp09"],
                                                         contrast_color=myplt.DARKGREEN)
     fig_aDN2 = analyse_natbehaviour_responses_singlefly(GAL4="aDN2", min_n_resp=min_n_resp, pre_stim=None,
