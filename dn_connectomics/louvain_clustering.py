@@ -10,6 +10,7 @@ import numpy as np
 import os
 import pickle
 import multiprocessing as mp
+from tqdm import tqdm
 
 import pandas as pd
 from loaddata import (
@@ -89,8 +90,7 @@ def run_clustering_n_times(
     if not os.path.exists(working_folder_):
         os.makedirs(working_folder_)
 
-    for i in range(iterations_):
-        print(f"Running iteration {i}")
+    for i in tqdm(range(iterations_)):
         file_name = os.path.join(
             working_folder_, f"iterated_modules_louvain_{i}.pkl"
         )
