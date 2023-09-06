@@ -15,6 +15,7 @@ from zoom_subsets_network import draw_subsets_network
 from detail_nt_matrix import detail_neurotransmitters_matrix
 from connectivity_vs_recurrence import connectivity_vs_recurrence_plots
 from layer_reaching_plot import cumulative_diffusion_plot
+from brain_synapses_distribution import plot_brain_synapses_distribution
 
 import params
 
@@ -44,3 +45,5 @@ if __name__ == "__main__":
     draw_meta_network()
     print("=== Drawing neurotransmitters matrix")
     detail_neurotransmitters_matrix()
+    print("=== Showing where clusters get their input from")
+    plot_brain_synapses_distribution()
