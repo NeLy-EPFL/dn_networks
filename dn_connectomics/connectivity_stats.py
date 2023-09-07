@@ -248,6 +248,88 @@ def plot_connection_stats(
     return ax
 
 
+def compare_ans_dns(edges, nodes, working_folder):
+    """
+    Compare the ANs and DNs contribution as presynaptic partners to DNs.
+    """
+    list_dns = nodes["root_id"][nodes["super_class"] == "descending"].values
+    list_ans = nodes["root_id"][nodes["super_class"] == "ascending"].values
+    ans_to_dns = edges[
+        edges["pre_root_id"].isin(list_ans)
+        & edges["post_root_id"].isin(list_dns)
+    ]
+    dns_to_dns = edges[
+        edges["pre_root_id"].isin(list_dns)
+        & edges["post_root_id"].isin(list_dns)
+    ]
+    # open a file to write the stats
+    file_name = os.path.join(working_folder, "ans_dns_stats.txt")
+    with open(file_name, "w") as f:
+        # number of existing ANs and DNs
+        f.write("Number of ANs: {}\n".format(len(list_ans)))
+        f.write("Number of DNs: {}\n".format(len(list_dns)))
+        # number of connections given by the unique (pre_root_id, post_root_id)
+        f.write(
+            "Number of ANs to DNs connections: {}\n".format(
+                len(ans_to_dns.groupby(["pre_root_id", "post_root_id"]))
+            )
+        )
+        f.write(
+            "Number of DNs to DNs connections: {}\n".format(
+                len(dns_to_dns.groupby(["pre_root_id", "post_root_id"]))
+            )
+        )
+        # sum of the number of synapses
+        f.write(
+            "Number of ANs to DNs synapses: {}\n".format(
+                ans_to_dns["syn_count"].sum()
+            )
+        )
+        f.write(
+            "Number of DNs to DNs synapses: {}\n".format(
+                dns_to_dns["syn_count"].sum()
+            )
+        )
+        # number of DNs receiving input from ANs vs DNs
+        f.write(
+            "Number of DNs receiving input from ANs: {}\n".format(
+                len(ans_to_dns["post_root_id"].unique())
+            )
+        )
+        f.write(
+            "Number of DNs receiving input from DNs: {}\n".format(
+                len(dns_to_dns["post_root_id"].unique())
+            )
+        )
+        neurons_reported = neuron_params.KNOWN_DNS.keys()
+        for neuron in neurons_reported:
+            # how many ANs and DNs are connected to this neuron
+            n_ans = len(
+                ans_to_dns[ans_to_dns["post_root_id"] == neuron][
+                    "pre_root_id"
+                ].unique()
+            )
+            n_dns = len(
+                dns_to_dns[dns_to_dns["post_root_id"] == neuron][
+                    "pre_root_id"
+                ].unique()
+            )
+            name = neuron_params.KNOWN_DNS[neuron]["name"]
+            f.write(
+                "Number of ANs connected to {} ({}) : {}\n".format(
+                    name, neuron, n_ans
+                )
+            )
+            f.write(
+                "Number of DNs connected to {} ({}) : {}\n".format(
+                    name, neuron, n_dns
+                )
+            )
+
+    f.close()
+    return
+
+
 def make_gng_dn_plot(dns_info):
     """
     Draw a plot showing the number of connected DNs as a function of the
@@ -288,54 +370,10 @@ def make_gng_dn_plot(dns_info):
     )
 
 
-def make_specific_neurons_plot(dns_info):
-    _, ax = plt.subplots(1, 2, figsize=(8, 6), width_ratios=[3, 1])
-
-    plotting_args_dn = {
-        "x_arg": plot_params.STATS_ARGS["measured_feature"] + "_sorting",
-        "y_arg": plot_params.STATS_ARGS["measured_feature"],
-        "x_label": "DNs sorted by connectivity",
-        "y_label": plot_params.STATS_ARGS["measured_feature_label"],
-        "data_label": "all DNs",
-        "black_dots_label": "DNs tested",
-        "scatter_color": plot_params.LIGHTGREY,
-    }
-    ax = plot_connection_stats(
-        ax,
-        dns_info,
-        highlighted_neurons=neuron_params.VALIDATION_DNS,  # REF_DNS,
-        displayed_neurons={},  # neurons.VALIDATION_DNS,
-        plotting_args=plotting_args_dn,
-    )
-
-
-def compute_connectivity_stats():
-    # Load the data
-    _, edges = load_nodes_and_edges()
-    (
-        _,
-        syncount_matrix,
-        _,
-        _,
-        equiv_index_rootid,
-    ) = load_graph_and_matrices("dn")
-
-    working_folder = plot_params.STATS_ARGS["folder"]
-    if not os.path.exists(working_folder):
-        os.makedirs(working_folder)
-
-    dns_info = prepare_table(equiv_index_rootid, marker="DNg")
-    dns_info = connectivity_stats(syncount_matrix, dns_info)
-    dns_info.to_csv(os.path.join(working_folder, "dns_info.csv"))
-
-    ## --- Plot the number of connected DNs as a function of the connectivity of the DNs --- ##
-    make_gng_dn_plot(dns_info)
-    plt.savefig(os.path.join(working_folder, "gng_dn_plot.pdf"))
-
-    make_specific_neurons_plot(dns_info)
-    plt.savefig(os.path.join(working_folder, "tested_neurons_plot.pdf"))
-
-    ## --- Print some stats for the paper to a file --- ##
+def write_relevant_stats(working_folder, dns_info, edges):
+    """
+    Write the stats used for the manuscript to a file.
+    """
     file_name = os.path.join(working_folder, "stats.txt")
     with open(file_name, "w") as f:
         # number of connections
@@ -409,6 +447,75 @@ def compute_connectivity_stats():
             p_value = 1 - stats.norm.cdf(z_score)
             f.write("p-value on z-score: {}\n".format(p_value))
     f.close()
+    return
+
+
+def make_specific_neurons_plot(dns_info):
+    _, ax = plt.subplots(1, 2, figsize=(8, 6), width_ratios=[3, 1])
+
+    plotting_args_dn = {
+        "x_arg": plot_params.STATS_ARGS["measured_feature"] + "_sorting",
+        "y_arg": plot_params.STATS_ARGS["measured_feature"],
+        "x_label": "DNs sorted by connectivity",
+        "y_label": plot_params.STATS_ARGS["measured_feature_label"],
+        "data_label": "all DNs",
+        "black_dots_label": "DNs tested",
+        "scatter_color": plot_params.LIGHTGREY,
+    }
+    ax = plot_connection_stats(
+        ax,
+        dns_info,
+        highlighted_neurons=neuron_params.VALIDATION_DNS,  # REF_DNS,
+        displayed_neurons={},  # neurons.VALIDATION_DNS,
+        plotting_args=plotting_args_dn,
+    )
+
+
+def compute_connectivity_stats():
+    # Load the data
+    nodes, edges = load_nodes_and_edges()
+    (
+        _,
+        syncount_matrix,
+        _,
+        _,
+        equiv_index_rootid,
+    ) = load_graph_and_matrices("dn")
+
+    working_folder = plot_params.STATS_ARGS["folder"]
+    if not os.path.exists(working_folder):
+        os.makedirs(working_folder)
+
+    dns_info = prepare_table(equiv_index_rootid, marker="DNg")
+    dns_info = connectivity_stats(syncount_matrix, dns_info)
+    dns_info.to_csv(os.path.join(working_folder, "dns_info.csv"))
+
+    ## --- Plot the number of connected DNs as a function of the connectivity of the DNs --- ##
+    make_gng_dn_plot(dns_info)
+    plt.savefig(os.path.join(working_folder, "gng_dn_plot.pdf"))
+
+    make_specific_neurons_plot(dns_info)
+    plt.savefig(os.path.join(working_folder, "tested_neurons_plot.pdf"))
+
+    ## --- Print some stats for the paper to a file --- ##
+    write_relevant_stats(working_folder, dns_info, edges)
+
+    ## --- Compare ANs to DNs --- ##
+    compare_ans_dns(edges, nodes, working_folder)
+
+    ## --- For the neurons studied in the paper, print the number of connections --- ##
+    neurons_reported = neuron_params.KNOWN_DNS.keys()
+    info_to_share = ["root_id", "DN_connected_in", "DN_connected_out"]
+    dns_info_reported = dns_info[dns_info["root_id"].isin(neurons_reported)][
+        info_to_share
+    ]
+    dns_info_reported["name"] = dns_info_reported["root_id"].apply(
+        lambda x: neuron_params.KNOWN_DNS[x]["name"]
+    )
+    dns_info_reported.to_csv(
+        os.path.join(working_folder, "stats_reported_neurons.csv")
+    )
+
     return
 
 
