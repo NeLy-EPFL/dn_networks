@@ -262,9 +262,29 @@ def compare_ans_dns(edges, nodes, working_folder):
         edges["pre_root_id"].isin(list_dns)
         & edges["post_root_id"].isin(list_dns)
     ]
+    all_to_dns = edges[edges["post_root_id"].isin(list_dns)]
+    dns_to_all = edges[edges["pre_root_id"].isin(list_dns)]
     # open a file to write the stats
     file_name = os.path.join(working_folder, "ans_dns_stats.txt")
     with open(file_name, "w") as f:
+        # fraction of DNs as outputs of DNs
+        f.write(
+            "Fraction of DNs as outputs of DNs: {}\n".format(
+                len(dns_to_dns) / len(dns_to_all)
+            )
+        )
+        # fraction of ANs as inputs to DNs
+        f.write(
+            "Fraction of ANs as inputs to DNs: {}\n".format(
+                len(ans_to_dns) / len(all_to_dns)
+            )
+        )
+        # fraction of DNs as inputs to DNs
+        f.write(
+            "Fraction of DNs as inputs to DNs: {}\n".format(
+                len(dns_to_dns) / len(all_to_dns)
+            )
+        )
         # number of existing ANs and DNs
         f.write("Number of ANs: {}\n".format(len(list_ans)))
         f.write("Number of DNs: {}\n".format(len(list_dns)))

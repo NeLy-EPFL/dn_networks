@@ -25,25 +25,25 @@ if __name__ == "__main__":
     os.makedirs(figures_path, exist_ok=True)
 
     # --- subnetwork visualisations --- #
-    print("=== Drawing flower plots")
+    print("=== Drawing flower plots, fig. 3 c-d & fig. 5 e")
     draw_all_flower_plots()
 
     # --- connectivity statistics --- #
-    print("=== Computing connectivity statistics")
+    print("=== Computing connectivity statistics, fig 5 a-c")
     compute_connectivity_stats()
-    print("=== Comparing distributions with graph models")
+    print("=== Comparing distributions with graph models, fig 6 a")
     compare_distributions()
-    print("=== Computing cumulative diffusion")
+    print("=== Computing cumulative diffusion, fig. 3 e")
     cumulative_diffusion_plot()
 
     # --- clustering visualisations --- #
-    print("=== Drawing Louvain clustering")
+    print("=== Drawing Louvain clustering, fig 6")
     draw_louvain_custering()
     print("=== Comparing Louvain clustering with random")
     compare_clustering_with_random()
-    print("=== Drawing meta-network")
+    print("=== Drawing meta-network, fig 6 i")
     draw_meta_network()
     print("=== Drawing neurotransmitters matrix")
     detail_neurotransmitters_matrix()
-    print("=== Showing where clusters get their input from")
+    print("=== Showing where clusters get their input from, fig 6 h")
     plot_brain_synapses_distribution()
