@@ -104,10 +104,29 @@ def plot_cumulative_diffusion(
         saves the figure in the working_folder
     """
     fig, ax = plt.subplots(figsize=(6, 6), dpi=120)
+    nb_layers = max(
+        [
+            len(layers[list(layers.keys())[i]]["cumulated"])
+            for i in range(len(layers))
+        ]
+    )
     if all_lines:
         for k, v in layers.items():
-            plt.plot(v["cumulated"], linewidth=0.5, color="grey", alpha=0.1)
-    else:  # compute the mean and enveloppe
+            if plot_params.NETWORK_STATS_ARGS["extend_lines"]:
+                if len(v["cumulated"]) == 0:
+                    v["cumulated"] = np.zeros(nb_layers)
+                else:
+                    while len(v["cumulated"]) < nb_layers:
+                        v["cumulated"] = np.append(
+                            v["cumulated"], v["cumulated"][-1]
+                        )
+                plt.plot(
+                    v["cumulated"], linewidth=0.5, color="grey", alpha=0.1
+                )
+
+    if (
+        not all_lines or plot_params.NETWORK_STATS_ARGS["overlay_method"]
+    ):  # compute the mean and enveloppe
         array = []
         for k, v in layers.items():
             array.append(v["cumulated"])
@@ -116,29 +135,31 @@ def plot_cumulative_diffusion(
         df = df.fillna(0)
         if method == "median":
             median = df.median(axis=1)
-            q1 = df.quantile(q=range_stats, axis=1)
-            q2 = df.quantile(q=1 - range_stats, axis=1)
             ax.plot(median, linewidth=2, color="black", label="median")
-            ax.fill_between(
-                df.index,
-                q1,
-                q2,
-                color="grey",
-                alpha=0.2,
-                label=f"{int(range_stats*10)}-{int(100-range_stats*10)} percentile",
-            )
+            if not all_lines:
+                q1 = df.quantile(q=range_stats, axis=1)
+                q2 = df.quantile(q=1 - range_stats, axis=1)
+                ax.fill_between(
+                    df.index,
+                    q1,
+                    q2,
+                    color="grey",
+                    alpha=0.2,
+                    label=f"{int(range_stats*10)}-{int(100-range_stats*10)} percentile",
+                )
         elif method == "mean":
             mean = df.mean(axis=1)
-            std = df.std(axis=1)
             ax.plot(mean, linewidth=2, color="black", label="mean")
-            ax.fill_between(
-                df.index,
-                mean - std,
-                mean + std,
-                color="grey",
-                alpha=0.2,
-                label="std",
-            )
+            if not all_lines:
+                std = df.std(axis=1)
+                ax.fill_between(
+                    df.index,
+                    mean - std,
+                    mean + std,
+                    color="grey",
+                    alpha=0.2,
+                    label="std",
+                )
         elif method == "bootstrap":
             mean = df.mean(axis=1)
             all_r = []
@@ -167,7 +188,7 @@ def plot_cumulative_diffusion(
             )
 
     ax.set_xlabel("Number of hops")
-    ax.set_xticks(np.arange(0, len(df), 1))
+    ax.set_xticks(np.arange(0, nb_layers, 1))
     ax.set_ylabel("Number of neurons reached")
     make_nice_spines(ax)
     plt.legend()
@@ -194,7 +215,7 @@ def cumulative_diffusion_plot():
         layers,
         working_folder,
         method=plot_params.NETWORK_STATS_ARGS["method"],
-        all_lines=False,
+        all_lines=plot_params.NETWORK_STATS_ARGS["all_lines"],
         range_stats=0.25,
     )
 

@@ -56,12 +56,10 @@ def run_function_with_timeout(target, args, time_limit):
 
         # Check if the process is still alive (i.e., function didn't terminate)
         if process.is_alive():
-            print("Function took too long. Restarting...")
             process.terminate()
             process.join()  # Wait for the process to be properly terminated before restarting
         else:
-            elapsed_time = time.time() - start_time
-            print("Function ran in {:.2f} seconds.".format(elapsed_time))
+            # elapsed_time = time.time() - start_time
             result = result_queue.get()
             success = True  # Set to True to break out of the while loop
             break
