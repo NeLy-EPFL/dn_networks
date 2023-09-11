@@ -1,4 +1,4 @@
-# dn_interactions: Repository holding the code for the upcoming paper about interactions between DNs: Braun et al.
+# DN_interactions: Repository holding the code for a paper about interactions between DNs: Braun et al.
 
 **Installation:**
 Use your existing conda environment that you use for twoppp
