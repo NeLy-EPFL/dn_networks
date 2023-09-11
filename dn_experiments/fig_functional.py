@@ -616,7 +616,7 @@ def summarise_all_stim_resp(pre_stim="walk", overwrite=False, mode="pdf", natbeh
     figure_params_MDN["pre_stim"] = None
     # figure_params_MDN["pre_stim"] = None
     if natbeh:
-        fig_MDN_natbeh = summarise_natbeh_resp(df_Dfd_MDN, figure_params_MDN, stim_resp_save=os.path.join(tmpdata_path, f"natbeh_{pre_stim}_resp_MDN3.pkl"),
+        fig_MDN_natbeh = summarise_natbeh_resp(df_Dfd_MDN, figure_params_MDN, stim_resp_save=os.path.join(tmpdata_path, f"natbeh_None_resp_MDN3.pkl"),
                                         overwrite=overwrite)
 
     # DNp09
@@ -635,7 +635,7 @@ def summarise_all_stim_resp(pre_stim="walk", overwrite=False, mode="pdf", natbeh
     figure_params_DNp09["pres_fly"] = presentation_natbeh_flies["DNp09"]
     figure_params_DNp09["pre_stim"] = "not_walk"
     if natbeh:
-        fig_DNp09_natbeh = summarise_natbeh_resp(df_Dfd_DNp09, figure_params_DNp09, stim_resp_save=os.path.join(tmpdata_path, f"natbeh_{pre_stim}_resp_DNp09.pkl"),
+        fig_DNp09_natbeh = summarise_natbeh_resp(df_Dfd_DNp09, figure_params_DNp09, stim_resp_save=os.path.join(tmpdata_path, f"natbeh_not_walk_resp_DNp09.pkl"),
                                         overwrite=overwrite)
 
     # aDN2
@@ -654,7 +654,7 @@ def summarise_all_stim_resp(pre_stim="walk", overwrite=False, mode="pdf", natbeh
     figure_params_aDN2["pres_fly"] = presentation_natbeh_flies["aDN2"]
     figure_params_aDN2["pre_stim"] = None
     if natbeh:
-        fig_aDN2_olfac = summarise_natbeh_resp(df_Dfd_aDN2, figure_params_aDN2, stim_resp_save=os.path.join(tmpdata_path, f"olfac_{pre_stim}_resp_aDN2.pkl"),
+        fig_aDN2_olfac = summarise_natbeh_resp(df_Dfd_aDN2, figure_params_aDN2, stim_resp_save=os.path.join(tmpdata_path, f"olfac_None_resp_aDN2.pkl"),
                                         overwrite=overwrite)
 
     # PR
