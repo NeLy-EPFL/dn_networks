@@ -112,7 +112,7 @@ def get_one_fly_stim_resp_panel(fig, axd, fly_data, figure_params):
         response_name = ""
         summary_title = ""
     else:
-        response_name = f"{fly_data['n_sel_responses']} responses after {figure_params['pre_stim'].replace('_', ' ')}ing" #  +\
+        response_name = f"{fly_data['n_sel_responses']} responses after {figure_params['pre_stim'].replace('_', ' ') if figure_params['pre_stim'] is not None else None}ing" #  +\
         #             f" ({fly_data['n_responses']} tot. {fly_data['n_other_responses']} other)"
         summary_title = None
     
@@ -551,7 +551,7 @@ def summarise_natbeh_resp(exp_df, figure_params, stim_resp_save=None, overwrite=
     return fig
 
 
-def summarise_all_stim_resp(pre_stim="walk", overwrite=False, mode="pdf", natbeh=False, figures_path=None, tmpdata_path=None):
+def summarise_all_stim_resp(pre_stim="walk", overwrite=False, mode="pdf", natbeh=False, figures_path=None, tmpdata_path=None, compute_only=False):
     if figures_path is None:
         figures_path = params.plot_base_dir
     if tmpdata_path is None:
@@ -667,12 +667,12 @@ def summarise_all_stim_resp(pre_stim="walk", overwrite=False, mode="pdf", natbeh
         fig_PR = summarise_stim_resp(df_Dfd_PR, figure_params_PR, stim_resp_save=os.path.join(tmpdata_path, f"stim_resp_{pre_stim}_PR.pkl"),
                                         overwrite=overwrite)
 
-    if not natbeh:
+    if not natbeh and not compute_only:
         figs = [fig_DNp09, fig_aDN2, fig_MDN, fig_PR]
         with PdfPages(os.path.join(figures_path, f"fig_func_summary_{pre_stim}_to_stim_{mode}.pdf")) as pdf:
             _ = [pdf.savefig(fig, transparent=True) for fig in figs if fig is not None]
         _ = [plt.close(fig) for fig in figs if fig is not None]
-    else:
+    elif not compute_only:
         figs_natbeh = [fig_DNp09_natbeh, fig_aDN2_olfac, fig_MDN_natbeh]  # fig_aDN2_natbeh, 
         with PdfPages(os.path.join(figures_path, f"fig_func_summary_{pre_stim}_natbeh_{mode}.pdf")) as pdf:
             _ = [pdf.savefig(fig, transparent=True) for fig in figs_natbeh if fig is not None]
@@ -755,19 +755,15 @@ def plot_stat_comparison_activation(pre_stim="walk", figures_path=None, tmpdata_
     print("MDN3 vs. control", mannwhitneyu(active_df["e_n_active"][active_df["CsChrimson"] == "MDN3"], active_df["e_n_active"][active_df["CsChrimson"] == "PR"]))
 
 if __name__ == "__main__":
-    # summarise_all_stim_resp(pre_stim="not_walk", overwrite=False, mode="pdf", only_natbeh_DNp09=True)
-    # summarise_all_stim_resp(pre_stim="not_walk", overwrite=False, mode="presentation", only_natbeh_DNp09=True)
-    # summarise_all_stim_resp(pre_stim="not_walk", overwrite=False, mode="pdf")
-    summarise_all_stim_resp(pre_stim="walk", overwrite=False, mode="pdf")  # --> supfig with all responses
-    
+    summarise_all_stim_resp(pre_stim="walk", overwrite=False, mode="presentation", natbeh=False)
+    summarise_all_stim_resp(pre_stim="walk", overwrite=False, mode="presentationsummary", natbeh=False)
     plot_stat_comparison_activation(pre_stim="walk")
-    # summarise_all_stim_resp(pre_stim="rest", overwrite=False, mode="pdf")
-    # summarise_all_stim_resp(pre_stim=None, overwrite=False, mode="pdf")
     
-    """
-    summarise_all_stim_resp(pre_stim="walk", overwrite=False, mode="presentation")  # --> individual fly responses for fig 2
-    summarise_all_stim_resp(pre_stim="rest", overwrite=False, mode="presentation")
-    summarise_all_stim_resp(pre_stim=None, overwrite=False, mode="presentation")
+    # Supp. File 1: Individual fly neural and behavioral responses to opto-genetic stimulation
+    summarise_all_stim_resp(pre_stim="walk", overwrite=False, mode="pdf", natbeh=False)
+    summarise_all_stim_resp(pre_stim="rest", overwrite=False, mode="pdf", natbeh=False)
 
-    summarise_all_stim_resp(pre_stim="walk", overwrite=False, mode="presentationsummary")  # --> summarised responses for fig 2
-    """
+    # Supp. Figure 2: Comparison of GNG-DN population neural activity during optogenetic stimulation versus corresponding natural behaviors.
+    summarise_all_stim_resp(pre_stim=None, overwrite=False, mode="presentation", natbeh=True)
+    summarise_all_stim_resp(pre_stim=None, overwrite=False, mode="pdf", natbeh=False, compute_only=True)
+    summarise_all_stim_resp(pre_stim="not_walk", overwrite=False, mode="pdf", natbeh=False, compute_only=True)

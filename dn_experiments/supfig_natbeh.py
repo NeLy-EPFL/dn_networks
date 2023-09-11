@@ -250,13 +250,16 @@ def analyse_natbehaviour_responses_all_genotypes(figures_path=None, tmpdata_path
         tmpdata_path = params.plotdata_base_dir
     fig_DNp09 = analyse_natbehaviour_responses_singlefly(GAL4="DNp09", min_n_resp=min_n_resp, pre_stim="not_walk",  # "rest",
                                                         fly_id=fig_functional.presentation_natbeh_flies["DNp09"],
-                                                        contrast_color=myplt.DARKGREEN)
+                                                        contrast_color=myplt.DARKGREEN,
+                                                        tmpdata_path=tmpdata_path)
     fig_aDN2 = analyse_natbehaviour_responses_singlefly(GAL4="aDN2", min_n_resp=min_n_resp, pre_stim=None,
                                                         fly_id=fig_functional.presentation_natbeh_flies["aDN2"],
-                                                        contrast_color=myplt.DARKRED)
+                                                        contrast_color=myplt.DARKRED,
+                                                        tmpdata_path=tmpdata_path)
     fig_MDN = analyse_natbehaviour_responses_singlefly(GAL4="MDN3", min_n_resp=min_n_resp, pre_stim=None,
                                                         fly_id=fig_functional.presentation_natbeh_flies["MDN"],
-                                                        contrast_color=myplt.DARKCYAN)
+                                                        contrast_color=myplt.DARKCYAN,
+                                                        tmpdata_path=tmpdata_path)
         
     with PdfPages(os.path.join(figures_path, f"supfig_singlefly_natbeh.pdf")) as pdf:
         _ = [pdf.savefig(fig, transparent=True) for fig in [fig_DNp09, fig_aDN2, fig_MDN]]

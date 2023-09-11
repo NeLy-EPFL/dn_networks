@@ -28,6 +28,8 @@ if __name__ == "__main__":
 
     # Supp. Figure 2: Comparison of GNG-DN population neural activity during optogenetic stimulation versus corresponding natural behaviors.
     fig_functional.summarise_all_stim_resp(pre_stim=None, overwrite=False, mode="presentation", natbeh=True, figures_path=figures_path, tmpdata_path=tmpdata_path)
+    fig_functional.summarise_all_stim_resp(pre_stim=None, overwrite=False, mode="pdf", natbeh=False, figures_path=figures_path, tmpdata_path=tmpdata_path, compute_only=True)
+    fig_functional.summarise_all_stim_resp(pre_stim="not_walk", overwrite=False, mode="pdf", natbeh=False, figures_path=figures_path, tmpdata_path=tmpdata_path, compute_only=True)
     supfig_natbeh.analyse_natbehaviour_responses_all_genotypes(figures_path=figures_path, tmpdata_path=tmpdata_path)
     supfig_natbeh.analyse_natbehaviour_responses_DNp09(figures_path=figures_path, tmpdata_path=tmpdata_path)
 
