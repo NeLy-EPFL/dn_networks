@@ -16,7 +16,7 @@ from detail_nt_matrix import detail_neurotransmitters_matrix
 from connectivity_vs_recurrence import connectivity_vs_recurrence_plots
 from layer_reaching_plot import cumulative_diffusion_plot
 from brain_synapses_distribution import plot_brain_synapses_distribution
-
+from cluster_behavior_analysis import make_cluster_analysis_plots
 import params
 
 
@@ -47,3 +47,5 @@ if __name__ == "__main__":
     detail_neurotransmitters_matrix()
     print("=== Showing where clusters get their input from, fig 6 h")
     plot_brain_synapses_distribution()
+    print("=== Showing where clusters output to in the VNC, which behaviors & DNs are represented, fig 6 f,g,j")
+    make_cluster_analysis_plots()
