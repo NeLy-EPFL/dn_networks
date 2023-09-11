@@ -104,4 +104,5 @@ def make_stim_loc_plots(driver_lines=["MDN", "BPN"], fly_dirs=None, figures_path
         fig.tight_layout()
         fig.savefig(os.path.join(figures_path, f"{driver_line}xCsChrimson_beh_responses.pdf"), dpi=300)
 
-
+if __name__ == "__main__":
+    make_stim_loc_plots()

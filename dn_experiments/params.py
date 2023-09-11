@@ -6,10 +6,13 @@ import matplotlib.pyplot as plt
 
 
 # handling summary data of all recording
-data_summary_dir = "/mnt/nas2/JB/_data_summary"
-data_summary_csv_dir = "/mnt/nas2/JB/_paper_data/imaging/imaging_summary_df.csv"  # os.path.join(data_summary_dir, "fly_selection_manual_230224.csv")
-data_headless_summary_csv_dir = "/mnt/nas2/JB/_paper_data/headless/headless_summary_df.csv"  # os.path.join(data_summary_dir, "fly_selection_nohead_230406.csv")
-data_predictions_summary_csv_dir = "/mnt/nas2/JB/_paper_data/headless/predictions_summary_df.csv"  # os.path.join(data_summary_dir, "fly_selection_predictions_230712.csv")
+data_summary_dir = "/mnt/nas2/JB/_paper_data/DN_Networks"  # "/mnt/nas2/JB/_data_summary"
+imaging_data_dir = os.path.join(data_summary_dir, "Optogenetics_Dfd_population_imaging")
+headless_predictions_data_dir = os.path.join(data_summary_dir, "Optogenetics_headless_behavior")
+other_data_dir = os.path.join(data_summary_dir, "Supplementary_data")
+data_summary_csv_dir = os.path.join(imaging_data_dir, "imaging_summary_df.csv")  # os.path.join(data_summary_dir, "fly_selection_manual_230224.csv")
+data_headless_summary_csv_dir = os.path.join(headless_predictions_data_dir, "headless_summary_df.csv")  # os.path.join(data_summary_dir, "fly_selection_nohead_230406.csv")
+data_predictions_summary_csv_dir = os.path.join(headless_predictions_data_dir, "predictions_summary_df.csv")  # os.path.join(data_summary_dir, "fly_selection_predictions_230712.csv")
 plot_base_dir = os.path.join(data_summary_dir, "plots")
 plotdata_base_dir = os.path.join(data_summary_dir, "plotdata")
 predictionsdata_base_dir = os.path.join(data_summary_dir, "predictionsdata")
@@ -20,9 +23,9 @@ twop_df_save_name="twop_df_comp.pkl"
 beh_df_save_name="beh_df_comp.pkl"
 
 # quality thresholds to accept a trial for processing
-q_thres_neural = 3
-q_thres_beh = 3
-q_thres_stim = 3
+q_thres_neural = None  # 3  # only selected data was uploaded
+q_thres_beh = None  # 3  # only selected data was uploaded
+q_thres_stim = None  # criterion was not applied
 q_check_headless = False
 q_thres_headless_legs_intact = 3
 q_thres_headless_beh = 3

@@ -17,7 +17,7 @@ from twoppp.utils import makedirs_safe, save_stack
 from twoppp import rois
 from twoppp.pipeline import PreProcessParams
 import utils2p
-import summarydf, params, loaddata
+import summarydf, params, loaddata, summarydf
 
 
 BASE_DIR = "/mnt/nas2/JB/_paper_data"
@@ -27,13 +27,6 @@ OPTOGENETICS_DIR = os.path.join(BASE_DIR, "optogenetics")
 HEADLESS_DIR = os.path.join(BASE_DIR, "headless")
 HEADLESS_ZIP_DIR = os.path.join(BASE_DIR, "headless_zip_novideo")
 OTHER_DIR = os.path.join(BASE_DIR, "other")
-
-def reassemble_imaging_data(base_dir):
-    pass
-
-
-def reassemble_headless_predictions_data(base_dir):
-    pass
 
 
 def make_roi_center_annotation_file(fly_dir, quantile=0.99):
@@ -490,6 +483,78 @@ def compress_one_trial_imaging(trial_dir, out_dir, overwrite=False, keep_videos=
             compress(tar_file, source_folder)
     os.chdir(old_wd)
 
+def decompress_imaging(imaging_data_dir):
+    old_wd = os.getcwd()
+    os.chdir(imaging_data_dir)
+    all_files = os.listdir(imaging_data_dir)
+    compressed_files = [this_file for this_file in all_files if this_file.endswith("tar.gz")]
+    trial_files = [this_file for this_file in all_files if this_file.endswith("novideo.tar.gz")]
+    processed_files = [this_file for this_file in all_files if this_file.endswith("processed.tar.gz")]
+
+    makedirs_safe(os.path.join(imaging_data_dir, "compressed"))
+
+    for compressed_file in processed_files:
+        fly_name, processed = compressed_file.split("__")
+        new_fly_dir = os.path.join(imaging_data_dir, fly_name)
+        makedirs_safe(new_fly_dir)
+        decompress(tar_file=compressed_file, path=new_fly_dir)
+        shutil.move(compressed_file, os.path.join("compressed", compressed_file))
+
+    for compressed_file in trial_files:
+        fly_name, trial_name = compressed_file.split("__")
+        trial_name = trial_name.replace("_novideo.tar.gz", "")
+        new_trial_dir = os.path.join(imaging_data_dir, fly_name, trial_name)
+        makedirs_safe(new_trial_dir)
+        decompress(tar_file=compressed_file, path=new_trial_dir)
+        shutil.move(compressed_file, os.path.join("compressed", compressed_file))
+
+    os.chdir(old_wd)
+
+    update_summary_df(df_path=os.path.join(imaging_data_dir, "imaging_summary_df.csv"), base_dir=imaging_data_dir)
+
+    
+def decompress_headless_predictions(headless_predictions_data_dir):
+    old_wd = os.getcwd()
+    os.chdir(headless_predictions_data_dir)
+    all_files = os.listdir(headless_predictions_data_dir)
+    compressed_files = [this_file for this_file in all_files if this_file.endswith("tar.gz")]
+    makedirs_safe(os.path.join(headless_predictions_data_dir, "compressed"))
+    for compressed_file in compressed_files:
+        decompress(tar_file=compressed_file, path=headless_predictions_data_dir)
+        shutil.move(compressed_file, os.path.join("compressed", compressed_file))
+    os.chdir(old_wd)
+
+    update_summary_df(df_path=os.path.join(headless_predictions_data_dir, "headless_summary_df.csv"), base_dir=headless_predictions_data_dir)
+    update_summary_df(df_path=os.path.join(headless_predictions_data_dir, "predictions_summary_df.csv"), base_dir=headless_predictions_data_dir)
+
+def decompress_other(other_data_dir):
+    old_wd = os.getcwd()
+    os.chdir(other_data_dir)
+    all_files = os.listdir(other_data_dir)
+    compressed_files = [this_file for this_file in all_files if this_file.endswith("tar.gz")]
+    makedirs_safe(os.path.join(other_data_dir, "compressed"))
+    for compressed_file in compressed_files:
+        decompress(tar_file=compressed_file, path=other_data_dir)
+        shutil.move(compressed_file, os.path.join("compressed", compressed_file))
+    os.chdir(old_wd)
+
+def update_summary_df(df_path, base_dir):
+    _, df_name = os.path.split(df_path)
+    df = summarydf.load_data_summary(path=df_path)
+    def update_trial(trial_dir, base_dir):
+        fly_dir, trial_name = os.path.split(trial_dir)
+        old_base_dir, fly_name = os.path.split(fly_dir)
+        new_fly_dir = os.path.join(base_dir, fly_name)
+        return os.path.join(new_fly_dir, trial_name)
+
+    for index, row in df.iterrows():
+        old_trial_dir = row.trial_dir
+        new_trial_dir = update_trial(old_trial_dir, base_dir=base_dir)
+        new_fly_dir = os.path.dirname(new_trial_dir)
+        df["trial_dir"].iloc[df.index == index] = new_trial_dir
+        df["fly_dir"].iloc[df.index == index] = new_fly_dir
+
+    df.to_csv(os.path.join(base_dir, df_name), index=False)
 
 def compress(tar_file, members):
     """
