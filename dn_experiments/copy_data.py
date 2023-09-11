@@ -543,16 +543,16 @@ def decompress(tar_file, path, members=None):
     tar.close()
 
 if __name__ == "__main__":
-    # compress_sleap()
+    compress_sleap()
 
-    # copy_stim_control_trials()
-    # compress_stim_control(keep_videos=False)
+    copy_stim_control_trials()
+    compress_stim_control(keep_videos=False)
 
     copy_all_predictions_trials()
     copy_all_headless_trials()
-    # compress_headless_predictions(keep_videos=False)
+    compress_headless_predictions(keep_videos=False)
     
     copy_all_imaging_trials()
     compress_imaging(keep_videos=False)
-    # 
+     
 
