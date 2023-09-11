@@ -17,8 +17,12 @@ import params, summarydf, loaddata, stimulation, behaviour, plotpanels, fig_func
 
 from twoppp import plot as myplt
 
-def analyse_natbehaviour_responses_DNp09(pre_stim="not_walk", min_n_resp=15, n_neurons_select=10):
-    data_file = os.path.join(params.plotdata_base_dir, f"natbeh_{pre_stim}_resp_DNp09.pkl")
+def analyse_natbehaviour_responses_DNp09(figures_path=None, tmpdata_path=None, pre_stim="not_walk", min_n_resp=params.min_n_resp_natbeh, n_neurons_select=10):
+    if figures_path is None:
+        figures_path = params.plot_base_dir
+    if tmpdata_path is None:
+        tmpdata_path = params.plotdata_base_dir
+    data_file = os.path.join(tmpdata_path, f"natbeh_{pre_stim}_resp_DNp09.pkl")
     with open(data_file, "rb") as f:
         all_fly_data = pickle.load(f)
     all_fly_data = [fly_data for fly_data in all_fly_data if fly_data["nat_n_sel_responses"] > min_n_resp and fly_data["n_sel_responses"] > min_n_resp]
@@ -173,12 +177,14 @@ def analyse_natbehaviour_responses_DNp09(pre_stim="not_walk", min_n_resp=15, n_n
 
     fig3.tight_layout()
 
-    with PdfPages(os.path.join(params.plot_base_dir, f"supfig_DNp09_natbeh_{pre_stim}_to_stim.pdf")) as pdf:
+    with PdfPages(os.path.join(figures_path, f"supfig_DNp09_natbeh_{pre_stim}_to_stim.pdf")) as pdf:
         _ = [pdf.savefig(fig, transparent=True) for fig in [fig1, fig2, fig3]]
     _ = [plt.close(fig) for fig in [fig1, fig2, fig3]]
 
-def analyse_natbehaviour_responses_singlefly(GAL4="MDN3", min_n_resp=15, pre_stim=None, fly_id=None, contrast_color=myplt.DARKCYAN):
-    data_file = os.path.join(params.plotdata_base_dir, f"natbeh_{pre_stim}_resp_{GAL4}.pkl")
+def analyse_natbehaviour_responses_singlefly(GAL4="MDN3", tmpdata_path=None, min_n_resp=params.min_n_resp_natbeh, pre_stim=None, fly_id=None, contrast_color=myplt.DARKCYAN):
+    if tmpdata_path is None:
+        tmpdata_path = params.plotdata_base_dir
+    data_file = os.path.join(tmpdata_path, f"natbeh_{pre_stim}_resp_{GAL4}.pkl")
     with open(data_file, "rb") as f:
         all_fly_data = pickle.load(f)
     if fly_id is None:
@@ -237,7 +243,11 @@ def analyse_natbehaviour_responses_singlefly(GAL4="MDN3", min_n_resp=15, pre_sti
 
     return fig
 
-def analyse_natbehaviour_responses_all_genotypes(min_n_resp=15):
+def analyse_natbehaviour_responses_all_genotypes(figures_path=None, tmpdata_path=None, min_n_resp=params.min_n_resp_natbeh):
+    if figures_path is None:
+        figures_path = params.plot_base_dir
+    if tmpdata_path is None:
+        tmpdata_path = params.plotdata_base_dir
     fig_DNp09 = analyse_natbehaviour_responses_singlefly(GAL4="DNp09", min_n_resp=min_n_resp, pre_stim="not_walk",  # "rest",
                                                         fly_id=fig_functional.presentation_natbeh_flies["DNp09"],
                                                         contrast_color=myplt.DARKGREEN)
@@ -248,7 +258,7 @@ def analyse_natbehaviour_responses_all_genotypes(min_n_resp=15):
                                                         fly_id=fig_functional.presentation_natbeh_flies["MDN"],
                                                         contrast_color=myplt.DARKCYAN)
         
-    with PdfPages(os.path.join(params.plot_base_dir, f"supfig_singlefly_natbeh.pdf")) as pdf:
+    with PdfPages(os.path.join(figures_path, f"supfig_singlefly_natbeh.pdf")) as pdf:
         _ = [pdf.savefig(fig, transparent=True) for fig in [fig_DNp09, fig_aDN2, fig_MDN]]
     _ = [plt.close(fig) for fig in [fig_DNp09, fig_aDN2, fig_MDN]]
 

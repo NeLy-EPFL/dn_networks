@@ -167,7 +167,11 @@ def summarise_headless(exp_df, figure_params, headless_save=None, overwrite=Fals
     return fig
 
 
-def summarise_all_headless(overwrite=False, allflies_only=False):
+def summarise_all_headless(overwrite=False, allflies_only=True, tmpdata_path=None, figures_path=None):
+    if tmpdata_path is None:
+        tmpdata_path = params.plotdata_base_dir
+    if figures_path is None:
+        figures_path = params.plot_base_dir
     df = summarydf.get_headless_df()
 
     figure_params = {
@@ -200,7 +204,7 @@ def summarise_all_headless(overwrite=False, allflies_only=False):
     figure_params_MDN["suptitle"] = "MDN3 > CsChrimson"
     figure_params_MDN["beh_name"] = "back"
     figure_params_MDN["ylim"] = [-3,7]
-    fig_MDN = summarise_headless(df_MDN, figure_params_MDN, headless_save=os.path.join(params.plotdata_base_dir, f"headless_MDN3.pkl"),
+    fig_MDN = summarise_headless(df_MDN, figure_params_MDN, headless_save=os.path.join(tmpdata_path, f"headless_MDN3.pkl"),
                                     overwrite=overwrite)
     
     # DNp09
@@ -209,21 +213,14 @@ def summarise_all_headless(overwrite=False, allflies_only=False):
     figure_params_DNp09["suptitle"] = "DNp09 > CsChrimson"
     figure_params_DNp09["beh_name"] = "walk"
     figure_params_DNp09["ylim"] = [-3,7]
-    fig_DNp09 = summarise_headless(df_DNp09, figure_params_DNp09, headless_save=os.path.join(params.plotdata_base_dir, f"headless_DNp09.pkl"),
+    fig_DNp09 = summarise_headless(df_DNp09, figure_params_DNp09, headless_save=os.path.join(tmpdata_path, f"headless_DNp09.pkl"),
                                     overwrite=overwrite)
     figure_params_DNp09["return_var"] = "anus_dist"
     figure_params_DNp09["return_var_change"] = [400,500]  # show relative changes by computing baseline of 1s before
     figure_params_DNp09["beh_response_ylabel"] = "anal plate (um)"
     figure_params_DNp09["return_var_multiply"] = 4.8  # pixeles -> um
     figure_params_DNp09["ylim"] = [-75,25]
-    fig_DNp09_1 = summarise_headless(df_DNp09, figure_params_DNp09, headless_save=os.path.join(params.plotdata_base_dir, f"headless_DNp09_anus.pkl"),
-                                    overwrite=overwrite)
-    figure_params_DNp09["return_var"] = "ovum_dist"
-    figure_params_DNp09["return_var_change"] = [400,500]  # show relative changes by computing baseline of 1s before
-    figure_params_DNp09["beh_response_ylabel"] = "ovipositor (um)"
-    figure_params_DNp09["return_var_multiply"] = 4.8  # pixeles -> um
-    figure_params_DNp09["ylim"] = [-75,25]
-    fig_DNp09_2 = summarise_headless(df_DNp09, figure_params_DNp09, headless_save=os.path.join(params.plotdata_base_dir, f"headless_DNp09_ovum.pkl"),
+    fig_DNp09_1 = summarise_headless(df_DNp09, figure_params_DNp09, headless_save=os.path.join(tmpdata_path, f"headless_DNp09_anus.pkl"),
                                     overwrite=overwrite)
     
     # aDN2
@@ -232,38 +229,7 @@ def summarise_all_headless(overwrite=False, allflies_only=False):
     figure_params_aDN2["suptitle"] = "aDN2 > CsChrimson"
     figure_params_aDN2["beh_name"] = "groom"
     figure_params_aDN2["ylim"] = [-3,7]
-    fig_aDN2 = summarise_headless(df_aDN2, figure_params_aDN2, headless_save=os.path.join(params.plotdata_base_dir, f"headless_aDN2.pkl"),
-                                    overwrite=overwrite)
-    figure_params_aDN2["return_var"] = "frleg_height"
-    figure_params_aDN2["return_var_change"] = [400,500]  # show relative changes by computing baseline of 1s before
-    figure_params_aDN2["beh_response_ylabel"] = "front leg height (um)"
-    figure_params_aDN2["return_var_multiply"] = 4.8  # pixeles -> um
-    figure_params_aDN2["return_var_flip"] = True  # make the positive direction more intuitive
-    figure_params_aDN2["ylim"] = None
-    fig_aDN2_2 = summarise_headless(df_aDN2, figure_params_aDN2, headless_save=os.path.join(params.plotdata_base_dir, f"headless_aDN2_frleg_height.pkl"),
-                                    overwrite=overwrite)
-    figure_params_aDN2["return_var"] = "ang_frfemur"
-    figure_params_aDN2["return_var_change"] = [400,500]  # show relative changes by computing baseline of 1s before
-    figure_params_aDN2["beh_response_ylabel"] = "femur angle (°)"
-    figure_params_aDN2["return_var_multiply"] = None
-    figure_params_aDN2["return_var_flip"] = False
-    figure_params_aDN2["ylim"] = None
-    fig_aDN2_3 = summarise_headless(df_aDN2, figure_params_aDN2, headless_save=os.path.join(params.plotdata_base_dir, f"headless_aDN2_femur_angle.pkl"),
-                                    overwrite=overwrite)
-    figure_params_aDN2["return_var"] = "ang_frtibia"
-    figure_params_aDN2["return_var_change"] = [400,500]  # show relative changes by computing baseline of 1s before
-    figure_params_aDN2["beh_response_ylabel"] = "tibia angle (°)"
-    figure_params_aDN2["return_var_flip"] = False 
-    figure_params_aDN2["ylim"] = None
-    fig_aDN2_4 = summarise_headless(df_aDN2, figure_params_aDN2, headless_save=os.path.join(params.plotdata_base_dir, f"headless_aDN2_tibia_angle.pkl"),
-                                    overwrite=overwrite)
-    figure_params_aDN2["return_var"] = "mef_tita"
-    figure_params_aDN2["return_var_change"] = None
-    figure_params_aDN2["beh_response_ylabel"] = "front leg speed (um)"
-    figure_params_aDN2["return_var_multiply"] = 4.8  # pixeles -> um
-    figure_params_aDN2["return_var_flip"] = False 
-    figure_params_aDN2["ylim"] = None
-    fig_aDN2_5 = summarise_headless(df_aDN2, figure_params_aDN2, headless_save=os.path.join(params.plotdata_base_dir, f"headless_aDN2_mef.pkl"),
+    fig_aDN2 = summarise_headless(df_aDN2, figure_params_aDN2, headless_save=os.path.join(tmpdata_path, f"headless_aDN2.pkl"),
                                     overwrite=overwrite)
     # additional kinematics parameters
     figure_params_aDN2["return_var"] = "frtita_neck_dist"
@@ -272,23 +238,7 @@ def summarise_all_headless(overwrite=False, allflies_only=False):
     figure_params_aDN2["return_var_multiply"] = 4.8  # pixeles -> um
     figure_params_aDN2["return_var_flip"] = False 
     figure_params_aDN2["ylim"] = [-175,100]
-    fig_aDN2_6 = summarise_headless(df_aDN2, figure_params_aDN2, headless_save=os.path.join(params.plotdata_base_dir, f"headless_aDN2_frtita_dist.pkl"),
-                                    overwrite=overwrite)
-    figure_params_aDN2["return_var"] = "frfeti_neck_dist"
-    figure_params_aDN2["return_var_change"] = [400,500]  # show relative changes by computing baseline of 1s before
-    figure_params_aDN2["beh_response_ylabel"] = "front leg feti - head dist (um)"
-    figure_params_aDN2["return_var_multiply"] = 4.8  # pixeles -> um
-    figure_params_aDN2["return_var_flip"] = False 
-    figure_params_aDN2["ylim"] = None
-    fig_aDN2_7 = summarise_headless(df_aDN2, figure_params_aDN2, headless_save=os.path.join(params.plotdata_base_dir, f"headless_aDN2_frfeti_dist.pkl"),
-                                    overwrite=overwrite)
-    figure_params_aDN2["return_var"] = "ang_frtibia_neck"
-    figure_params_aDN2["return_var_change"] = [400,500]  # show relative changes by computing baseline of 1s before
-    figure_params_aDN2["beh_response_ylabel"] = "tibia - neck angle (°)"
-    figure_params_aDN2["return_var_multiply"] = None
-    figure_params_aDN2["return_var_flip"] = False 
-    figure_params_aDN2["ylim"] = None
-    fig_aDN2_8 = summarise_headless(df_aDN2, figure_params_aDN2, headless_save=os.path.join(params.plotdata_base_dir, f"headless_aDN2_tibia_neck_angle.pkl"),
+    fig_aDN2_1 = summarise_headless(df_aDN2, figure_params_aDN2, headless_save=os.path.join(tmpdata_path, f"headless_aDN2_frtita_dist.pkl"),
                                     overwrite=overwrite)
 
     # PR
@@ -297,93 +247,37 @@ def summarise_all_headless(overwrite=False, allflies_only=False):
     figure_params_PR["suptitle"] = "__ > CsChrimson"
     figure_params_PR["beh_name"] = "rest"
     figure_params_PR["ylim"] = [-3,7]
-    fig_PR = summarise_headless(df_PR, figure_params_PR, headless_save=os.path.join(params.plotdata_base_dir, f"headless_PR.pkl"),
+    fig_PR = summarise_headless(df_PR, figure_params_PR, headless_save=os.path.join(tmpdata_path, f"headless_PR.pkl"),
                                     overwrite=overwrite)
     figure_params_PR["beh_name"] = "back"
-    fig_PR1 = summarise_headless(df_PR, figure_params_PR, headless_save=os.path.join(params.plotdata_base_dir, f"headless_PR.pkl"),
+    fig_PR_1 = summarise_headless(df_PR, figure_params_PR, headless_save=os.path.join(tmpdata_path, f"headless_PR.pkl"),
                                     overwrite=overwrite)
     figure_params_PR["beh_name"] = "walk"
-    fig_PR2 = summarise_headless(df_PR, figure_params_PR, headless_save=os.path.join(params.plotdata_base_dir, f"headless_PR.pkl"),
+    fig_PR_2 = summarise_headless(df_PR, figure_params_PR, headless_save=os.path.join(tmpdata_path, f"headless_PR.pkl"),
                                     overwrite=overwrite)
     figure_params_PR["return_var"] = "anus_dist"
     figure_params_PR["return_var_change"] = [400,500]  # show relative changes by computing baseline of 1s before
     figure_params_PR["beh_response_ylabel"] = "anal plate (um)"
     figure_params_PR["return_var_multiply"] = 4.8  # pixeles -> um
     figure_params_PR["ylim"] = [-75,25]
-    fig_PR3 = summarise_headless(df_PR, figure_params_PR, headless_save=os.path.join(params.plotdata_base_dir, f"headless_PR_anus.pkl"),
-                                    overwrite=overwrite)
-    figure_params_PR["return_var"] = "ovum_dist"
-    figure_params_PR["return_var_change"] = [400,500]  # show relative changes by computing baseline of 1s before
-    figure_params_PR["beh_response_ylabel"] = "ovipositor (px)"
-    figure_params_PR["return_var_multiply"] = 4.8  # pixeles -> um
-    figure_params_PR["ylim"] = [-75,25]
-    fig_PR4 = summarise_headless(df_PR, figure_params_PR, headless_save=os.path.join(params.plotdata_base_dir, f"headless_PR_ovum.pkl"),
+    fig_PR_3 = summarise_headless(df_PR, figure_params_PR, headless_save=os.path.join(tmpdata_path, f"headless_PR_anus.pkl"),
                                     overwrite=overwrite)
 
-    figure_params_PR["beh_name"] = "groom"
-    figure_params_PR["return_var"] = "frleg_height"
-    figure_params_PR["return_var_change"] = [400,500]  # show relative changes by computing baseline of 1s before
-    figure_params_PR["beh_response_ylabel"] = "front leg height (px)"
-    figure_params_PR["return_var_multiply"] = 4.8  # pixeles -> um
-    figure_params_PR["return_var_flip"] = True  # make the positive direction more intuitive
-    figure_params_PR["ylim"] = None
-    fig_PR5 = summarise_headless(df_PR, figure_params_PR, headless_save=os.path.join(params.plotdata_base_dir, f"headless_PR_frleg_height.pkl"),
-                                    overwrite=overwrite)
-    figure_params_PR["return_var"] = "ang_frfemur"
-    figure_params_PR["return_var_change"] = [400,500]  # show relative changes by computing baseline of 1s before
-    figure_params_PR["beh_response_ylabel"] = "femur angle (°)"
-    figure_params_PR["return_var_multiply"] = None
-    figure_params_PR["return_var_flip"] = False 
-    figure_params_PR["ylim"] = None
-    fig_PR6 = summarise_headless(df_PR, figure_params_PR, headless_save=os.path.join(params.plotdata_base_dir, f"headless_PR_femur_angle.pkl"),
-                                    overwrite=overwrite)
-    figure_params_PR["return_var"] = "ang_frtibia"
-    figure_params_PR["return_var_change"] = [400,500]  # show relative changes by computing baseline of 1s before
-    figure_params_PR["beh_response_ylabel"] = "tibia angle (°)"
-    figure_params_PR["return_var_flip"] = False 
-    figure_params_PR["ylim"] = None
-    fig_PR7 = summarise_headless(df_PR, figure_params_PR, headless_save=os.path.join(params.plotdata_base_dir, f"headless_PR_tibia_angle.pkl"),
-                                    overwrite=overwrite)
-
-    figure_params_PR["return_var"] = "mef_tita"
-    figure_params_PR["return_var_change"] = None
-    figure_params_PR["beh_response_ylabel"] = "front leg speed (px)"
-    figure_params_PR["return_var_multiply"] = 4.8  # pixeles -> um
-    figure_params_PR["return_var_flip"] = False 
-    figure_params_PR["ylim"] = None
-    fig_PR8 = summarise_headless(df_PR, figure_params_PR, headless_save=os.path.join(params.plotdata_base_dir, f"headless_PR_mef.pkl"),
-                                    overwrite=overwrite)
     figure_params_PR["return_var"] = "frtita_neck_dist"
     figure_params_PR["return_var_change"] = [400,500]  # show relative changes by computing baseline of 1s before
     figure_params_PR["beh_response_ylabel"] = "front leg tita - head dist (px)"
     figure_params_PR["return_var_multiply"] = 4.8  # pixeles -> um
     figure_params_PR["return_var_flip"] = False 
     figure_params_PR["ylim"] = [-175,100]
-    fig_PR9 = summarise_headless(df_PR, figure_params_PR, headless_save=os.path.join(params.plotdata_base_dir, f"headless_PR_frtita_dist.pkl"),
-                                    overwrite=overwrite)
-    figure_params_PR["return_var"] = "frfeti_neck_dist"
-    figure_params_PR["return_var_change"] = [400,500]  # show relative changes by computing baseline of 1s before
-    figure_params_PR["beh_response_ylabel"] = "front leg feti - head dist (px)"
-    figure_params_PR["return_var_multiply"] = 4.8  # pixeles -> um
-    figure_params_PR["return_var_flip"] = False 
-    figure_params_PR["ylim"] = None
-    fig_PR10 = summarise_headless(df_PR, figure_params_PR, headless_save=os.path.join(params.plotdata_base_dir, f"headless_PR_frfeti_dist.pkl"),
-                                    overwrite=overwrite)
-    figure_params_PR["return_var"] = "ang_frtibia_neck"
-    figure_params_PR["return_var_change"] = [400,500]  # show relative changes by computing baseline of 1s before
-    figure_params_PR["beh_response_ylabel"] = "tibia - neck angle (°)"
-    figure_params_PR["return_var_multiply"] = None
-    figure_params_PR["return_var_flip"] = False 
-    figure_params_PR["ylim"] = None
-    fig_PR11 = summarise_headless(df_PR, figure_params_PR, headless_save=os.path.join(params.plotdata_base_dir, f"headless_PR_tibia_neck_angle.pkl"),
+    fig_PR_4 = summarise_headless(df_PR, figure_params_PR, headless_save=os.path.join(tmpdata_path, f"headless_PR_frtita_dist.pkl"),
                                     overwrite=overwrite)
 
     
-    figs = [fig_MDN, fig_DNp09, fig_DNp09_1, fig_DNp09_2, fig_aDN2, fig_aDN2_2, fig_aDN2_3, fig_aDN2_4, fig_aDN2_5, fig_aDN2_6, fig_aDN2_7, fig_aDN2_8,\
-            fig_PR, fig_PR1, fig_PR2, fig_PR3, fig_PR4, fig_PR5, fig_PR6, fig_PR7, fig_PR8, fig_PR9, fig_PR10, fig_PR11]
+    figs = [fig_MDN, fig_DNp09, fig_DNp09_1, fig_aDN2, fig_aDN2_1,\
+            fig_PR, fig_PR_1, fig_PR_2, fig_PR_3, fig_PR_4]
 
 
-    with PdfPages(os.path.join(params.plot_base_dir, f"fig_headless_summary_ball{add_str}.pdf")) as pdf:
+    with PdfPages(os.path.join(figures_path, f"fig_headless_summary_ball{add_str}.pdf")) as pdf:
         _ = [pdf.savefig(fig) for fig in figs]
     _ = [plt.close(fig) for fig in figs]
 
@@ -442,12 +336,14 @@ def test_stats_beh_control(all_flies, all_flies_control, GAL4, beh_name, i_0=500
     # print(f"{GAL4} (n={len(beh)}) vs. control (n={len(beh_control)}) {beh_name}. {i_0}-{i_1}: on trials", mannwhitneyu(beh, beh_control))
     print(f"{GAL4} (n={len(beh_paired)}) vs. control (n={len(beh_control_paired)}) {beh_name}. {i_0}-{i_1}: on flies", mannwhitneyu(beh_paired, beh_control_paired))
 
-def headless_stat_test():
+def headless_stat_test(tmpdata_path=None):
+    if tmpdata_path is None:
+        tmpdata_path = params.predictionsdata_base_dir
     headless_files = {
-        "MDN": os.path.join(params.plotdata_base_dir, "headless_MDN3.pkl"),
-        "DNp09": os.path.join(params.plotdata_base_dir, "headless_DNp09.pkl"),
-        "aDN2": os.path.join(params.plotdata_base_dir, "headless_aDN2.pkl"),
-        "PR": os.path.join(params.plotdata_base_dir, "headless_PR.pkl"),
+        "MDN": os.path.join(tmpdata_path, "headless_MDN3.pkl"),
+        "DNp09": os.path.join(tmpdata_path, "headless_DNp09.pkl"),
+        "aDN2": os.path.join(tmpdata_path, "headless_aDN2.pkl"),
+        "PR": os.path.join(tmpdata_path, "headless_PR.pkl"),
     }
     with open(headless_files["MDN"], "rb") as f:
         MDN = pickle.load(f)
@@ -464,51 +360,22 @@ def headless_stat_test():
     test_stats_pre_post(PR, i_beh=2, GAL4="PR", beh_name="rest")
 
     detailled_files = {
-        "DNp09_anus": os.path.join(params.plotdata_base_dir, "headless_DNp09_anus.pkl"),
-        "PR_anus": os.path.join(params.plotdata_base_dir, "headless_PR_anus.pkl"),
-        "DNp09_ovum": os.path.join(params.plotdata_base_dir, "headless_DNp09_ovum.pkl"),
-        "PR_ovum": os.path.join(params.plotdata_base_dir, "headless_PR_ovum.pkl"),
-        "aDN2_height": os.path.join(params.plotdata_base_dir, "headless_aDN2_frleg_height.pkl"),
-        "PR_height": os.path.join(params.plotdata_base_dir, "headless_PR_frleg_height.pkl"),
-        "aDN2_angle": os.path.join(params.plotdata_base_dir, "headless_aDN2_tibia_angle.pkl"),
-        "PR_angle": os.path.join(params.plotdata_base_dir, "headless_PR_tibia_angle.pkl"),
-        "aDN2_dist_tita": os.path.join(params.plotdata_base_dir, "headless_aDN2_frtita_dist.pkl"),
-        "PR_dist_tita": os.path.join(params.plotdata_base_dir, "headless_PR_frtita_dist.pkl"),
-        "aDN2_dist_feti": os.path.join(params.plotdata_base_dir, "headless_aDN2_frfeti_dist.pkl"),
-        "PR_dist_feti": os.path.join(params.plotdata_base_dir, "headless_PR_frfeti_dist.pkl"),
+        "DNp09_anus": os.path.join(tmpdata_path, "headless_DNp09_anus.pkl"),
+        "PR_anus": os.path.join(tmpdata_path, "headless_PR_anus.pkl"),
+        "aDN2_dist_tita": os.path.join(tmpdata_path, "headless_aDN2_frtita_dist.pkl"),
+        "PR_dist_tita": os.path.join(tmpdata_path, "headless_PR_frtita_dist.pkl"),
     }
     with open(detailled_files["DNp09_anus"], "rb") as f:
         DNp09_anus = pickle.load(f)
     with open(detailled_files["PR_anus"], "rb") as f:
         PR_anus = pickle.load(f)
-    with open(detailled_files["DNp09_ovum"], "rb") as f:
-        DNp09_ovum = pickle.load(f)
-    with open(detailled_files["PR_ovum"], "rb") as f:
-        PR_ovum = pickle.load(f)
-    with open(detailled_files["aDN2_height"], "rb") as f:
-        aDN2_height = pickle.load(f)
-    with open(detailled_files["PR_height"], "rb") as f:
-        PR_height = pickle.load(f)
-    with open(detailled_files["aDN2_angle"], "rb") as f:
-        aDN2_angle = pickle.load(f)
-    with open(detailled_files["PR_angle"], "rb") as f:
-        PR_angle = pickle.load(f)
     with open(detailled_files["aDN2_dist_tita"], "rb") as f:
         aDN2_dist_tita = pickle.load(f)
     with open(detailled_files["PR_dist_tita"], "rb") as f:
         PR_dist_tita = pickle.load(f)
-    with open(detailled_files["aDN2_dist_feti"], "rb") as f:
-        aDN2_dist_feti = pickle.load(f)
-    with open(detailled_files["PR_dist_feti"], "rb") as f:
-        PR_dist_feti = pickle.load(f)
 
     test_stats_beh_control(DNp09_anus, PR_anus, GAL4="DNp09", beh_name="anus", i_0=500, i_1=750)
-    # test_stats_beh_control(DNp09_ovum, PR_ovum, GAL4="DNp09", beh_name="ovum", i_0=500, i_1=750)
-
-    # test_stats_beh_control(aDN2_height, PR_height, GAL4="aDN2", beh_name="height", i_0=750, i_1=1000)
-    # test_stats_beh_control(aDN2_angle, PR_angle, GAL4="aDN2", beh_name="angle", i_0=750, i_1=1000)
     test_stats_beh_control(aDN2_dist_tita, PR_dist_tita, GAL4="aDN2", beh_name="dist tita", i_0=500, i_1=750)
-    # test_stats_beh_control(aDN2_dist_feti, PR_dist_feti, GAL4="aDN2", beh_name="dist feti", i_0=500, i_1=750)
 
 
 if __name__ == "__main__":

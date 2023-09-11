@@ -230,15 +230,15 @@ def summarise_predictions_one_genotype(GAL4, overwrite=False, allflies_only=Fals
         fig.savefig(os.path.join(plot_save_location, f"{GAL4}_predictions_{return_var}{add_str}.pdf"), transparent=True)
     return fig
 
-def predictions_stats_tests():
+def predictions_stats_tests(tmpdata_path=None):
+    if tmpdata_path is None:
+        tmpdata_path = params.predictionsdata_base_dir
     tests_pre_post = [
         {"GAL4": "DNa01", "var": "v_turn", "name": "turn vel"},
-        {"GAL4": "DNa01", "var": "v_side", "name": "side vel"},
         {"GAL4": "aDN1", "var": "frtita_neck_dist", "name": "approach"},
         {"GAL4": "aDN1", "var": "mef_tita", "name": "front motion"},
         {"GAL4": "aDN1", "var": "ang_frtibia", "name": "tibia angle"},
         {"GAL4": "DNa02", "var": "v_turn", "name": "turn vel"},
-        {"GAL4": "DNa02", "var": "v_side", "name": "side vel"},
         {"GAL4": "DNb02", "var": "v_turn", "name": "turn vel"},
         {"GAL4": "DNb02", "var": "v_forw", "name": "forward vel"},
         {"GAL4": "DNg14", "var": "anus_y_rel_neck", "name": "abd dip"},
@@ -246,12 +246,10 @@ def predictions_stats_tests():
     ]
     tests_pre_post_control = [
         {"GAL4": "PR", "var": "v_turn", "name": "turn vel"},
-        {"GAL4": "PR", "var": "v_side", "name": "side vel"},
         {"GAL4": "PR", "var": "frtita_neck_dist", "name": "approach"},
         {"GAL4": "PR", "var": "mef_tita", "name": "front motion"},
         {"GAL4": "PR", "var": "ang_frtibia", "name": "tibia angle"},
         {"GAL4": "PR", "var": "v_turn", "name": "turn vel"},
-        {"GAL4": "PR", "var": "v_side", "name": "side vel"},
         {"GAL4": "PR", "var": "v_turn", "name": "turn vel"},
         {"GAL4": "PR", "var": "v_forw", "name": "forward vel"},
         {"GAL4": "PR", "var": "anus_y_rel_neck", "name": "abd dip"},
@@ -259,15 +257,15 @@ def predictions_stats_tests():
     ]
 
     for to_test in tests_pre_post + tests_pre_post_control:
-        file_name = os.path.join(params.predictionsdata_base_dir, f"predictions_{to_test['GAL4']}_{to_test['var']}.pkl")
+        file_name = os.path.join(tmpdata_path, f"predictions_{to_test['GAL4']}_{to_test['var']}.pkl")
         with open(file_name, "rb") as f:
             fly_data = pickle.load(f)
         fig_headless.test_stats_pre_post(fly_data, i_beh=0, GAL4=to_test['GAL4'], beh_name=None, var_name=to_test["name"], i_0=500, i_1=750 if "t2" not in to_test.keys() else to_test["t2"])
 
     for to_test_exp, to_test_control in zip(tests_pre_post, tests_pre_post_control):
         assert to_test_exp["name"] == to_test_control["name"]
-        file_name_exp = os.path.join(params.predictionsdata_base_dir, f"predictions_{to_test_exp['GAL4']}_{to_test_exp['var']}.pkl")
-        file_name_control = os.path.join(params.predictionsdata_base_dir, f"predictions_{to_test_control['GAL4']}_{to_test_control['var']}.pkl")
+        file_name_exp = os.path.join(tmpdata_path, f"predictions_{to_test_exp['GAL4']}_{to_test_exp['var']}.pkl")
+        file_name_control = os.path.join(tmpdata_path, f"predictions_{to_test_control['GAL4']}_{to_test_control['var']}.pkl")
         with open(file_name_exp, "rb") as f:
             fly_data_exp = pickle.load(f)
         with open(file_name_control, "rb") as f:
@@ -275,64 +273,64 @@ def predictions_stats_tests():
 
         fig_headless.test_stats_beh_control(fly_data_exp, fly_data_control, GAL4=to_test_exp['GAL4'], beh_name=to_test_exp["name"], i_0=500, i_1=750 if "t2" not in to_test_exp.keys() else to_test["t2"])
 
-if __name__ == "__main__":
-    
+def make_all_predictions_figures(allflies_only=True, tmpdata_path=None, figures_path=None, overwrite=False):
     ylim_v_turn = [-100,600]
-    ylim_v_side = [-0.5,2.5]
     ylim_v_forw = [-1,1]
     ylim_mef = [-0.3,1.3]
     ylim_ang_frti = [-15,40]
     ylim_dist_frtita = [-175,100]
     ylim_abd_dip = [-150,75]
     ylim_ovi_ext = [-100,50]
-    """
-    # fig = summarise_predictions_one_genotype("DNa01", overwrite=True)
-    # fig = summarise_predictions_one_genotype("DNa01", overwrite=True, return_var="v_side", return_var_ylabel=r"$v_{=}$ (mm/s)", return_var_abs=True)
-    # fig = summarise_predictions_one_genotype("DNa01", overwrite=True, return_var="v_turn", return_var_ylabel=r"$v_{T}$ (°/s)", return_var_abs=True)
-    fig = summarise_predictions_one_genotype("DNa01", return_var_ylim=ylim_v_turn, overwrite=True, return_var="v_turn", return_var_ylabel=r"$v_{T}$ (°/s)", return_var_abs=True, allflies_only=True)
-    fig = summarise_predictions_one_genotype("DNa01", return_var_ylim=ylim_v_side, overwrite=True, return_var="v_side", return_var_ylabel=r"$v_{=}$ (mm/s)", return_var_abs=True, allflies_only=True)
 
-    # fig = summarise_predictions_one_genotype("aDN1", overwrite=True, beh_name="groom", return_var="frtita_neck_dist", return_var_ylabel="front leg tita - head dist (um)", return_var_baseline=[400,500], return_var_multiply=4.8)
-    # fig = summarise_predictions_one_genotype("aDN1", overwrite=True, beh_name="groom", return_var="ang_frfemur", return_var_ylabel="femur angle (°)", return_var_baseline=[400,500])
-    # fig = summarise_predictions_one_genotype("aDN1", overwrite=True, beh_name="groom", return_var="frleg_height", return_var_ylabel="front leg height (um)", return_var_baseline=[400,500], return_var_flip=True)
-    # fig = summarise_predictions_one_genotype("aDN1", overwrite=True, beh_name="groom", return_var="ang_frtibia", return_var_ylabel="tibia angle (°)", return_var_baseline=[400,500])
-    # fig = summarise_predictions_one_genotype("aDN1", overwrite=True, beh_name="groom", return_var="mef_tita", return_var_ylabel="front leg speed (um)", return_var_baseline=[400,500], return_var_multiply=4.8)
-    # fig = summarise_predictions_one_genotype("aDN1", overwrite=True, beh_name="groom", return_var="frfeti_neck_dist", return_var_ylabel="front leg feti - head dist (um)", return_var_baseline=[400,500], return_var_multiply=4.8)
-    # fig = summarise_predictions_one_genotype("aDN1", overwrite=True, beh_name="groom", return_var="ang_frtibia_neck", return_var_ylabel="tibia - neck angle (°)", return_var_baseline=[400,500])
-    fig = summarise_predictions_one_genotype("aDN1", return_var_ylim=ylim_dist_frtita, overwrite=True, beh_name="groom", return_var="frtita_neck_dist", return_var_ylabel="front leg tita - head dist (um)", return_var_baseline=[400,500], return_var_multiply=4.8, allflies_only=True)
-    fig = summarise_predictions_one_genotype("aDN1", return_var_ylim=ylim_mef, overwrite=True, beh_name="groom", return_var="mef_tita", return_var_ylabel="front leg speed (mm/s)", return_var_baseline=[400,500], return_var_multiply=4.8/10, allflies_only=True)
-    fig = summarise_predictions_one_genotype("aDN1", return_var_ylim=ylim_ang_frti, overwrite=True, beh_name="groom", return_var="ang_frtibia", return_var_ylabel="tibia angle (°)", return_var_baseline=[400,500], allflies_only=True)
-
-
-    # fig = summarise_predictions_one_genotype("DNa02", overwrite=True)
-    # fig = summarise_predictions_one_genotype("DNa02", overwrite=True, return_var="v_side", return_var_ylabel=r"$v_{=}$ (mm/s)", return_var_abs=True)
-    # fig = summarise_predictions_one_genotype("DNa02", overwrite=True, return_var="v_turn", return_var_ylabel=r"$v_{T}$ (°/s)", return_var_abs=True)
-    fig = summarise_predictions_one_genotype("DNa02", return_var_ylim=ylim_v_turn, overwrite=True, return_var="v_turn", return_var_ylabel=r"$v_{T}$ (°/s)", return_var_abs=True, allflies_only=True)
-    fig = summarise_predictions_one_genotype("DNa02", return_var_ylim=ylim_v_side, overwrite=True, return_var="v_side", return_var_ylabel=r"$v_{=}$ (mm/s)", return_var_abs=True, allflies_only=True)
-
-    # fig = summarise_predictions_one_genotype("DNb02", overwrite=True)
-    # fig = summarise_predictions_one_genotype("DNb02", overwrite=True, return_var="v_side", return_var_ylabel=r"$v_{=}$ (mm/s)", return_var_abs=True)
-    # fig = summarise_predictions_one_genotype("DNb02", overwrite=True, return_var="v_turn", return_var_ylabel=r"$v_{T}$ (°/s)", return_var_abs=True)
-    fig = summarise_predictions_one_genotype("DNb02", return_var_ylim=ylim_v_turn, overwrite=True, return_var="v_turn", return_var_ylabel=r"$v_{T}$ (°/s)", return_var_abs=True, allflies_only=True)
-    fig = summarise_predictions_one_genotype("DNb02", return_var_ylim=ylim_v_forw, overwrite=True, allflies_only=True)
-
-    # fig = summarise_predictions_one_genotype("DNg14", overwrite=True, return_var="anus_y_rel_neck", return_var_ylabel=r"anus y (um)", return_var_baseline=[400,500], return_var_multiply=4.8, return_var_flip=True)
-    fig = summarise_predictions_one_genotype("DNg14", return_var_ylim=ylim_abd_dip, overwrite=True, return_var="anus_y_rel_neck", return_var_ylabel=r"anus y (um)", return_var_baseline=[400,500], return_var_multiply=4.8, return_var_flip=True, allflies_only=True)
-
-    # fig = summarise_predictions_one_genotype("mute", overwrite=True, return_var="anus_x_rel_neck", return_var_ylabel=r"anus x", return_var_baseline=[400,500])
-    # fig = summarise_predictions_one_genotype("mute", overwrite=True, return_var="ovum_x_rel_neck", return_var_ylabel=r"ovum x", return_var_baseline=[400,500])
-    # fig = summarise_predictions_one_genotype("mute", overwrite=True, return_var="anus_dist", return_var_ylabel=r"anus dist", return_var_baseline=[400,500])
-    # fig = summarise_predictions_one_genotype("mute", overwrite=True, return_var="ovum_dist", return_var_ylabel=r"ovum dist", return_var_baseline=[400,500])
-    fig = summarise_predictions_one_genotype("mute", return_var_ylim=ylim_ovi_ext, overwrite=True, return_var="ovum_x_rel_neck", return_var_ylabel=r"ovum x", return_var_baseline=[400,500], return_var_multiply=4.8, allflies_only=True)
+    fig = summarise_predictions_one_genotype("aDN1", data_save_location=tmpdata_path, plot_save_location=figures_path,
+                                             return_var_ylim=ylim_dist_frtita, overwrite=overwrite, beh_name="groom",
+                                             return_var="frtita_neck_dist", return_var_ylabel="front leg tita - head dist (um)", return_var_baseline=[400,500], return_var_multiply=4.8, allflies_only=allflies_only)
+    fig = summarise_predictions_one_genotype("aDN1", data_save_location=tmpdata_path, plot_save_location=figures_path,
+                                             return_var_ylim=ylim_mef, overwrite=overwrite, beh_name="groom", return_var="mef_tita",
+                                             return_var_ylabel="front leg speed (mm/s)", return_var_baseline=[400,500], return_var_multiply=4.8/10, allflies_only=allflies_only)
+    fig = summarise_predictions_one_genotype("aDN1", data_save_location=tmpdata_path, plot_save_location=figures_path,
+                                             return_var_ylim=ylim_ang_frti, overwrite=overwrite, beh_name="groom", return_var="ang_frtibia",
+                                             return_var_ylabel="tibia angle (°)", return_var_baseline=[400,500], allflies_only=allflies_only)
+    fig = summarise_predictions_one_genotype("DNa01", data_save_location=tmpdata_path, plot_save_location=figures_path,
+                                             return_var_ylim=ylim_v_turn, overwrite=overwrite, return_var="v_turn",
+                                             return_var_ylabel=r"$v_{T}$ (°/s)", return_var_abs=True, allflies_only=allflies_only)
+    fig = summarise_predictions_one_genotype("DNb02", data_save_location=tmpdata_path, plot_save_location=figures_path,
+                                             return_var_ylim=ylim_v_turn, overwrite=overwrite, return_var="v_turn",
+                                             return_var_ylabel=r"$v_{T}$ (°/s)", return_var_abs=True, allflies_only=allflies_only)
+    fig = summarise_predictions_one_genotype("DNb02", data_save_location=tmpdata_path, plot_save_location=figures_path,
+                                             return_var_ylim=ylim_v_forw, overwrite=overwrite, allflies_only=True)
+    fig = summarise_predictions_one_genotype("DNa02", data_save_location=tmpdata_path, plot_save_location=figures_path,
+                                             return_var_ylim=ylim_v_turn, overwrite=overwrite, return_var="v_turn",
+                                             return_var_ylabel=r"$v_{T}$ (°/s)", return_var_abs=True, allflies_only=allflies_only)
+    fig = summarise_predictions_one_genotype("DNg14", data_save_location=tmpdata_path, plot_save_location=figures_path,
+                                             return_var_ylim=ylim_abd_dip, overwrite=overwrite, return_var="anus_y_rel_neck",
+                                             return_var_ylabel=r"anus y (um)", return_var_baseline=[400,500], return_var_multiply=4.8, return_var_flip=True, allflies_only=allflies_only)
+    fig = summarise_predictions_one_genotype("mute", data_save_location=tmpdata_path, plot_save_location=figures_path,
+                                             return_var_ylim=ylim_ovi_ext, overwrite=overwrite, return_var="ovum_x_rel_neck",
+                                             return_var_ylabel=r"ovum x", return_var_baseline=[400,500], return_var_multiply=4.8, allflies_only=allflies_only)
     
-    # using headless df instead of predictions df
-    fig = summarise_predictions_one_genotype("PR",dataset="headless", return_var_ylim=ylim_v_forw, overwrite=True, allflies_only=True)
-    fig = summarise_predictions_one_genotype("PR",dataset="headless", return_var_ylim=ylim_v_side, overwrite=True, return_var="v_side", return_var_ylabel=r"$v_{=}$ (mm/s)", return_var_abs=True, allflies_only=True)  
-    fig = summarise_predictions_one_genotype("PR",dataset="headless", return_var_ylim=ylim_v_turn, overwrite=True, return_var="v_turn", return_var_ylabel=r"$v_{T}$ (°/s)", return_var_abs=True, allflies_only=True)  
-    fig = summarise_predictions_one_genotype("PR",dataset="headless", return_var_ylim=ylim_abd_dip, overwrite=True, return_var="anus_y_rel_neck", return_var_ylabel=r"anus y (um)", return_var_baseline=[400,500], return_var_multiply=4.8, return_var_flip=True, allflies_only=True)
-    fig = summarise_predictions_one_genotype("PR",dataset="headless", return_var_ylim=ylim_ovi_ext, overwrite=True, return_var="ovum_x_rel_neck", return_var_ylabel=r"ovum x", return_var_baseline=[400,500], return_var_multiply=4.8, allflies_only=True)
-    fig = summarise_predictions_one_genotype("PR",dataset="headless", return_var_ylim=ylim_dist_frtita, overwrite=True, beh_name="groom", return_var="frtita_neck_dist", return_var_ylabel="front leg tita - head dist (um)", return_var_baseline=[400,500], return_var_multiply=4.8, allflies_only=True)
-    fig = summarise_predictions_one_genotype("PR",dataset="headless", return_var_ylim=ylim_mef, overwrite=True, beh_name="groom", return_var="mef_tita", return_var_ylabel="front leg speed (mm/s)", return_var_baseline=[400,500], return_var_multiply=4.8/10, allflies_only=True)
-    fig = summarise_predictions_one_genotype("PR",dataset="headless", return_var_ylim=ylim_ang_frti, overwrite=True, beh_name="groom", return_var="ang_frtibia", return_var_ylabel="tibia angle (°)", return_var_baseline=[400,500], allflies_only=True)
-    """
+    fig = summarise_predictions_one_genotype("PR",dataset="headless", data_save_location=tmpdata_path, plot_save_location=figures_path,
+                                             return_var_ylim=ylim_v_forw, overwrite=overwrite, allflies_only=allflies_only)
+    fig = summarise_predictions_one_genotype("PR",dataset="headless", data_save_location=tmpdata_path, plot_save_location=figures_path,
+                                             return_var_ylim=ylim_v_turn, overwrite=overwrite, return_var="v_turn",
+                                             return_var_ylabel=r"$v_{T}$ (°/s)", return_var_abs=True, allflies_only=allflies_only)  
+    fig = summarise_predictions_one_genotype("PR",dataset="headless", data_save_location=tmpdata_path, plot_save_location=figures_path,
+                                             return_var_ylim=ylim_abd_dip, overwrite=overwrite, return_var="anus_y_rel_neck",
+                                             return_var_ylabel=r"anus y (um)", return_var_baseline=[400,500], return_var_multiply=4.8, return_var_flip=True, allflies_only=allflies_only)
+    fig = summarise_predictions_one_genotype("PR",dataset="headless", data_save_location=tmpdata_path, plot_save_location=figures_path,
+                                             return_var_ylim=ylim_ovi_ext, overwrite=overwrite, return_var="ovum_x_rel_neck",
+                                             return_var_ylabel=r"ovum x", return_var_baseline=[400,500], return_var_multiply=4.8, allflies_only=allflies_only)
+    fig = summarise_predictions_one_genotype("PR",dataset="headless", data_save_location=tmpdata_path, plot_save_location=figures_path,
+                                             return_var_ylim=ylim_dist_frtita, overwrite=overwrite, beh_name="groom", return_var="frtita_neck_dist",
+                                             return_var_ylabel="front leg tita - head dist (um)", return_var_baseline=[400,500], return_var_multiply=4.8, allflies_only=allflies_only)
+    fig = summarise_predictions_one_genotype("PR",dataset="headless", data_save_location=tmpdata_path, plot_save_location=figures_path,
+                                             return_var_ylim=ylim_mef, overwrite=overwrite, beh_name="groom", return_var="mef_tita",
+                                             return_var_ylabel="front leg speed (mm/s)", return_var_baseline=[400,500], return_var_multiply=4.8/10, allflies_only=allflies_only)
+    fig = summarise_predictions_one_genotype("PR",dataset="headless", data_save_location=tmpdata_path, plot_save_location=figures_path,
+                                             return_var_ylim=ylim_ang_frti, overwrite=overwrite, beh_name="groom", return_var="ang_frtibia",
+                                             return_var_ylabel="tibia angle (°)", return_var_baseline=[400,500], allflies_only=allflies_only)
+    
+
+if __name__ == "__main__":
+    make_all_predictions_figures()
     predictions_stats_tests()
