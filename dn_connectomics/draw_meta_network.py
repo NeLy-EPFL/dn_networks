@@ -20,7 +20,12 @@ from common import convert_index_root_id
 from graph_plot_utils import make_nice_spines, add_edge_legend
 
 
-def load_communities(path: str, return_type: str = "set", threshold: int = 2):
+def load_communities(
+    path: str,
+    return_type: str = "set",
+    threshold: int = 2,
+    data_type: str = "node_index",
+):
     """
     Load the communities from a file.
 
@@ -37,14 +42,16 @@ def load_communities(path: str, return_type: str = "set", threshold: int = 2):
         The list of communities.
     """
     df = pd.read_csv(os.path.join(path, "clustering.csv"))
+    if data_type not in df.columns:
+        data_type = "node_index"
     if return_type == "set":
         communities_ = [
-            set(df[df["cluster"] == cluster]["node_index"].values)
+            set(df[df["cluster"] == cluster][data_type].values)
             for cluster in df["cluster"].unique()
         ]
     elif return_type == "list":
         communities_ = [
-            df[df["cluster"] == cluster]["node_index"].values
+            df[df["cluster"] == cluster][data_type].values
             for cluster in df["cluster"].unique()
         ]
     else:
@@ -81,7 +88,7 @@ def define_meta_graph(
             for community_ in communities
             if len(community_) > size_threshold
         ]
-        for node in graph_.nodes():  # nodes are numbered starting from 1
+        for node in graph_.nodes():
             graph_.nodes[node]["composition"] = communities_used[node]
     return graph_
 
@@ -127,7 +134,7 @@ def plot_meta_graph(
     labels = (
         {node: details["labels"][node] for node in meta_graph.nodes()}
         if (details is not None and details["show_labels"])
-        else {node: node for node in meta_graph.nodes()}
+        else {node: str(int(node) + 1) for node in meta_graph.nodes()}
     )
     edge_colors = [
         plot_params.INHIB_COLOR if w_ < 0 else plot_params.EXCIT_COLOR

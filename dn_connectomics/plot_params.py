@@ -86,6 +86,11 @@ META_GRAPH = {}
 META_GRAPH["edge_normalisation"] = 5
 META_GRAPH["scale_nodes"] = 10
 
+BRAIN_SYNAPSES_DISTRIBUTION_ARGS = {}
+BRAIN_SYNAPSES_DISTRIBUTION_ARGS["cmap"] = "Greys"  # "Purples"
+BRAIN_SYNAPSES_DISTRIBUTION_ARGS["normalise"] = True
+BRAIN_SYNAPSES_DISTRIBUTION_ARGS["logscale"] = True
+
 # --- Plotting parameters for the statistics --- #
 STATS_ARGS = {}
 STATS_ARGS["folder"] = os.path.join(
@@ -105,4 +110,7 @@ NETWORK_STATS_ARGS["layers_folder"] = os.path.join(
     NETWORK_STATS_ARGS["folder"],
     "layers",
 )
-NETWORK_STATS_ARGS["method"] = "bootstrap"
+NETWORK_STATS_ARGS["method"] = "median"
+NETWORK_STATS_ARGS["all_lines"] = True
+NETWORK_STATS_ARGS["extend_lines"] = True
+NETWORK_STATS_ARGS["overlay_method"] = True
