@@ -77,7 +77,7 @@ def get_beh_df_with_me(fly_dir, all_trial_dirs, q_me=params.q_me, add_sleap=True
         if "me_front" not in beh_df.keys() and add_me:
             print(f"Motion energy not yet computed for trial {trial_dir}. Will compute now.")
             beh_df = motionenergy.compute_and_add_me_to_df(trial_dir, beh_df_file, camera_name=params.me_cam)
-        if ("mef_tita" not in beh_df.keys() or "frtita_neck_dist" not in beh_df.keys()) and add_sleap:
+        if ("mef_tita" not in beh_df.keys()) and add_sleap:  #  or "frtita_neck_dist" not in beh_df.keys()
             beh_df = sleap.add_sleap_to_beh_df(trial_dir, beh_df)
             beh_df.to_pickle(beh_df_file)
         beh_dfs.append(beh_df)
