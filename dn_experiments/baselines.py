@@ -1,3 +1,6 @@
+"""
+module used to compute different types of baselines for neural signals and to add the DF/F signals to the twop_df
+"""
 import sys
 import numpy as np
 from scipy.signal import find_peaks
@@ -12,11 +15,24 @@ def get_resting_baselines(neurons, rest, fs=params.fs_2p,
                           max_search_t_s=params.rest_base_max_search_t_s,
                           frac_rest=params.rest_base_frac_rest):
     """
+    Compute the baseline for neurons based on the resting behavior.
     compute resting baseline as follows:
     1. find all instances where fly starts resting and is resting for at least frac_rest * 100 percent during the next min_rest_s seconds.
         - ignore all repeated starts of resting if they are within max_search_t_s[1] // 2 seconds after the previous start
     2. compute the median across all repetitions
     3. compute the minimum of each neuron from  max_search_t_s[0] s before to max_search_t_s[1] s after start of resting
+
+    Parameters:
+        neurons (numpy.ndarray): Neuronal data to calculate the baseline for.
+        rest (numpy.ndarray): Resting behavior data.
+        fs (float, optional): Sampling frequency. Defaults to params.fs_2p.
+        min_rest_s (float, optional): Minimum duration of resting in seconds. Defaults to params.rest_base_min_rest_s.
+        max_search_t_s (tuple, optional): Search time range in seconds, specified as (before, after) resting onset.
+                                          Defaults to params.rest_base_max_search_t_s.
+        frac_rest (float, optional): Fraction of time within the search range that must be spent resting. Defaults to params.rest_base_frac_rest.
+
+    Returns:
+        numpy.ndarray: baselines for each neuron.
     """
     # 1. find onsets of resting
     rest_start = np.diff(rest.astype(int)) == 1
@@ -59,6 +75,7 @@ def get_trough_baselines(neurons, n_peaks=params.trough_baseline_n_peaks,
                          min_distance=params.trough_baseline_min_distance,
                          n_samples_around=params.trough_baseline_n_samples_around):
     """
+    Compute baselines for neurons based on population activity troughs.
     find the baseline of a neuron by considering the time points when the entire population is at its minimum
     1. standardise 'neurons' and average across neurons
     2. find 'n_peaks' most prominent troughs
@@ -66,24 +83,17 @@ def get_trough_baselines(neurons, n_peaks=params.trough_baseline_n_peaks,
     4. compute the median across repetitions for each neuron
     5. compute the minimum across time for each neuron
 
-    Parameters
-    ----------
-    neurons : [type]
-        [description]
-    n_peaks : [type], optional
-        [description], by default params.trough_baseline_n_peaks
-    min_height : [type], optional
-        [description], by default params.trough_baseline_min_height
-    min_distance : [type], optional
-        [description], by default params.trough_baseline_min_distance
-    n_samples_around : [type], optional
-        [description], by default params.trough_baseline_n_samples_around
+    Parameters:
+        neurons (numpy.ndarray): Neuronal data to calculate the baseline for.
+        n_peaks (int, optional): Number of most prominent trough peaks to consider. Defaults to params.trough_baseline_n_peaks.
+        min_height (float, optional): Minimum peak height to be considered a trough. Defaults to params.trough_baseline_min_height.
+        min_distance (int, optional): Minimum distance (in samples) between troughs. Defaults to params.trough_baseline_min_distance.
+        n_samples_around (int, optional): Number of samples to consider around each trough. Defaults to params.trough_baseline_n_samples_around.
 
-    Returns
-    -------
-    [type]
-        [description]
+    Returns:
+        numpy.ndarray: baselines for each neuron.
     """
+
     neurons_std_mean = -1 * np.mean((neurons - neurons.mean(axis=0)) / neurons.std(axis=0), axis=-1)
     peaks, peak_properties = find_peaks(neurons_std_mean, height=min_height, distance=min_distance)
     sorted_peaks = peaks[np.flip(np.argsort(peak_properties["peak_heights"]))]
@@ -104,6 +114,7 @@ def get_me_trough_baselines(neurons, me, n_peaks=params.trough_baseline_n_peaks,
                          n_samples_around=params.trough_baseline_n_samples_around,
                          sigma_me=params.me_trough_baseline_sigma_me):
     """
+    Compute baselines for neurons based on motion energy troughs.
     find the baseline of a neuron by considering the time points when the motion energy is at its minimum
     1. low pass filter and quantile normalise motion energy
     2. find 'n_peaks' most prominent troughs
@@ -111,27 +122,17 @@ def get_me_trough_baselines(neurons, me, n_peaks=params.trough_baseline_n_peaks,
     4. compute the median across repetitions for each neuron
     5. compute the minimum across time for each neuron
 
-    Parameters
-    ----------
-    neurons : [type]
-        [description]
-    me : [type]
-        [description]
-    n_peaks : [type], optional
-        [description], by default params.trough_baseline_n_peaks
-    min_height : [type], optional
-        [description], by default params.me_trough_baseline_min_height
-    min_distance : [type], optional
-        [description], by default params.trough_baseline_min_distance
-    n_samples_around : [type], optional
-        [description], by default params.trough_baseline_n_samples_around
-    sigma_me : [type], optional
-        [description], by default params.me_trough_baseline_sigma_me
+    Parameters:
+        neurons (numpy.ndarray): Neuronal data to calculate the baseline for.
+        me (numpy.ndarray): Motion energy data.
+        n_peaks (int, optional): Number of trough peaks to consider. Defaults to params.trough_baseline_n_peaks.
+        min_height (float, optional): Minimum peak height to be considered a trough. Defaults to params.me_trough_baseline_min_height.
+        min_distance (int, optional): Minimum distance (in samples) between troughs. Defaults to params.trough_baseline_min_distance.
+        n_samples_around (int, optional): Number of samples to consider around each trough. Defaults to params.trough_baseline_n_samples_around.
+        sigma_me (float, optional): Sigma value for Gaussian filtering of motion energy. Defaults to params.me_trough_baseline_sigma_me.
 
-    Returns
-    -------
-    [type]
-        [description]
+    Returns:
+        numpy.ndarray: baselines for each neuron.
     """
     me_q = utils.normalise_quantile(-1 * gaussian_filter1d(me, sigma=sigma_me))
     peaks, peak_properties = find_peaks(me_q, height=min_height, distance=min_distance)
@@ -148,6 +149,19 @@ def get_me_trough_baselines(neurons, me, n_peaks=params.trough_baseline_n_peaks,
     return through_baselines
 
 def add_baseline_to_df(twop_df, baseline_sub, baseline_div, fstring="dff", neurons_regex=params.baseline_neurons_regex):
+    """
+    Add baseline-subtracted and baseline-divided neuronal signals, i.e. DF/F to the twop_df DataFrame.
+
+    Parameters:
+        twop_df (pandas.DataFrame): DataFrame containing two-photon imaging data.
+        baseline_sub (numpy.ndarray): Baseline to subtract from the neuronal signals.
+        baseline_div (numpy.ndarray): Baseline to divide the neuronal signals by.
+        fstring (str, optional): Prefix for the new columns. Defaults to "dff".
+        neurons_regex (str, optional): Regular expression to match neuronal columns in the DataFrame. Defaults to params.baseline_neurons_regex.
+
+    Returns:
+        pandas.DataFrame: Updated DataFrame with baseline-subtracted and baseline-divided signals.
+    """
     neurons_filt = twop_df.filter(regex=neurons_regex).values
     dff = (neurons_filt - baseline_sub) / baseline_div
     for i_roi in range(neurons_filt.shape[1]):
@@ -157,6 +171,21 @@ def add_baseline_to_df(twop_df, baseline_sub, baseline_div, fstring="dff", neuro
 def get_baseline_in_twop_df(twop_df, baseline_exclude_stim_range=params.baseline_exclude_stim_range,
                             exclude_stim_low_high=params.baseline_exclude_stim_low_high,
                             normalisation_type=params.all_normalisation_types, return_baselines=False, qmax=params.baseline_qmax):
+    """
+    Calculate baseline values and add them to the twop_df DataFrame.
+
+    Parameters:
+        twop_df (pandas.DataFrame): DataFrame containing two-photon imaging data.
+        baseline_exclude_stim_range (tuple, optional): Time range to exclude for baseline calculation. Defaults to params.baseline_exclude_stim_range.
+        exclude_stim_low_high (tuple, optional): Tuple of length 2 indicating whether to exclude stimulation periods for lower and upper limit computation. Defaults to params.baseline_exclude_stim_low_high.
+        normalisation_type (str or list, optional): Type of normalisation to perform. Defaults to params.all_normalisation_types.
+        return_baselines (bool, optional): Whether to return computed baseline values. Defaults to False.
+        qmax (float, optional): Quantile value for computing the qmax baseline. Defaults to params.baseline_qmax.
+
+    Returns:
+        pandas.DataFrame or tuple: Updated DataFrame with baseline-subtracted and baseline-divided signals.
+                                    If return_baselines is True, also returns a dictionary of computed baseline values.
+    """
     # print("prepare neural data outside of stimulation period for baseline computation")
     neurons_for_baseline = twop_df.filter(regex=params.baseline_neurons_regex).values
     

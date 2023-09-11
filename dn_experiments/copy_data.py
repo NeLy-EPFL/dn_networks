@@ -1,3 +1,7 @@
+"""
+This file contains functions used to copy and compress data in order to prepare it for the upload to Harvard Dataverse.
+It also contains functions to re-arrange the data to a consistent folder structure after downloading it from Harvard Dataverse.
+"""
 import os
 import shutil
 from datetime import datetime
@@ -24,7 +28,22 @@ HEADLESS_DIR = os.path.join(BASE_DIR, "headless")
 HEADLESS_ZIP_DIR = os.path.join(BASE_DIR, "headless_zip_novideo")
 OTHER_DIR = os.path.join(BASE_DIR, "other")
 
+def reassemble_imaging_data(base_dir):
+    pass
+
+
+def reassemble_headless_predictions_data(base_dir):
+    pass
+
+
 def make_roi_center_annotation_file(fly_dir, quantile=0.99):
+    """
+    Create a PDF file with annotated ROI centers on a standard deviation image.
+
+    Parameters:
+        fly_dir (str): The directory containing the fly data.
+        quantile (float): The quantile for colormap scaling. Defaults to 0.99.
+    """
     process_params = PreProcessParams()
     pca_map_file = os.path.join(fly_dir, "processed", process_params.pca_maps)
     roi_centers = rois.read_roi_center_file(os.path.join(fly_dir, "processed", "ROI_centers.txt"))
@@ -49,11 +68,33 @@ def make_roi_center_annotation_file(fly_dir, quantile=0.99):
 
 
 def make_background_image(fly_dir):
+    """
+    Create and save a background image from fly data.
+    This defaults to the standard deviation projection image, but can be changed in params.py
+
+    Parameters:
+        fly_dir (str): The directory containing the fly data.
+    """
     background_image = loaddata.get_background_image(fly_dir)
     save_stack(os.path.join(fly_dir, "processed", "background_image.tif"), background_image)
 
+def convert_trial_dir(trial_dir, imaging=True):
+    fly_dir, trial_name = os.path.split(trial_dir)
+    date_genotype_dir, fly_name = os.path.split(fly_dir)
+    _, date_genotype_name = os.path.split(date_genotype_dir)
+    if imaging:
+        new_fly_dir = os.path.join(IMAGING_DIR, date_genotype_name + "_" + fly_name)
+    else:
+        new_fly_dir = os.path.join(HEADLESS_DIR, date_genotype_name + "_" + fly_name)
+    return os.path.join(new_fly_dir, trial_name)
 
 def copy_all_imaging_trials(overwrite=False):
+    """
+    Copy all imaging trials to an external directory from where they can be uploaded to Harvard dataverse.
+
+    Parameters:
+        overwrite (bool): Whether to overwrite existing files. Defaults to False.
+    """
     df = summarydf.load_data_summary()
     df = summarydf.filter_data_summary(df, no_co2=False)
     df = summarydf.get_selected_df(df, [{"GCaMP": "Dfd"}])
@@ -77,6 +118,20 @@ def copy_all_imaging_trials(overwrite=False):
 
     df = df[selected_trials]
 
+    nan  = df["exclude"].iloc[0]
+    df["neural_quality"] = nan
+    df["behaviour_quality"] = nan
+    df["stim_response_quality"] = nan
+    df["exclude"] = nan
+    df["comment"] = nan
+
+    for index, row in df.iterrows():
+        old_trial_dir = row.trial_dir
+        new_trial_dir = convert_trial_dir(old_trial_dir, imaging=True)
+        new_fly_dir = os.path.dirname(new_trial_dir)
+        df["trial_dir"].iloc[df.index == index] = new_trial_dir
+        df["fly_dir"].iloc[df.index == index] = new_fly_dir
+
     df.to_csv(os.path.join(IMAGING_DIR, "imaging_summary_df.csv"), index=False)
 
     for i_fly, (fly_id, fly_df) in enumerate(df.groupby("fly_id")):
@@ -85,7 +140,23 @@ def copy_all_imaging_trials(overwrite=False):
 
 
 def copy_all_headless_trials(overwrite=False):
+    """
+    Copy all headless trials to an external directory from where they can be uploaded to Harvard dataverse.
+
+    Parameters:
+        overwrite (bool): Whether to overwrite existing files. Defaults to False.
+    """
     df = summarydf.get_headless_df()
+
+    for index, row in df.iterrows():
+        old_trial_dir = row.trial_dir
+        new_trial_dir = convert_trial_dir(old_trial_dir, imaging=False)
+        new_fly_dir = os.path.dirname(new_trial_dir)
+        df["trial_dir"].iloc[df.index == index] = new_trial_dir
+        df["fly_dir"].iloc[df.index == index] = new_fly_dir
+
+    nan  = df["exclude"].iloc[0]
+    df["comment"] = nan
     df.to_csv(os.path.join(HEADLESS_DIR, "headless_summary_df.csv"), index=False)
 
     for i_fly, (fly_id, fly_df) in enumerate(df.groupby("fly_id")):
@@ -97,8 +168,25 @@ def copy_all_headless_trials(overwrite=False):
 
 
 def copy_all_predictions_trials(genotypes=["DNa01", "DNa02", "DNb02", "aDN1", "DNg14", "mute"], overwrite=False):
+    """
+    Copy all prediction trials for specified genotypes to an external directory from where they can be uploaded to Harvard dataverse.
+
+    Parameters:
+        genotypes (list): List of genotypes to copy. Defaults to ["DNa01", "DNa02", "DNb02", "aDN1", "DNg14", "mute"].
+        overwrite (bool): Whether to overwrite existing files. Defaults to False.
+    """
     df = summarydf.get_predictions_df()
     df = summarydf.get_selected_df(df, select_dicts=[{"CsChrimson": genotype} for genotype in genotypes])
+
+    for index, row in df.iterrows():
+        old_trial_dir = row.trial_dir
+        new_trial_dir = convert_trial_dir(old_trial_dir, imaging=False)
+        new_fly_dir = os.path.dirname(new_trial_dir)
+        df["trial_dir"].iloc[df.index == index] = new_trial_dir
+        df["fly_dir"].iloc[df.index == index] = new_fly_dir
+
+    nan  = df["exclude"].iloc[0]
+    df["comment"] = nan
     df.to_csv(os.path.join(HEADLESS_DIR, "predictions_summary_df.csv"), index=False)
 
     for i_fly, (fly_id, fly_df) in enumerate(df.groupby("fly_id")):
@@ -110,6 +198,12 @@ def copy_all_predictions_trials(genotypes=["DNa01", "DNa02", "DNb02", "aDN1", "D
 
 
 def copy_stim_control_trials(overwrite=False):
+    """
+    Copy stimulation control trials to an external directory from where they can be uploaded to Harvard dataverse.
+
+    Parameters:
+        overwrite (bool): Whether to overwrite existing files. Defaults to False.
+    """
     fly_dirs = [
         "/mnt/nas2/JB/220816_MDN3xCsChrimson/Fly5",
         "/mnt/nas2/JB/230125_BPNxCsChrimson/Fly1"
@@ -124,6 +218,15 @@ def copy_stim_control_trials(overwrite=False):
 
 
 def copy_one_fly(trial_dirs, imaging=True, overwrite=False, base_dir=None):
+    """
+    Copy data for one fly to an external directory
+
+    Parameters:
+        trial_dirs (list): List of trial directories to copy.
+        imaging (bool): Whether there is imaging data to copy. Defaults to True.
+        overwrite (bool): Whether to overwrite existing files. Defaults to False.
+        base_dir (str): The base directory for copying. If None, use the appropriate data directory based on imaging. Defaults to None.
+    """
     fly_dir = os.path.dirname(trial_dirs[0])
     date_genotype_dir, fly_name = os.path.split(fly_dir)
     _, date_genotype_name = os.path.split(date_genotype_dir)
@@ -153,6 +256,15 @@ def copy_one_fly(trial_dirs, imaging=True, overwrite=False, base_dir=None):
 
 
 def copy_one_trial(new_fly_dir, trial_dir, imaging=True, overwrite=False):
+    """
+    Copy data for one trial to an external directory.
+
+    Parameters:
+        new_fly_dir (str): The destination directory for the fly.
+        trial_dir (str): The trial directory to copy.
+        imaging (bool): Whether there is imaging data to copy. Defaults to True.
+        overwrite (bool): Whether to overwrite existing files. Defaults to False.
+    """
     print(datetime.now().strftime('%Y-%m-%d %H:%M:%S'), trial_dir)
     old_fly_dir, trial_name = os.path.split(trial_dir)
     new_trial_dir = os.path.join(new_fly_dir, trial_name)
@@ -178,6 +290,15 @@ def copy_one_trial(new_fly_dir, trial_dir, imaging=True, overwrite=False):
         
 
 def copy_file(file_path, old_trial_dir, new_trial_dir, overwrite=False):
+    """
+    Copy a file from one directory to another.
+
+    Parameters:
+        file_path (str): The source file path.
+        old_trial_dir (str): The source trial directory.
+        new_trial_dir (str): The destination trial directory.
+        overwrite (bool): Whether to overwrite existing files. Defaults to False.
+    """
     new_file_path = file_path.replace(old_trial_dir, new_trial_dir)
     new_dir = os.path.dirname(new_file_path)
     makedirs_safe(new_dir)
@@ -186,6 +307,13 @@ def copy_file(file_path, old_trial_dir, new_trial_dir, overwrite=False):
 
 
 def compress_headless_predictions(overwrite=False, keep_videos=False):
+    """
+    Compress headless and prediction data.
+
+    Parameters:
+        overwrite (bool): Whether to overwrite existing files. Defaults to False.
+        keep_videos (bool): Whether to keep compressed video files. Defaults to False.
+    """
     old_wd = os.getcwd()
     os.chdir(HEADLESS_DIR)
     fly_names = os.listdir(".")
@@ -208,6 +336,12 @@ def compress_headless_predictions(overwrite=False, keep_videos=False):
     os.chdir(old_wd)
 
 def compress_sleap(overwrite=False):
+    """
+    Compress SLEAP model data.
+
+    Parameters:
+        overwrite (bool): Whether to overwrite existing files. Defaults to False.
+    """
     old_wd = os.getcwd()
     os.chdir(OTHER_DIR)
     source_folder = ["sleap_model"]
@@ -217,6 +351,13 @@ def compress_sleap(overwrite=False):
 
 
 def compress_stim_control(overwrite=False, keep_videos=False):
+    """
+    Compress stimulation control data.
+
+    Parameters:
+        overwrite (bool): Whether to overwrite existing files. Defaults to False.
+        keep_videos (bool): Whether to keep compressed video files. Defaults to False.
+    """
     old_wd = os.getcwd()
     os.chdir(OTHER_DIR)
     fly_names = [
@@ -241,6 +382,13 @@ def compress_stim_control(overwrite=False, keep_videos=False):
 
 
 def compress_imaging(overwrite=False, keep_videos=False):
+    """
+    Compress imaging data.
+
+    Parameters:
+        overwrite (bool): Whether to overwrite existing files. Defaults to False.
+        keep_videos (bool): Whether to keep compressed behavioural and fluorescence video files. Defaults to False.
+    """
     base_dir = IMAGING_DIR
     out_dir = IMAGING_ZIP_DIR
     fly_names = os.listdir(base_dir)
@@ -251,6 +399,15 @@ def compress_imaging(overwrite=False, keep_videos=False):
 
 
 def compress_one_fly_imaging(fly_dir, out_dir, overwrite=False, keep_videos=False):
+    """
+    Compress data for one fly's imaging.
+
+    Parameters:
+        fly_dir (str): The directory containing the fly data.
+        out_dir (str): The destination directory for compressed data.
+        overwrite (bool): Whether to overwrite existing files. Defaults to False.
+        keep_videos (bool): Whether to keep compressed behavioural and fluorescence video files. Defaults to False.
+    """
     base_dir, fly_name = os.path.split(fly_dir)
     subfolders = os.listdir(fly_dir)
     for subfolder in subfolders:
@@ -269,6 +426,15 @@ def compress_one_fly_imaging(fly_dir, out_dir, overwrite=False, keep_videos=Fals
 
 
 def compress_one_trial_imaging(trial_dir, out_dir, overwrite=False, keep_videos=False):
+    """
+    Compress data for one trial's imaging.
+
+    Parameters:
+        trial_dir (str): The trial directory containing the data.
+        out_dir (str): The destination directory for compressed data.
+        overwrite (bool): Whether to overwrite existing files. Defaults to False.
+        keep_videos (bool): Whether to keep compressed behavioural and fluorescence video files. Defaults to False.
+    """
     old_wd = os.getcwd()
     os.chdir(trial_dir)
     fly_dir, trial_name = os.path.split(trial_dir)
@@ -327,8 +493,12 @@ def compress_one_trial_imaging(trial_dir, out_dir, overwrite=False, keep_videos=
 
 def compress(tar_file, members):
     """
-    Adds files (`members`) to a tar_file and compress it
+    Compress files using tar and gzip.
     Copied from https://thepythoncode.com/article/compress-decompress-files-tarfile-python#google_vignette
+
+    Parameters:
+        tar_file (str): The path to the tar.gz file to create.
+        members (list): List of file/folder names to include in the archive.
     """
     # open file for gzip compressed writing
     tar = tarfile.open(tar_file, mode="w:gz")
@@ -343,11 +513,18 @@ def compress(tar_file, members):
     # close the file
     tar.close()
 
+
 def decompress(tar_file, path, members=None):
     """
+    Decompress files from a tar.gz archive.
     Extracts `tar_file` and puts the `members` to `path`.
     If members is None, all members on `tar_file` will be extracted.
     Copied from: https://thepythoncode.com/article/compress-decompress-files-tarfile-python#google_vignette
+
+    Parameters:
+        tar_file (str): The path to the tar.gz file to decompress.
+        path (str): The destination directory for decompressed files.
+        members (list): List of specific members to extract. Defaults to None (extract all).
     """
     tar = tarfile.open(tar_file, mode="r:gz")
     if members is None:
@@ -366,14 +543,16 @@ def decompress(tar_file, path, members=None):
     tar.close()
 
 if __name__ == "__main__":
-    # compress_sleap()
+    compress_sleap()
+
     copy_stim_control_trials()
     compress_stim_control(keep_videos=False)
 
-    # copy_all_predictions_trials()
-    # copy_all_headless_trials()
-    # compress_headless_predictions(keep_videos=False)
+    copy_all_predictions_trials()
+    copy_all_headless_trials()
+    compress_headless_predictions(keep_videos=False)
     
-    # copy_all_imaging_trials()
-    # compress_imaging(keep_videos=False)
+    copy_all_imaging_trials()
+    compress_imaging(keep_videos=False)
+     
 

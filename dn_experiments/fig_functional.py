@@ -202,6 +202,11 @@ def get_one_fly_nat_resp_panel(fig, axd, fly_data, figure_params):
         q_max=figure_params["response_q_max"], clim=clim)
 
 def summarise_stim_resp(exp_df, figure_params, stim_resp_save=None, overwrite=False):
+    if stim_resp_save is None:
+        tmpdata_path = None
+    else:
+        tmpdata_path = os.path.dirname(stim_resp_save)
+
     if stim_resp_save is not None and os.path.isfile(stim_resp_save) and not overwrite:
         with open(stim_resp_save, "rb") as f:
             all_fly_data = pickle.load(f)
@@ -298,7 +303,7 @@ def summarise_stim_resp(exp_df, figure_params, stim_resp_save=None, overwrite=Fa
             with open(stim_resp_save, "wb") as f:
                 pickle.dump(all_fly_data, f)
 
-    collect_data_stat_comparison_activation(all_fly_data, pre_stim=figure_params["pre_stim"], overwrite=overwrite)
+    collect_data_stat_comparison_activation(all_fly_data, pre_stim=figure_params["pre_stim"], overwrite=overwrite, tmpdata_path=tmpdata_path)
     
     if figure_params["mode"] == "presentationsummary":
         fig = plt.figure(figsize=(figure_params["panel_size"][0],figure_params["panel_size"][1]))  # layout="constrained"
@@ -546,7 +551,12 @@ def summarise_natbeh_resp(exp_df, figure_params, stim_resp_save=None, overwrite=
     return fig
 
 
-def summarise_all_stim_resp(pre_stim="walk", overwrite=False, mode="pdf", only_natbeh_DNp09=False):
+def summarise_all_stim_resp(pre_stim="walk", overwrite=False, mode="pdf", natbeh=False, figures_path=None, tmpdata_path=None):
+    if figures_path is None:
+        figures_path = params.plot_base_dir
+    if tmpdata_path is None:
+        tmpdata_path = params.plotdata_base_dir
+
     df = summarydf.load_data_summary()
     df = summarydf.filter_data_summary(df, no_co2=False)
 
@@ -577,10 +587,8 @@ def summarise_all_stim_resp(pre_stim="walk", overwrite=False, mode="pdf", only_n
     }
 
     if mode == "presentation":
-        figure_params["response_clim"] = 0.8
         figure_params["mosaic"] = mosaic_stim_resp_panel_presentation
     elif mode == "presentationsummary":
-        figure_params["response_clim"] = 0.8
         figure_params["mosaic"] = mosaic_stim_resp_panel_presentationsummary
         figure_params["panel_size"] = (4,8)
     
@@ -591,90 +599,90 @@ def summarise_all_stim_resp(pre_stim="walk", overwrite=False, mode="pdf", only_n
         "PR": [-5,11],  # [-5,5],
     }
     
-    if not only_natbeh_DNp09:
-        # MDN
-        df_Dfd_MDN = summarydf.get_selected_df(df, [{"GCaMP": "Dfd", "CsChrimson": "MDN3", "walkon": "ball"}])
-        figure_params_MDN = figure_params.copy()
-        figure_params_MDN["suptitle"] = f"Backward walking DN (MDN) response after {pre_stim.replace('_', ' ')}ing"
-        figure_params_MDN["pres_fly"] = presentation_flies["MDN"]
-        figure_params_MDN["response_beh_lim"] = response_beh_lims["MDN"] if "presentation" in mode else None
-        figure_params_MDN["trigger_2"] = "back_trig_start"
-        fig_MDN = summarise_stim_resp(df_Dfd_MDN, figure_params_MDN, stim_resp_save=os.path.join(params.plotdata_base_dir, f"stim_resp_{pre_stim}_MDN3.pkl"),
+    # MDN
+    df_Dfd_MDN = summarydf.get_selected_df(df, [{"GCaMP": "Dfd", "CsChrimson": "MDN3", "walkon": "ball"}])
+    figure_params_MDN = figure_params.copy()
+    figure_params_MDN["suptitle"] = f"Backward walking DN (MDN) response after {pre_stim.replace('_', ' ') if pre_stim is not None else None}ing"
+    figure_params_MDN["pres_fly"] = presentation_flies["MDN"]
+    figure_params_MDN["response_beh_lim"] = response_beh_lims["MDN"] if "presentation" in mode else None
+    figure_params_MDN["trigger_2"] = "back_trig_start"
+    if not natbeh:
+        fig_MDN = summarise_stim_resp(df_Dfd_MDN, figure_params_MDN, stim_resp_save=os.path.join(tmpdata_path, f"stim_resp_{pre_stim}_MDN3.pkl"),
                                         overwrite=overwrite)
-        df_Dfd_MDN = summarydf.get_selected_df(df, [{"GCaMP": "Dfd", "CsChrimson": "MDN3", "walkon": "wheel"}])
-        figure_params_MDN["panel_size"] = (18,4)
-        figure_params_MDN["mosaic"] = mosaic_nat_resp_panel
-        figure_params_MDN["pres_fly"] = presentation_natbeh_flies["MDN"]
-        # figure_params_MDN["pre_stim"] = None
-        fig_MDN_natbeh = summarise_natbeh_resp(df_Dfd_MDN, figure_params_MDN, stim_resp_save=os.path.join(params.plotdata_base_dir, f"natbeh_{pre_stim}_resp_MDN3.pkl"),
+    df_Dfd_MDN = summarydf.get_selected_df(df, [{"GCaMP": "Dfd", "CsChrimson": "MDN3", "walkon": "wheel"}])
+    figure_params_MDN["panel_size"] = (18,4)
+    figure_params_MDN["mosaic"] = mosaic_nat_resp_panel
+    figure_params_MDN["pres_fly"] = presentation_natbeh_flies["MDN"]
+    figure_params_MDN["pre_stim"] = None
+    # figure_params_MDN["pre_stim"] = None
+    if natbeh:
+        fig_MDN_natbeh = summarise_natbeh_resp(df_Dfd_MDN, figure_params_MDN, stim_resp_save=os.path.join(tmpdata_path, f"natbeh_{pre_stim}_resp_MDN3.pkl"),
                                         overwrite=overwrite)
 
     # DNp09
     df_Dfd_DNp09 = summarydf.get_selected_df(df, [{"GCaMP": "Dfd", "CsChrimson": "DNp09", "walkon": "ball"},
                                       {"GCaMP": "Dfd", "CsChrimson": "DNP9" , "walkon": "ball"}])
     figure_params_DNp09 = figure_params.copy()
-    figure_params_DNp09["suptitle"] = f"Forward walking DN (DNp09) response after {pre_stim.replace('_', ' ')}ing"
+    figure_params_DNp09["suptitle"] = f"Forward walking DN (DNp09) response after {pre_stim.replace('_', ' ') if pre_stim is not None else None}ing"
     figure_params_DNp09["pres_fly"] = presentation_flies["DNp09"]
     figure_params_DNp09["response_beh_lim"] = response_beh_lims["DNp09"] if "presentation" in mode else None
     figure_params_DNp09["trigger_2"] = "walk_trig_start"
-    
-    if not only_natbeh_DNp09:
-        fig_DNp09 = summarise_stim_resp(df_Dfd_DNp09, figure_params_DNp09, stim_resp_save=os.path.join(params.plotdata_base_dir, f"stim_resp_{pre_stim}_DNp09.pkl"),
+    if not natbeh:
+        fig_DNp09 = summarise_stim_resp(df_Dfd_DNp09, figure_params_DNp09, stim_resp_save=os.path.join(tmpdata_path, f"stim_resp_{pre_stim}_DNp09.pkl"),
                                     overwrite=overwrite)
     figure_params_DNp09["panel_size"] = (18,4)
     figure_params_DNp09["mosaic"] = mosaic_nat_resp_panel
     figure_params_DNp09["pres_fly"] = presentation_natbeh_flies["DNp09"]
-    # figure_params_DNp09["pre_stim"] = "rest"
-    fig_DNp09_natbeh = summarise_natbeh_resp(df_Dfd_DNp09, figure_params_DNp09, stim_resp_save=os.path.join(params.plotdata_base_dir, f"natbeh_{pre_stim}_resp_DNp09.pkl"),
-                                    overwrite=overwrite)
-
-    if not only_natbeh_DNp09:
-        # aDN2
-        df_Dfd_aDN2 = summarydf.get_selected_df(df, [{"GCaMP": "Dfd", "CsChrimson": "aDN2", "walkon": "ball"}])
-        figure_params_aDN2 = figure_params.copy()
-        figure_params_aDN2["suptitle"] = f"Grooming DN (aDN2) response after {pre_stim.replace('_', ' ')}ing"
-        figure_params_aDN2["pres_fly"] = presentation_flies["aDN2"]
-        figure_params_aDN2["response_beh_lim"] = response_beh_lims["aDN2"] if "presentation" in mode else None
-        figure_params_aDN2["trigger_2"] = "groom_trig_start"
-        figure_params_aDN2["stim_p"] = [20]
-        fig_aDN2 = summarise_stim_resp(df_Dfd_aDN2, figure_params_aDN2, stim_resp_save=os.path.join(params.plotdata_base_dir, f"stim_resp_{pre_stim}_aDN2.pkl"),
-                                        overwrite=overwrite)
-        figure_params_aDN2["panel_size"] = (18,4)
-        figure_params_aDN2["mosaic"] = mosaic_nat_resp_panel
-        figure_params_aDN2["pres_fly"] = presentation_natbeh_flies["aDN2"]
-        # figure_params_aDN2["pre_stim"] = None
-        fig_aDN2_natbeh = summarise_natbeh_resp(df_Dfd_aDN2, figure_params_aDN2, stim_resp_save=os.path.join(params.plotdata_base_dir, f"natbeh_{pre_stim}_resp_aDN2.pkl"),
-                                        overwrite=overwrite)
-        figure_params_aDN2["trigger_2"] = "olfac_start"
-        fig_aDN2_olfac = summarise_natbeh_resp(df_Dfd_aDN2, figure_params_aDN2, stim_resp_save=os.path.join(params.plotdata_base_dir, f"olfac_{pre_stim}_resp_aDN2.pkl"),
+    figure_params_DNp09["pre_stim"] = "not_walk"
+    if natbeh:
+        fig_DNp09_natbeh = summarise_natbeh_resp(df_Dfd_DNp09, figure_params_DNp09, stim_resp_save=os.path.join(tmpdata_path, f"natbeh_{pre_stim}_resp_DNp09.pkl"),
                                         overwrite=overwrite)
 
-        # PR
-        df_Dfd_PR = summarydf.get_selected_df(df, [{"GCaMP": "Dfd", "CsChrimson": "PR", "walkon": "ball"}])
-        figure_params_PR = figure_params.copy()
-        figure_params_PR["suptitle"] = f"control (no GAL4) response after {pre_stim.replace('_', ' ')}ing"
-        figure_params_PR["pres_fly"] = presentation_flies["PR"]
-        figure_params_PR["response_beh_lim"] = response_beh_lims["PR"] if "presentation" in mode else None
-        fig_PR = summarise_stim_resp(df_Dfd_PR, figure_params_PR, stim_resp_save=os.path.join(params.plotdata_base_dir, f"stim_resp_{pre_stim}_PR.pkl"),
+    # aDN2
+    df_Dfd_aDN2 = summarydf.get_selected_df(df, [{"GCaMP": "Dfd", "CsChrimson": "aDN2", "walkon": "ball"}])
+    figure_params_aDN2 = figure_params.copy()
+    figure_params_aDN2["suptitle"] = f"Grooming DN (aDN2) response after {pre_stim.replace('_', ' ') if pre_stim is not None else None}ing"
+    figure_params_aDN2["pres_fly"] = presentation_flies["aDN2"]
+    figure_params_aDN2["response_beh_lim"] = response_beh_lims["aDN2"] if "presentation" in mode else None
+    figure_params_aDN2["trigger_2"] = "olfac_start"  # "groom_trig_start"
+    figure_params_aDN2["stim_p"] = [20]
+    if not natbeh:
+        fig_aDN2 = summarise_stim_resp(df_Dfd_aDN2, figure_params_aDN2, stim_resp_save=os.path.join(tmpdata_path, f"stim_resp_{pre_stim}_aDN2.pkl"),
+                                        overwrite=overwrite)
+    figure_params_aDN2["panel_size"] = (18,4)
+    figure_params_aDN2["mosaic"] = mosaic_nat_resp_panel
+    figure_params_aDN2["pres_fly"] = presentation_natbeh_flies["aDN2"]
+    figure_params_aDN2["pre_stim"] = None
+    if natbeh:
+        fig_aDN2_olfac = summarise_natbeh_resp(df_Dfd_aDN2, figure_params_aDN2, stim_resp_save=os.path.join(tmpdata_path, f"olfac_{pre_stim}_resp_aDN2.pkl"),
                                         overwrite=overwrite)
 
+    # PR
+    df_Dfd_PR = summarydf.get_selected_df(df, [{"GCaMP": "Dfd", "CsChrimson": "PR", "walkon": "ball"}])
+    figure_params_PR = figure_params.copy()
+    figure_params_PR["suptitle"] = f"control (no GAL4) response after {pre_stim.replace('_', ' ') if pre_stim is not None else None}ing"
+    figure_params_PR["pres_fly"] = presentation_flies["PR"]
+    figure_params_PR["response_beh_lim"] = response_beh_lims["PR"] if "presentation" in mode else None
+    if not natbeh:
+        fig_PR = summarise_stim_resp(df_Dfd_PR, figure_params_PR, stim_resp_save=os.path.join(tmpdata_path, f"stim_resp_{pre_stim}_PR.pkl"),
+                                        overwrite=overwrite)
+
+    if not natbeh:
         figs = [fig_DNp09, fig_aDN2, fig_MDN, fig_PR]
-        figs_natbeh = [fig_DNp09_natbeh, fig_aDN2_olfac, fig_MDN_natbeh]  # fig_aDN2_natbeh, 
-
-
-        with PdfPages(os.path.join(params.plot_base_dir, f"fig_func_summary_{pre_stim}_to_stim_{mode}.pdf")) as pdf:
+        with PdfPages(os.path.join(figures_path, f"fig_func_summary_{pre_stim}_to_stim_{mode}.pdf")) as pdf:
             _ = [pdf.savefig(fig, transparent=True) for fig in figs if fig is not None]
         _ = [plt.close(fig) for fig in figs if fig is not None]
-
-        with PdfPages(os.path.join(params.plot_base_dir, f"fig_func_summary_{pre_stim}_natbeh_{mode}.pdf")) as pdf:
+    else:
+        figs_natbeh = [fig_DNp09_natbeh, fig_aDN2_olfac, fig_MDN_natbeh]  # fig_aDN2_natbeh, 
+        with PdfPages(os.path.join(figures_path, f"fig_func_summary_{pre_stim}_natbeh_{mode}.pdf")) as pdf:
             _ = [pdf.savefig(fig, transparent=True) for fig in figs_natbeh if fig is not None]
         _ = [plt.close(fig) for fig in figs_natbeh if fig is not None]
-    else:
-        fig_DNp09_natbeh.savefig(os.path.join(params.plot_base_dir, f"fig_func_summary_{pre_stim}_DNp09natbeh_{mode}.pdf"), transparent=True)
+    
 
-def collect_data_stat_comparison_activation(all_fly_data, pre_stim="walk", overwrite=False):
-    overwrite = True
-    n_activated_file = os.path.join(params.plotdata_base_dir, f"n_activated_stats_{pre_stim}_to_stim.csv")
+def collect_data_stat_comparison_activation(all_fly_data, pre_stim="walk", overwrite=True, tmpdata_path=None):
+    if tmpdata_path is None:
+        tmpdata_path = params.plotdata_base_dir
+    n_activated_file = os.path.join(tmpdata_path, f"n_activated_stats_{pre_stim}_to_stim.csv")
     if not os.path.isfile(n_activated_file):
         active_df = pd.DataFrame(columns=["fly_id", "CsChrimson", "n_neurons", "n_active", "frac_active", "e_n_active", "e_f_active", 
                                           "n_deactive", "frac_deactive", "e_n_deactive", "e_f_deactive"])
@@ -710,13 +718,18 @@ def collect_data_stat_comparison_activation(all_fly_data, pre_stim="walk", overw
     
     active_df.to_csv(n_activated_file, index=False)
 
-def plot_stat_comparison_activation(pre_stim="walk"):
-    n_activated_file = os.path.join(params.plotdata_base_dir, f"n_activated_stats_{pre_stim}_to_stim.csv")
+def plot_stat_comparison_activation(pre_stim="walk", figures_path=None, tmpdata_path=None):
+    if figures_path is None:
+        figures_path = params.plot_base_dir
+    if tmpdata_path is None:
+        tmpdata_path = params.plotdata_base_dir
+    n_activated_file = os.path.join(tmpdata_path, f"n_activated_stats_{pre_stim}_to_stim.csv")
     active_df = pd.read_csv(n_activated_file)
 
-    fig, axs = plt.subplots(4,2, figsize=(9.5,16))
+    fig, axs = plt.subplots(1,3, figsize=(13,4))
 
-    for ax, var in zip(axs.flatten(), ["n_active", "e_n_active", "frac_active", "e_f_active", "n_deactive", "e_n_deactive", "frac_deactive", "e_f_deactive"]):
+    # ["n_active", "e_n_active", "frac_active", "e_f_active", "n_deactive", "e_n_deactive", "frac_deactive", "e_f_deactive"]
+    for ax, var in zip(axs.flatten(), ["n_active", "e_n_active", "frac_active"]):
 
         sns.barplot(ax=ax, data=active_df, x="CsChrimson", y=var, order=["DNp09", "aDN2", "MDN3", "PR"], hue="CsChrimson",
                     palette=[myplt.DARKCYAN, myplt.DARKGREEN, myplt.DARKRED, myplt.DARKGRAY], saturation=1, dodge=False, width=0.5, alpha=1)
@@ -725,13 +738,17 @@ def plot_stat_comparison_activation(pre_stim="walk"):
         ax.legend([], frameon=False)
     fig.tight_layout()
 
-    fig.savefig(os.path.join(params.plot_base_dir, f"fig_n_activated_stats_{pre_stim}_to_stim.pdf"))
+    fig.savefig(os.path.join(figures_path, f"fig_n_activated_stats_{pre_stim}_to_stim.pdf"))
 
     print(f"results of Mann-Whittney-U testing of each line agains control for {pre_stim} to stim")
     print("number of activated neurons:")
     print("DNp09 vs. control", mannwhitneyu(active_df["n_active"][active_df["CsChrimson"] == "DNp09"], active_df["n_active"][active_df["CsChrimson"] == "PR"]))
     print("aDN2 vs. control", mannwhitneyu(active_df["n_active"][active_df["CsChrimson"] == "aDN2"], active_df["n_active"][active_df["CsChrimson"] == "PR"]))
     print("MDN3 vs. control", mannwhitneyu(active_df["n_active"][active_df["CsChrimson"] == "MDN3"], active_df["n_active"][active_df["CsChrimson"] == "PR"]))
+    print("fraction of activated neurons:")
+    print("DNp09 vs. control", mannwhitneyu(active_df["frac_active"][active_df["CsChrimson"] == "DNp09"], active_df["frac_active"][active_df["CsChrimson"] == "PR"]))
+    print("aDN2 vs. control", mannwhitneyu(active_df["frac_active"][active_df["CsChrimson"] == "aDN2"], active_df["frac_active"][active_df["CsChrimson"] == "PR"]))
+    print("MDN3 vs. control", mannwhitneyu(active_df["frac_active"][active_df["CsChrimson"] == "MDN3"], active_df["frac_active"][active_df["CsChrimson"] == "PR"]))
     print("DFF sum of activated neurons:")
     print("DNp09 vs. control", mannwhitneyu(active_df["e_n_active"][active_df["CsChrimson"] == "DNp09"], active_df["e_n_active"][active_df["CsChrimson"] == "PR"]))
     print("aDN2 vs. control", mannwhitneyu(active_df["e_n_active"][active_df["CsChrimson"] == "aDN2"], active_df["e_n_active"][active_df["CsChrimson"] == "PR"]))
