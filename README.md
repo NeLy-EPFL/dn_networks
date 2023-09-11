@@ -1,4 +1,4 @@
-# dn_interactions: Repository holding the code for the paper "Networks of descending neurons transform command-like signals into population-based behavioral control"
+# dn_networks: Repository holding the code for the paper "Networks of descending neurons transform command-like signals into population-based behavioral control"
 
 Jonas Braun, Femke Hurtak, Sibo Wang-Chen, Pavan Ramdya 2023
 
