@@ -12,9 +12,9 @@ conda activate connectomics
 ```
 
 # Free parameters
-- All the parameters that are used in the analysis are stored in the `params.py` file. This file is used by all the other scripts to load the parameters. This includes the paths to the data and the parameters for the analysis.
-- All the parameters used for specific neurons used in this work are defined in the `neuron_params.py` file.
-- All the parameters used for plotting are defined in the `plot_params.py` file.
+- All the parameters that are used in the analysis are stored in the [`params.py` file](params.py). This file is used by all the other scripts to load the parameters. This includes the paths to the data and the parameters for the analysis.
+- All the parameters used for specific neurons used in this work are defined in the [`neuron_params.py`](neuron_params.py) file.
+- All the parameters used for plotting are defined in the [`plot_params.py`](plot_params.py) file.
 
 # Data
 
@@ -22,7 +22,10 @@ conda activate connectomics
 The raw data is taken from the FlyWire project (https://www.flywire.ai/). The data is not included in this repository, but can be downloaded from the FlyWire website (https://codex.flywire.ai/api/download).
 
 ## Preprocessed data
-The data is preprocessed using the `data_prep.py` script. This script takes the raw data and converts it to a format that is easier to work with. This dat is stored in the `data` folder as .pkl files. 
+The data is preprocessed using the [`data_prep.py` script](data_prep.py). This script takes the raw data and converts it to a format that is easier to work with. This dat is stored in the `data` folder as .pkl files. 
+
+## Supplementary data
+Please download Supplementary_Information_file_2.xlxs, distributed alongside the article and save it in the [`data` folder](data)
 
 ## Processed data
-To generate all the connectomics plots displayed in the paper, run the script `make_all_plots.py`. This script will generate all the plots and store them in the `figures` folder, along with the data used to generate the plots.
+To generate all the connectomics plots displayed in the paper, run the script [`make_all_plots.py`](make_all_plots.py). This script will generate all the plots and store them in the [`figures` folder](figures), along with the data used to generate the plots.
