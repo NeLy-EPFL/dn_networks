@@ -11,7 +11,7 @@ if __name__ == "__main__":
     os.makedirs(figures_path, exist_ok=True)
     tmpdata_path = os.path.join(Path(__file__).absolute().parent, "tmpdata")
     os.makedirs(tmpdata_path, exist_ok=True)
-    
+    """
     # Figure 2: Activation of command-like DNs recruits larger, distinct DN populations.
     fig_functional.summarise_all_stim_resp(pre_stim="walk", overwrite=False, mode="presentation", natbeh=False, figures_path=figures_path, tmpdata_path=tmpdata_path)
     fig_functional.summarise_all_stim_resp(pre_stim="walk", overwrite=False, mode="presentationsummary", natbeh=False, figures_path=figures_path, tmpdata_path=tmpdata_path)
@@ -25,7 +25,7 @@ if __name__ == "__main__":
     supfig_stim_powers.plot_stim_p_effect(figures_path=figures_path)
     bpn_mdn_control_fly_dirs = [os.path.join(params.other_data_dir, "220816_MDN3xCsChrimson_Fly5"), os.path.join(params.other_data_dir, "230125_BPNxCsChrimson_Fly1")]
     supfig_bpn_mdn.make_stim_loc_plots(figures_path=figures_path, fly_dirs=bpn_mdn_control_fly_dirs)
-
+    """
     # Supp. Figure 2: Comparison of GNG-DN population neural activity during optogenetic stimulation versus corresponding natural behaviors.
     fig_functional.summarise_all_stim_resp(pre_stim=None, overwrite=False, mode="presentation", natbeh=True, figures_path=figures_path, tmpdata_path=tmpdata_path)
     fig_functional.summarise_all_stim_resp(pre_stim=None, overwrite=False, mode="pdf", natbeh=False, figures_path=figures_path, tmpdata_path=tmpdata_path, compute_only=True)

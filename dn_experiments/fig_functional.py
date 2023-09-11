@@ -654,7 +654,7 @@ def summarise_all_stim_resp(pre_stim="walk", overwrite=False, mode="pdf", natbeh
     figure_params_aDN2["pres_fly"] = presentation_natbeh_flies["aDN2"]
     figure_params_aDN2["pre_stim"] = None
     if natbeh:
-        fig_aDN2_olfac = summarise_natbeh_resp(df_Dfd_aDN2, figure_params_aDN2, stim_resp_save=os.path.join(tmpdata_path, f"olfac_None_resp_aDN2.pkl"),
+        fig_aDN2_olfac = summarise_natbeh_resp(df_Dfd_aDN2, figure_params_aDN2, stim_resp_save=os.path.join(tmpdata_path, f"natbeh_None_resp_aDN2.pkl"),
                                         overwrite=overwrite)
 
     # PR
