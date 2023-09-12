@@ -2,16 +2,11 @@
 
 **Installation:**
 
-Create and activate a new conda environment, install numpy:
-- ```conda create -n twoppp37 python=3.7```
-- ```conda activate twoppp37```
-- ```pip install numpy```
+Create and activate a new conda environment, with the twoppp package inside:
+- Follow the instractions to download and install the [twoppp package](https://github.com/NeLy-EPFL/twoppp)
 
-Clone and install th dn_interactions repository:
+Clone this repository:
 - ```git clone https://github.com/NeLy-EPFL/dn_networks```
-- ```cd dn_networks```
-- ```pip install -e .```
-- fix numpy installation: ```pip install numpy --upgrade```
 
 **Downloading all data:**
 Please download all files from the respsective Dataset on [Harvard Dataverse](https://dataverse.harvard.edu/dataverse/dn_networks) as follows:
