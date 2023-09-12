@@ -8,13 +8,13 @@ with open("requirements.txt", "r") as f:
     requirements = [l for l in requirements if not l.startswith('#')]
 
 setup(
-    name="DN_population_analysis",
+    name="DN_network_analysis",
     version="0.1",
     packages=["dn_experiments","dn_connectomics"],
-    author="Jonas Braun, Femke Hurtak, Sibo Wang-Chen",
-    author_email="jonas.braun@epfl.ch, femke.hurtak@epfl.ch, sibo.wang@epfl.ch",
+    author="Jonas Braun, Femke Hurtak, Sibo Wang-Chen, Pavan Ramdya",
+    author_email="jonas.braun@epfl.ch, femke.hurtak@epfl.ch, sibo.wang@epfl.ch, pavan.ramdya@epfl.ch",
     description="Code for preprocessing and analysis of the data published in Braun et al. 2023",
-    long_description=long_description,
+    long_description="",
     long_description_content_type="text/markdown",
     url="https://github.com/NeLy-EPFL/dn_networks.git",
     python_requires='>=3.7, <3.10',
