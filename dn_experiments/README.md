@@ -7,7 +7,7 @@ Create and activate a new conda environment
 - ```conda activate twoppp37```
 Clone and install th dn_interactions repository:
 - ```git clone https://github.com/NeLy-EPFL/dn_networks```
-- ```cd dn_interations```
+- ```cd dn_networks```
 - ```pip install -e .```
 - fix numpy installation: ```pip install numpy --upgrade```
 
