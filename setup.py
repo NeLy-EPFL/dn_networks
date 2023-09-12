@@ -18,5 +18,5 @@ setup(
     long_description_content_type="text/markdown",
     url="https://github.com/NeLy-EPFL/dn_networks.git",
     python_requires='>=3.7, <3.10',
-    # install_requires=requirements,
+    install_requires=requirements,
 )
