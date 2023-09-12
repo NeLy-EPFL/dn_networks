@@ -1,3 +1,7 @@
+"""
+Module to analyse headless experiments.
+Author: jonas.braun@epfl.ch
+"""
 import os
 import sys
 
@@ -30,6 +34,18 @@ mosaic_headless_summary_panel = """
 """
 
 def get_one_fly_headless_panel(fig, axd, fly_data, figure_params):
+    """
+    Generate a panel for a single fly's behavioral response and add it to the figure.
+
+    Args:
+        fig (matplotlib.figure.Figure): The figure to which the panel should be added.
+        axd (dict): A dictionary of subplot axes where the panel should be placed.
+        fly_data (dict): Data for a single fly.
+        figure_params (dict): Parameters for configuring the panel's appearance.
+
+    Returns:
+        None
+    """
     if figure_params["allflies_only"]:
         if fly_data['fly_df'].CsChrimson.values[0] == "PR":
             response_name = f"__ > CsChrimson"
@@ -72,6 +88,19 @@ def get_one_fly_headless_panel(fig, axd, fly_data, figure_params):
 
 
 def summarise_headless(exp_df, figure_params, headless_save=None, overwrite=False):
+    """
+    Summarize and visualize behavioral responses of multiple flies and add them to a figure.
+
+    Args:
+        exp_df (pandas.DataFrame): DataFrame containing experimental data for multiple flies.
+        figure_params (dict): Parameters for configuring the appearance of the summary figure.
+        headless_save (str): Path to save the temporary data as a pickle file.
+        overwrite (bool): If True, overwrite the existing temporary data file.
+
+    Returns:
+        matplotlib.figure.Figure: The generated figure containing behavioral response panels.
+    """
+
     base_fly_data = {
         "fly_df": None,
         "fly_id": None,
@@ -168,6 +197,18 @@ def summarise_headless(exp_df, figure_params, headless_save=None, overwrite=Fals
 
 
 def summarise_all_headless(overwrite=False, allflies_only=True, tmpdata_path=None, figures_path=None):
+    """
+    Summarize and visualize behavioral responses of multiple fly genotypes and save them as a PDF.
+
+    Args:
+        overwrite (bool): If True, overwrite existing temporary data files.
+        allflies_only (bool): If True, generate a summary for all flies.
+        tmpdata_path (str): Path to the temporary data directory.
+        figures_path (str): Path to the directory where PDF figures will be saved.
+
+    Returns:
+        None
+    """
     if tmpdata_path is None:
         tmpdata_path = params.plotdata_base_dir
     if figures_path is None:
@@ -282,6 +323,21 @@ def summarise_all_headless(overwrite=False, allflies_only=True, tmpdata_path=Non
     _ = [plt.close(fig) for fig in figs]
 
 def test_stats_pre_post(all_flies, i_beh, GAL4, beh_name, var_name="v", i_0=500, i_1=750):
+    """
+    Perform statistical tests on behavioral data before and after decapitation.
+
+    Args:
+        all_flies (list): List of fly data dictionaries.
+        i_beh (int): Index of the behavioral class to compare.
+        GAL4 (str): GAL4 genotype identifier.
+        beh_name (str): Name of the behavior being analyzed.
+        var_name (str): Name of the behavioral variable.
+        i_0 (int): Start index for the time window of comparison. 
+        i_1 (int): End index for the time window of comparison.
+
+    Returns:
+        None
+    """
     v_pre = []
     v_pre_paired = []
     p_pre = []
@@ -317,6 +373,20 @@ def test_stats_pre_post(all_flies, i_beh, GAL4, beh_name, var_name="v", i_0=500,
         print(f"{GAL4} {beh_name} beh class pre (n={len(p_pre_paired)}) post (n={len(p_post_paired)}). {i_0}-{i_1}: on flies ", mannwhitneyu(p_pre_paired, p_post_paired))
 
 def test_stats_beh_control(all_flies, all_flies_control, GAL4, beh_name, i_0=500, i_1=750):
+    """
+    Perform statistical tests comparing the behavioral responses of a group of flies to a control group.
+
+    Args:
+        all_flies (list): List of fly data dictionaries for the experimental group.
+        all_flies_control (list): List of fly data dictionaries for the control group.
+        GAL4 (str): GAL4 genotype identifier.
+        beh_name (str): Name of the behavior being analyzed.
+        i_0 (int): Start index for the time window of interest.
+        i_1 (int): End index for the time window of interest.
+
+    Returns:
+        None
+    """
     beh = []
     beh_paired = []
     beh_control = []
@@ -337,6 +407,15 @@ def test_stats_beh_control(all_flies, all_flies_control, GAL4, beh_name, i_0=500
     print(f"{GAL4} (n={len(beh_paired)}) vs. control (n={len(beh_control_paired)}) {beh_name}. {i_0}-{i_1}: on flies", mannwhitneyu(beh_paired, beh_control_paired))
 
 def headless_stat_test(tmpdata_path=None):
+    """
+    Perform statistical tests on behavioral data for different fly genotypes and experimental conditions.
+
+    Args:
+        tmpdata_path (str): Path to the directory containing temporary data files.
+
+    Returns:
+        None
+    """
     if tmpdata_path is None:
         tmpdata_path = params.predictionsdata_base_dir
     headless_files = {

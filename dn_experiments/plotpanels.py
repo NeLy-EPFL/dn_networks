@@ -1,3 +1,7 @@
+"""
+Module for generating a specific plot on one matplotlib axis.
+Author: jonas.braun@epfl.ch
+"""
 import os
 import sys
 import numpy as np
@@ -16,6 +20,12 @@ mpl.rcParams['axes.labelsize'] = 16
 mpl.rcParams['axes.labelpad'] = 5
 
 def make_nice_spines(ax):
+    """
+    Adjusts the spines and ticks of a matplotlib axis to create a clean plot.
+
+    Args:
+        ax (matplotlib.axes.Axes): The axis to adjust.
+    """
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)
     ax.spines['left'].set_position(('outward', 2*linewidth))
@@ -29,7 +39,22 @@ def make_nice_spines(ax):
     ax.spines["right"].set_linewidth(0)
 
 def plot_ax_behavioural_response(beh_responses, response_name=None, response_ylabel=None, ax=None, beh_responses_2=None, beh_response_2_color=myplt.BLACK, x="2p", ylim=None):
+    """
+    Plots behavioral response data on axis. Plots mean and 95% confidence interval.
 
+    Args:
+        beh_responses (numpy.ndarray): Behavioral response data.
+        response_name (str): Name of the behavioral response. Will be the title.
+        response_ylabel (str): Label for the y-axis.
+        ax (matplotlib.axes.Axes, optional): The axis to plot on. If not provided, the current axis will be used.
+        beh_responses_2 (numpy.ndarray, optional): Additional behavioral response data. Can be used to contrast 2 responses
+        beh_response_2_color (str, optional): Color for the second behavioral response. The first one will be black
+        x (str, optional): Specifies the x-axis values, i.e. which time vector should be used ("2p" or "beh").
+        ylim (list, optional): Limits for the y-axis.
+
+    Returns:
+        matplotlib.axes.Axes: The axis on which the data is plotted.
+    """
     ax = plt.gca() if ax is None else ax
     if x == "2p":
         response_t_params = params.response_t_params_2p
@@ -63,6 +88,17 @@ def plot_ax_behavioural_response(beh_responses, response_name=None, response_yla
 
 
 def plot_ax_allneurons_response(stim_responses, response_ylabel=None, ax=None):
+    """
+    Plots responses of all neurons as lines overlaid on top of each other.
+
+    Args:
+        stim_responses (numpy.ndarray): Neuronal response data.
+        response_ylabel (str): Label for the y-axis.
+        ax (matplotlib.axes.Axes, optional): The axis to plot on. If not provided, the current axis will be used.
+
+    Returns:
+        matplotlib.axes.Axes: The axis on which the data is plotted.
+    """
     ax = plt.gca() if ax is None else ax
     x = np.arange(np.sum(params.response_t_params_2p))/params.fs_int-params.response_t_params_2p_label[0]
     stim_response = np.mean(stim_responses, axis=-1)
@@ -83,6 +119,21 @@ def plot_ax_allneurons_response(stim_responses, response_ylabel=None, ax=None):
 
 
 def plot_ax_allneurons_confidence(stim_responses, clim=None, sort_ind=None, cmap=params.cmap_ci, ax=None, ylabel="Annotated neurons", title="|mean| > CI"):
+    """
+    Plots a map showing neuronal responses over time of all neurons. Only shows 'confident' responses.
+
+    Args:
+        stim_responses (numpy.ndarray): Neuronal response data.
+        clim (list, optional): Color limit for the plot.
+        sort_ind (numpy.ndarray, optional): Indices for sorting the neurons.
+        cmap (matplotlib.colors.Colormap, optional): Colormap for the plot.
+        ax (matplotlib.axes.Axes, optional): The axis to plot on. If not provided, the current axis will be used.
+        ylabel (str, optional): Label for the y-axis.
+        title (str, optional): Title for the plot.
+
+    Returns:
+        matplotlib.axes.Axes: The axis on which the data is plotted.
+    """
     ax = plt.gca() if ax is None else ax
     stim_response = np.mean(stim_responses, axis=-1)
 
@@ -109,23 +160,63 @@ def plot_ax_allneurons_confidence(stim_responses, clim=None, sort_ind=None, cmap
     
 
 def plot_ax_cbar(fig, ax, clim, cmap=params.cmap_ci, clabel=None):
+    """
+    Plots a colorbar for neuronal response values values.
+
+    Args:
+        fig (matplotlib.figure.Figure): The figure to which the colorbar will be added.
+        ax (matplotlib.axes.Axes): The axis to which the colorbar will be added.
+        clim (list): Color limit for the colorbar.
+        cmap (matplotlib.colors.Colormap, optional): Colormap for the colorbar.
+        clabel (str, optional): Label for the colorbar.
+
+    Returns:
+        None
+    """
     cbar1 = fig.colorbar(mpl.cm.ScalarMappable(norm=mpl.colors.NoNorm(), cmap=cmap), cax=ax,
                          ticks=np.linspace(0,255, 3), label=clabel)
     cbar1.set_ticklabels([f"{-clim:.1f}", 0, f"{clim:.1f}"])
     cbar1.outline.set_visible(False)
-    # cbar1.spines["right"].set_linewidth(2)
     cbar1.outline.set_linewidth(2)
     cbar1.ax.tick_params(width=2.5)
     cbar1.ax.tick_params(length=5)
     cbar1.ax.tick_params(labelsize=16)
 
-# plot_responses_summary_on_ax
 def plot_ax_response_summary(background_image, roi_centers, ax, 
                    response_values=None, response_values_left=None, response_values_right=None,
                    min_dot_size=params.map_min_dot_size, max_dot_size=params.map_max_dot_size,
                    min_dot_alpha=params.map_min_dot_alpha, max_dot_alpha=params.map_max_dot_alpha,
                    norm_name="", response_name="", response_name_left="", response_name_right="", fly_name="",
                    cmap=params.map_cmap_dft, crop_x=params.map_crop_x, q_max=params.map_q_max, clim=None, title=None):
+    """
+    Plots a response summary: circles visualising the response for each neuron overlaid over a background image.
+    Can be two half-circles to compare to different responses.
+
+    Args:
+        background_image (numpy.ndarray): Background image for plotting.
+        roi_centers (list): List of ROI centers.
+        ax (matplotlib.axes.Axes): The axis to plot on.
+        response_values (numpy.ndarray, optional): Response values to show full circles.
+        response_values_left (numpy.ndarray, optional): Left response values to show half circles.
+        response_values_right (numpy.ndarray, optional): Right response values to show half circles.
+        min_dot_size (int, optional): Minimum dot size for plotting.
+        max_dot_size (int, optional): Maximum dot size for plotting.
+        min_dot_alpha (float, optional): Minimum dot alpha (transparency) for plotting.
+        max_dot_alpha (float, optional): Maximum dot alpha (transparency) for plotting.
+        norm_name (str, optional): Name of the normalization.
+        response_name (str, optional): Name of the response.
+        response_name_left (str, optional): Name of the left response.
+        response_name_right (str, optional): Name of the right response.
+        fly_name (str, optional): Name of the fly.
+        cmap (matplotlib.colors.Colormap, optional): Colormap for the plot.
+        crop_x (int, optional): Value for cropping the x-axis.
+        q_max (float, optional): Maximum quantile for color limit calculation.
+        clim (list, optional): Color limits for the plot.
+        title (str, optional): Title for the plot.
+
+    Returns:
+        matplotlib.axes.Axes: The axis on which the data is plotted.
+    """
     ax.imshow(background_image, cmap=plt.cm.binary, clim=[np.quantile(background_image, 0.01), np.quantile(background_image, 0.99)])
     
     if clim is not None:
@@ -181,13 +272,28 @@ def plot_ax_response_summary(background_image, roi_centers, ax,
                     cmap=cmap[1], norm=cnorm)
             ax.set_title(f"{norm_name.upper()} response to {response_name_left} (left) and {response_name_right} (right)\n{fly_name}" if title is None else title)
 
-    # ax.set_ylim([250,50])
     ax.set_xlim([crop_x,background_image.shape[1]-crop_x])
     ax.axis("off")
     return ax
 
 def plot_ax_multi_fly_response_density(roi_centers, response_values, background_image, ax, n_flies=None, clim=[-1,1],
                                        cmap=params.map_cmap_dft, crop_x=params.map_crop_x):
+    """
+    Plots the smoothed response density of multiple flies.
+
+    Args:
+        roi_centers (list): List of ROI centers.
+        response_values (numpy.ndarray): Response values.
+        background_image (numpy.ndarray): Background image for plotting.
+        ax (matplotlib.axes.Axes): The axis to plot on.
+        n_flies (int, optional): Number of flies.
+        clim (list, optional): Color limits for the plot.
+        cmap (matplotlib.colors.Colormap, optional): Colormap for the plot.
+        crop_x (int, optional): Value for cropping the x-axis.
+
+    Returns:
+        matplotlib.axes.Axes: The axis on which the data is plotted.
+    """
     ax = plt.gca() if ax is None else ax
     ax.imshow(background_image, cmap=plt.cm.binary, clim=[np.quantile(background_image, 0.01), np.quantile(background_image, 0.99)])
 
@@ -204,9 +310,7 @@ def plot_ax_multi_fly_response_density(roi_centers, response_values, background_
         response_img_filt /= n_flies
 
     ax.imshow(response_img_filt, clim=[-clim,clim], cmap=cmap)
-    # ax.set_xlim([crop_x,background_image.shape[1]-crop_x])
-    
-    # ax.axis("off")
+
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)
     ax.spines['bottom'].set_visible(False)
@@ -216,20 +320,31 @@ def plot_ax_multi_fly_response_density(roi_centers, response_values, background_
     ax.set_ylabel("density")
 
 def plot_ax_behclass(labels, ax=None, cmap=behaviour.beh_cmap, cnorm=behaviour.beh_cnorm, dy=0.1, xlabel="Time (s)", ylabel=""):
+    """
+    Plots behavioral class labels over time as boxes. Each row represents one trial.
+
+    Args:
+        labels (numpy.ndarray): Behavioral class labels.
+        ax (matplotlib.axes.Axes, optional): The axis to plot on. If not provided, the current axis will be used.
+        cmap (matplotlib.colors.Colormap, optional): Colormap for the plot.
+        cnorm (matplotlib.colors.Normalize, optional): Normalize instance for colormap.
+        dy (float, optional): Vertical offset for the behavioral class labels.
+        xlabel (str, optional): Label for the x-axis.
+        ylabel (str, optional): Label for the y-axis.
+
+    Returns:
+        matplotlib.axes.Axes: The axis on which the data is plotted.
+    """
     ax = plt.gca() if ax is None else ax
     x = np.arange(np.sum(params.response_t_params_beh))/params.fs_beh-params.response_t_params_2p_label[0]
 
     labels = labels.T
-    # def plot_behaviour_classes(labels, x=None, classes=None, ):
     if len(labels.shape) == 1:
         labels = np.expand_dims(labels, axis=0)
     N_rep, N_s = labels.shape
     x = np.arange(N_s) if x is None else x
     dx = np.mean(np.diff(x))
     
-    # if cnorm is None:
-    #     bounds = np.linspace(-0.5, len(classes)-0.5, len(classes)+1)
-    #     cnorm =  mpl.colors.BoundaryNorm(bounds, ncolors=256)
     cmap = plt.cm.get_cmap(cmap) if (cmap is None or isinstance(cmap, str)) else cmap
     
     for i_rep in range(N_rep):
@@ -252,6 +367,23 @@ def plot_ax_behclass(labels, ax=None, cmap=behaviour.beh_cmap, cnorm=behaviour.b
 
 def plot_ax_behprob(labels, ax=None, cmap=behaviour.beh_cmaplist.copy(), beh_mapping=behaviour.beh_mapping.copy(),
                     collapse_groom=behaviour.collapse_groom, xlabel="Time (s)", ylabel="Behaviour\nprobability", labels_2=None, beh_2=None):
+    """
+    Plots behavioral probabilities over time.
+
+    Args:
+        labels (numpy.ndarray): Behavioral classes. Will be averaged across trials to compute probabilities.
+        ax (matplotlib.axes.Axes, optional): The axis to plot on. If not provided, the current axis will be used.
+        cmap (list or matplotlib.colors.Colormap, optional): Colormap for the plot.
+        beh_mapping (list, optional): Mapping of behavior labels.
+        collapse_groom (bool, optional): Whether to collapse grooming behaviors.
+        xlabel (str, optional): Label for the x-axis.
+        ylabel (str, optional): Label for the y-axis.
+        labels_2 (numpy.ndarray, optional): Additional behavioral probabilities.
+        beh_2 (numpy.ndarray, optional): Additional behavioral labels.
+
+    Returns:
+        matplotlib.axes.Axes: The axis on which the data is plotted.
+    """
     ax = plt.gca() if ax is None else ax
     x = np.arange(np.sum(params.response_t_params_beh))/params.fs_beh-params.response_t_params_2p_label[0]
     if labels is None or np.all(np.isnan(labels)):
@@ -298,6 +430,5 @@ def plot_ax_behprob(labels, ax=None, cmap=behaviour.beh_cmaplist.copy(), beh_map
     ax.set_ylim([-0.01,1.01])
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
-    # ax.set_title("behaviour classes")
 
     make_nice_spines(ax)

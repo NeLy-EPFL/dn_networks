@@ -1,4 +1,7 @@
-
+"""
+Module to generate figures related to functional imaging during optogenetic stimulation.
+Author: jonas.braun@epfl.ch
+"""
 import os
 import sys
 
@@ -85,6 +88,18 @@ BBBBBBBBBBBBBBBB.NNNNNNNNMMMMMMMML...SSSSSSSSSSSSSSSSSSSSSSSS
 """
 
 def align_roi_centers(roi_centers, x_target=[50,736-50], y_target=[25,320-25]):
+    """
+    Aligns the ROI centers to a target coordinate system defined by `x_target` and `y_target`.
+    Considers the two most dorsal/ventral neurons for y axis alignment and the two most lateral neurons for x-axis alignment.
+
+    Parameters:
+        roi_centers (numpy.ndarray): A 2D numpy array containing ROI centers as (y, x) coordinates.
+        x_target (list): Target x-coordinate range for alignment. Defaults to [50, 686].
+        y_target (list): Target y-coordinate range for alignment. Defaults to [25, 295].
+
+    Returns:
+        numpy.ndarray: Aligned ROI centers.
+    """
     roi_centers = np.array(roi_centers)
     if not roi_centers.size: # empty array
         return roi_centers
@@ -106,6 +121,18 @@ def align_roi_centers(roi_centers, x_target=[50,736-50], y_target=[25,320-25]):
     return roi_centers_corr
 
 def get_one_fly_stim_resp_panel(fig, axd, fly_data, figure_params):
+    """
+    Generates a panel of plots related to stimulation response for a single fly.
+
+    Parameters:
+        fig (matplotlib.figure.Figure): The matplotlib figure to which the plots will be added.
+        axd (dict): A dictionary of axes for different subplots.
+        fly_data (dict): Data for the fly.
+        figure_params (dict): Parameters for configuring the figure.
+
+    Returns:
+        None
+    """
     clim = fly_data["clim"] if figure_params["response_clim"] is None else figure_params["response_clim"]
 
     if figure_params["mode"] == "presentation":
@@ -143,6 +170,18 @@ def get_one_fly_stim_resp_panel(fig, axd, fly_data, figure_params):
         title=summary_title)
 
 def get_one_fly_nat_resp_panel(fig, axd, fly_data, figure_params):
+    """
+    Generates a panel of plots to compare stimulation respones and natural behavior response for a single fly.
+
+    Parameters:
+        fig (matplotlib.figure.Figure): The matplotlib figure to which the plots will be added.
+        axd (dict): A dictionary of axes for different subplots.
+        fly_data (dict): Data for the fly.
+        figure_params (dict): Parameters for configuring the figure.
+
+    Returns:
+        None
+    """
     clim = fly_data["clim"] if figure_params["response_clim"] is None else figure_params["response_clim"]
 
     beh_name = figure_params['trigger_2'].split('_')[0]
@@ -202,6 +241,18 @@ def get_one_fly_nat_resp_panel(fig, axd, fly_data, figure_params):
         q_max=figure_params["response_q_max"], clim=clim)
 
 def summarise_stim_resp(exp_df, figure_params, stim_resp_save=None, overwrite=False):
+    """
+    Summarize neural responses and behavioral data for multiple flies during stimulus-triggered averaging.
+
+    Parameters:
+        exp_df (pandas.DataFrame): Dataframe containing information about the experiments and flies.
+        figure_params (dict): A dictionary containing various figure parameters and settings.
+        stim_resp_save (str, optional): Path to save/load cached data. Default is None.
+        overwrite (bool, optional): Whether to overwrite cached data if it exists. Default is False.
+
+    Returns:
+        matplotlib.figure.Figure: The generated summary figure.
+    """
     if stim_resp_save is None:
         tmpdata_path = None
     else:
@@ -384,6 +435,18 @@ def summarise_stim_resp(exp_df, figure_params, stim_resp_save=None, overwrite=Fa
 
 
 def summarise_natbeh_resp(exp_df, figure_params, stim_resp_save=None, overwrite=False):
+    """
+    Summarize neural responses and behavioral data for multiple flies during optogenetic stimulation with natural behaviors.
+
+    Parameters:
+        exp_df (pandas.DataFrame): Dataframe containing information about the experiments and flies.
+        figure_params (dict): A dictionary containing various figure parameters and settings.
+        stim_resp_save (str, optional): Path to save/load cached data. Default is None.
+        overwrite (bool, optional): Whether to overwrite cached data if it exists. Default is False.
+
+    Returns:
+        matplotlib.figure.Figure: The generated summary figure.
+    """
     if stim_resp_save is not None and os.path.isfile(stim_resp_save) and not overwrite:
         with open(stim_resp_save, "rb") as f:
             all_fly_data = pickle.load(f)
@@ -552,6 +615,21 @@ def summarise_natbeh_resp(exp_df, figure_params, stim_resp_save=None, overwrite=
 
 
 def summarise_all_stim_resp(pre_stim="walk", overwrite=False, mode="pdf", natbeh=False, figures_path=None, tmpdata_path=None, compute_only=False):
+    """
+    Summarize all neuronal and behavioural responses for flies from multiple genotypes.
+
+    Parameters:
+        pre_stim (str, optional): The type of pre-stimulus behavior to consider. Default is "walk".
+        overwrite (bool, optional): Whether to overwrite cached data if it exists. Default is False.
+        mode (str, optional): The mode for generating summary figures (e.g., "pdf"). Default is "pdf".
+        natbeh (bool, optional): Whether to include natural behavior data. Default is False.
+        figures_path (str, optional): Path to save generated figures. Default is None.
+        tmpdata_path (str, optional): Path to save/load cached data. Default is None.
+        compute_only (bool, optional): Whether to compute summary data only without generating figures. Default is False.
+
+    Returns:
+        None
+    """
     if figures_path is None:
         figures_path = params.plot_base_dir
     if tmpdata_path is None:
@@ -680,6 +758,18 @@ def summarise_all_stim_resp(pre_stim="walk", overwrite=False, mode="pdf", natbeh
     
 
 def collect_data_stat_comparison_activation(all_fly_data, pre_stim="walk", overwrite=True, tmpdata_path=None):
+    """
+    Collect and summarize data for statistical comparison of neural activation.
+
+    Parameters:
+        all_fly_data (list): A list of dictionaries, each containing data for one fly.
+        pre_stim (str, optional): The type of pre-stimulus behavior to consider. Default is "walk".
+        overwrite (bool, optional): Whether to overwrite cached data if it exists. Default is True.
+        tmpdata_path (str, optional): Path to store temporary data. Default is None.
+
+    Returns:
+        None
+    """
     if tmpdata_path is None:
         tmpdata_path = params.plotdata_base_dir
     n_activated_file = os.path.join(tmpdata_path, f"n_activated_stats_{pre_stim}_to_stim.csv")
@@ -719,6 +809,17 @@ def collect_data_stat_comparison_activation(all_fly_data, pre_stim="walk", overw
     active_df.to_csv(n_activated_file, index=False)
 
 def plot_stat_comparison_activation(pre_stim="walk", figures_path=None, tmpdata_path=None):
+    """
+    Generate statistical comparison plots for neural activation during pre-stimulus behavior.
+
+    Parameters:
+        pre_stim (str, optional): The type of pre-stimulus behavior to consider. Default is "walk".
+        figures_path (str, optional): Path to save generated figures. Default is None.
+        tmpdata_path (str, optional): Path to store temporary data. Default is None.
+
+    Returns:
+        None
+    """
     if figures_path is None:
         figures_path = params.plot_base_dir
     if tmpdata_path is None:

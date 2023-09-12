@@ -1,5 +1,6 @@
-"""[summary]
-loading data from file
+"""
+loading data from files
+Author: jonas.braun@epfl.ch
 """
 import os
 import sys
@@ -16,7 +17,22 @@ import params, behaviour, baselines, stimulation, motionenergy  # , sleap
 
 def get_background_image(fly_dir, background_crop=params.background_crop, background_key=params.background_key,
                          background_sigma=params.background_sigma, background_med=params.background_med, force_new_background=False):
-    # print("load and process background image")
+    """
+    Load and process the background image for a fly's data directory.
+    For data downloaded from Harvard dataverse, this will load the "background_image.tif" file instead of newly computing it.
+    It can be forced to calculate a new background.
+
+    Args:
+        fly_dir (str): The directory containing the fly's data.
+        background_crop (tuple): Cropping parameters for the background image.
+        background_key (str): Key for the background image in summary statistics.
+        background_sigma (float): Sigma for Gaussian smoothing of the background image.
+        background_med (int): Size of the median filter for the background image.
+        force_new_background (bool): Force recomputation of the background image instead of loading saved background image.
+
+    Returns:
+        background (numpy.ndarray): Processed background image.
+    """
     if os.path.isfile(os.path.join(fly_dir, load.PROCESSED_FOLDER, "background_image.tif")) and not force_new_background:
         background = utils.get_stack(os.path.join(fly_dir, load.PROCESSED_FOLDER, "background_image.tif"))
         print("loading pre-computed background image. Params are not applied.")
@@ -38,6 +54,15 @@ def get_background_image(fly_dir, background_crop=params.background_crop, backgr
     return background
 
 def get_roi_centers(fly_dir):
+    """
+    Load ROI centers from a file in a fly's data directory.
+
+    Args:
+        fly_dir (str): The directory containing the fly's data.
+
+    Returns:
+        roi_centers (list): List of ROI centers.
+    """
     try:
         roi_centers = rois.read_roi_center_file(os.path.join(fly_dir, load.PROCESSED_FOLDER, "ROI_centers.txt"))
     except FileNotFoundError:
@@ -46,6 +71,19 @@ def get_roi_centers(fly_dir):
     return roi_centers 
 
 def get_filtered_twop_df(fly_dir, all_trial_dirs, neurons_med=params.neurons_med, neurons_sigma=params.neurons_sigma, neurons_filt_regex=params.neurons_filt_regex):
+    """
+    Load and filter Two-Photon (2P) data for a fly's data directory.
+
+    Args:
+        fly_dir (str): The directory containing the fly's data.
+        all_trial_dirs (list): List of trial directories.
+        neurons_med (int): Size of the median filter for neuronal signal data.
+        neurons_sigma (float): Sigma for Gaussian smoothing of neuronal signal data.
+        neurons_filt_regex (str): Regular expression for filtering neuron data. Will be used as keys in the twop_df.
+
+    Returns:
+        twop_df (pandas.DataFrame): Filtered 2P data DataFrame.
+    """
     twop_dfs = []
     for i_trial, trial_dir in enumerate(all_trial_dirs):
         if not os.path.isdir(trial_dir):
@@ -68,6 +106,19 @@ def get_filtered_twop_df(fly_dir, all_trial_dirs, neurons_med=params.neurons_med
     return twop_df
 
 def get_beh_df_with_me(fly_dir, all_trial_dirs, q_me=params.q_me, add_sleap=True, add_me=False):
+    """
+    Load behavior data with optional motion energy (ME) computation and SLEAP predictions.
+
+    Args:
+        fly_dir (str): The directory containing the fly's data.
+        all_trial_dirs (list): List of trial directories.
+        q_me (float): Quantile for normalizing motion energy.
+        add_sleap (bool): Add SLEAP predictions to behavior data.
+        add_me (bool): Add motion energy to behavior data.
+
+    Returns:
+        beh_df (pandas.DataFrame): Behavior data DataFrame.
+    """
     beh_dfs = []
     for i_trial, trial_dir in enumerate(all_trial_dirs):
         if not os.path.isdir(trial_dir):
@@ -107,7 +158,21 @@ def get_beh_df_with_me(fly_dir, all_trial_dirs, q_me=params.q_me, add_sleap=True
 
 
 def load_process_data(fly_dir, all_trial_dirs, twop_df_save_name=params.twop_df_save_name, beh_df_save_name=params.beh_df_save_name, load_twop=True):
-    
+    """
+    Load and process data for a fly's data directory, including 2P data and behavior data.
+    Low level interface only to be used internally.
+
+    Args:
+        fly_dir (str): The directory containing the fly's data.
+        all_trial_dirs (list): List of trial directories.
+        twop_df_save_name (str): Filename for saving the filtered 2P data.
+        beh_df_save_name (str): Filename for saving the behavior data.
+        load_twop (bool): Whether to load 2P data of beh_df only.
+
+    Returns:
+        twop_df (pandas.DataFrame): Filtered 2P data DataFrame.
+        beh_df (pandas.DataFrame): Behavior data DataFrame.
+    """
     if load_twop:
         beh_df = get_beh_df_with_me(fly_dir=fly_dir, all_trial_dirs=all_trial_dirs, add_sleap=True, add_me=True)
         twop_df = get_filtered_twop_df(fly_dir=fly_dir, all_trial_dirs=all_trial_dirs)
@@ -138,6 +203,19 @@ def load_process_data(fly_dir, all_trial_dirs, twop_df_save_name=params.twop_df_
         return beh_df
 
 def load_data(fly_dir, all_trial_dirs, overwrite=False):
+    """
+    Load 2P and behavior data for a fly's data directory.
+    High level interface also for external use.
+
+    Args:
+        fly_dir (str): The directory containing the fly's data.
+        all_trial_dirs (list): List of trial directories.
+        overwrite (bool): Whether to overwrite existing data files.
+
+    Returns:
+        twop_df (pandas.DataFrame): Filtered 2P data DataFrame.
+        beh_df (pandas.DataFrame): Behavior data DataFrame.
+    """
     FILE_PRESENT = False
     if FILE_PRESENT and not overwrite:
         twop_df = None
@@ -146,6 +224,18 @@ def load_data(fly_dir, all_trial_dirs, overwrite=False):
         return load_process_data(fly_dir, all_trial_dirs, load_twop=True)
 
 def load_beh_data_only(fly_dir, all_trial_dirs, overwrite=False):
+    """
+    Load behavior data (without 2P data) for a fly's data directory.
+    High level interface to also be used externally.
+
+    Args:
+        fly_dir (str): The directory containing the fly's data.
+        all_trial_dirs (list): List of trial directories.
+        overwrite (bool): Whether to overwrite existing data files.
+
+    Returns:
+        beh_df (pandas.DataFrame): Behavior data DataFrame.
+    """
     FILE_PRESENT = False
     if FILE_PRESENT and not overwrite:
         beh_df = None

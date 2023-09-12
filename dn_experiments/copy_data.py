@@ -1,6 +1,7 @@
 """
 This file contains functions used to copy and compress data in order to prepare it for the upload to Harvard Dataverse.
-It also contains functions to re-arrange the data to a consistent folder structure after downloading it from Harvard Dataverse.
+It also contains functions to decompress and re-arrange the data to a consistent folder structure after downloading it from Harvard Dataverse.
+Author: jonas.braun@epfl.ch
 """
 import os
 import shutil
@@ -71,7 +72,18 @@ def make_background_image(fly_dir):
     background_image = loaddata.get_background_image(fly_dir)
     save_stack(os.path.join(fly_dir, "processed", "background_image.tif"), background_image)
 
+
 def convert_trial_dir(trial_dir, imaging=True):
+    """
+    Convert the trial directory path to a new directory path in the temporary data dir.
+
+    Parameters:
+        trial_dir (str): The directory path of the trial to be converted.
+        imaging (bool, optional): Whether the trial is an imaging trial. Defaults to True.
+
+    Returns:
+        str: The new directory path after conversion.
+    """
     fly_dir, trial_name = os.path.split(trial_dir)
     date_genotype_dir, fly_name = os.path.split(fly_dir)
     _, date_genotype_name = os.path.split(date_genotype_dir)
@@ -80,6 +92,7 @@ def convert_trial_dir(trial_dir, imaging=True):
     else:
         new_fly_dir = os.path.join(HEADLESS_DIR, date_genotype_name + "_" + fly_name)
     return os.path.join(new_fly_dir, trial_name)
+
 
 def copy_all_imaging_trials(overwrite=False):
     """
@@ -328,6 +341,7 @@ def compress_headless_predictions(overwrite=False, keep_videos=False):
     
     os.chdir(old_wd)
 
+
 def compress_sleap(overwrite=False):
     """
     Compress SLEAP model data.
@@ -484,6 +498,16 @@ def compress_one_trial_imaging(trial_dir, out_dir, overwrite=False, keep_videos=
     os.chdir(old_wd)
 
 def decompress_imaging(imaging_data_dir):
+    """
+    Decompress imaging data files and update the imaging summary DataFrame.
+    Moves tar.gz files into a "compressed" subfolder.
+
+    Parameters:
+        imaging_data_dir (str): The directory path containing the imaging data files.
+
+    Returns:
+        None
+    """
     old_wd = os.getcwd()
     os.chdir(imaging_data_dir)
     all_files = os.listdir(imaging_data_dir)
@@ -514,6 +538,16 @@ def decompress_imaging(imaging_data_dir):
 
     
 def decompress_headless_predictions(headless_predictions_data_dir):
+    """
+    Decompress headless prediction data files and update the respective summary DataFrames.
+    Moves tar.gz files into a "compressed" subfolder.
+
+    Parameters:
+        headless_predictions_data_dir (str): The directory path containing headless prediction data files.
+
+    Returns:
+        None
+    """
     old_wd = os.getcwd()
     os.chdir(headless_predictions_data_dir)
     all_files = os.listdir(headless_predictions_data_dir)
@@ -528,6 +562,16 @@ def decompress_headless_predictions(headless_predictions_data_dir):
     update_summary_df(df_path=os.path.join(headless_predictions_data_dir, "predictions_summary_df.csv"), base_dir=headless_predictions_data_dir)
 
 def decompress_other(other_data_dir):
+    """
+    Decompress supplementary data files.
+    Moves tar.gz files into a "compressed" subfolder.
+
+    Parameters:
+        other_data_dir (str): The directory path containing supplementary data files.
+
+    Returns:
+        None
+    """
     old_wd = os.getcwd()
     os.chdir(other_data_dir)
     all_files = os.listdir(other_data_dir)
@@ -539,6 +583,16 @@ def decompress_other(other_data_dir):
     os.chdir(old_wd)
 
 def update_summary_df(df_path, base_dir):
+    """
+    Update a summary DataFrame with new directory paths.
+
+    Parameters:
+        df_path (str): The path to the summary DataFrame CSV file.
+        base_dir (str): The new base directory path of the data.
+
+    Returns:
+        None
+    """
     _, df_name = os.path.split(df_path)
     df = summarydf.load_data_summary(path=df_path)
     def update_trial(trial_dir, base_dir):

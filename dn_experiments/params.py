@@ -1,18 +1,25 @@
 """
-Parameters used for analysis of 2p and behavioural data
+Parameters used for analysis of 2p and behavioural data.
+Author: jonas.braun@epfl.ch
 """
 import os
 import matplotlib.pyplot as plt
 
 
 # handling summary data of all recording
+# ====================== CHANGE THIS PARAMETER TO THE FOLDER WHERE YOUR DOWNLOADED DATA IS ==============
 data_summary_dir = "/mnt/nas2/JB/_paper_data/DN_Networks"  # "/mnt/nas2/JB/_data_summary"
+# =======================================================================================================
+# ====================== VERIFY THAT THESE FOLDERS ARE CORRECT ==========================================
 imaging_data_dir = os.path.join(data_summary_dir, "Optogenetics_Dfd_population_imaging")
 headless_predictions_data_dir = os.path.join(data_summary_dir, "Optogenetics_headless_behavior")
 other_data_dir = os.path.join(data_summary_dir, "Supplementary_data")
 data_summary_csv_dir = os.path.join(imaging_data_dir, "imaging_summary_df.csv")  # os.path.join(data_summary_dir, "fly_selection_manual_230224.csv")
 data_headless_summary_csv_dir = os.path.join(headless_predictions_data_dir, "headless_summary_df.csv")  # os.path.join(data_summary_dir, "fly_selection_nohead_230406.csv")
 data_predictions_summary_csv_dir = os.path.join(headless_predictions_data_dir, "predictions_summary_df.csv")  # os.path.join(data_summary_dir, "fly_selection_predictions_230712.csv")
+# =======================================================================================================
+
+# output directories
 plot_base_dir = os.path.join(data_summary_dir, "plots")
 plotdata_base_dir = os.path.join(data_summary_dir, "plotdata")
 predictionsdata_base_dir = os.path.join(data_summary_dir, "predictionsdata")
@@ -61,8 +68,6 @@ n_s_beh_15s = int(fs_beh * 15)
 n_s_beh_20s = int(fs_beh * 20)
 n_s_beh_25s = int(fs_beh * 25)
 
-
-
 ## neuronal processing
 # filtering
 neurons_med = 3  # median filterin applied to ROI signals
@@ -99,8 +104,8 @@ min_n_resp_natbeh = 15
 
 ## behavioural data processing
 # motion energy processing
-me_cam = "camera_5.mp4"
-me_cam_mean = "camera_5_mean.jpg"
+me_cam = "camera_5.mp4"  # which camera to use for motion energy compuation
+me_cam_mean = "camera_5_mean.jpg"  # file name for the mean of that camera.
 q_me = 0.95  # quantile to which to normalise motion energy to
 thres_silent_me_front = 0.2  # front motion energy quantile has to be smaller than this to count into silent state
 thres_silent_me_all = 0.2  # total motion energy quantile has to be smaller than this to count into silent state

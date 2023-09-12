@@ -1,3 +1,7 @@
+"""
+Module to make figure for predictions data
+Author: jonas.braun@epfl.ch (with input from femke.hurtak@epfl.ch)
+"""
 import os
 import sys
 
@@ -34,6 +38,18 @@ base_fly_data = {
         }
 
 def load_data_one_genotype(exp_df, figure_params, predictions_save=None, overwrite=False):
+    """
+    Load stimulus response data for a specific genotype and return a list of dictionaries with sitmulus responses for this genotype.
+
+    Parameters:
+    - exp_df (DataFrame): summary DataFrame containing experimental data.
+    - figure_params (dict): Dictionary containing figure parameters.
+    - predictions_save (str): Path to save or load predictions data.
+    - overwrite (bool): Whether to overwrite existing predictions data.
+
+    Returns:
+    - all_fly_data (list): List of dictionaries containing stimulus response fly data.
+    """
     if predictions_save is not None and os.path.isfile(predictions_save) and not overwrite:
         with open(predictions_save, "rb") as f:
             all_fly_data = pickle.load(f)
@@ -112,6 +128,16 @@ def concatenate(
     all_fly_data,
     column: str,
     ):
+    """
+    Concatenate data from all flies for a specific column.
+
+    Parameters:
+    - all_fly_data (list): List of dictionaries containing fly data.
+    - column (str): Column name to concatenate.
+
+    Returns:
+    - concatenated_data (numpy.ndarray): Concatenated data.
+    """
     data_list = [fly_data[column] for fly_data in all_fly_data
         if (
         (fly_data[column] is not None and not np.all(np.isnan(fly_data[column])))
@@ -120,6 +146,16 @@ def concatenate(
         data_list, axis=-1)
 
 def plot_data_one_genotype(figure_params, all_fly_data):
+    """
+    Plot data for a specific genotype.
+
+    Parameters:
+    - figure_params (dict): Dictionary containing figure parameters.
+    - all_fly_data (list): List of dictionaries containing fly data.
+
+    Returns:
+    - fig (matplotlib.figure.Figure): Matplotlib figure object.
+    """
     nrows = len(all_fly_data) + 1 if not figure_params["allflies_only"] else 1
     fig = plt.figure(figsize=(figure_params["panel_size"][0],figure_params["panel_size"][1]*nrows))  # layout="constrained"
     subfigs = fig.subfigures(nrows=nrows, ncols=1, squeeze=False)[:,0]
@@ -231,6 +267,15 @@ def summarise_predictions_one_genotype(GAL4, overwrite=False, allflies_only=Fals
     return fig
 
 def predictions_stats_tests(tmpdata_path=None):
+    """
+    Perform statistical tests on predictions data.
+
+    Parameters:
+    - tmpdata_path (str): Path to temporary data.
+
+    Returns:
+    - None
+    """
     if tmpdata_path is None:
         tmpdata_path = params.predictionsdata_base_dir
     tests_pre_post = [
@@ -274,6 +319,18 @@ def predictions_stats_tests(tmpdata_path=None):
         fig_headless.test_stats_beh_control(fly_data_exp, fly_data_control, GAL4=to_test_exp['GAL4'], beh_name=to_test_exp["name"], i_0=500, i_1=750 if "t2" not in to_test_exp.keys() else to_test["t2"])
 
 def make_all_predictions_figures(allflies_only=True, tmpdata_path=None, figures_path=None, overwrite=False):
+    """
+    Generate all predictions figures.
+
+    Parameters:
+    - allflies_only (bool): Whether to generate figures for all flies or for individual flies.
+    - tmpdata_path (str): Path to temporary data.
+    - figures_path (str): Path to save figures.
+    - overwrite (bool): Whether to overwrite existing temporary data.
+
+    Returns:
+    - None
+    """
     ylim_v_turn = [-100,600]
     ylim_v_forw = [-1,1]
     ylim_mef = [-0.3,1.3]

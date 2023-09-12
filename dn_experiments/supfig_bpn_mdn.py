@@ -1,3 +1,7 @@
+"""
+Module to generate supplementary figure analysing stimulation at different locations
+Author: jonas.braun@epfl.ch
+"""
 import os
 import numpy as np
 import pandas as pd
@@ -14,6 +18,17 @@ import twoppp.plot as myplt
 import loaddata, params, plotpanels
 
 def make_stim_loc_plots(driver_lines=["MDN", "BPN"], fly_dirs=None, figures_path=None):
+    """
+    Generate and save plots of behavioral responses to optogenetic stimulation at different locations.
+
+    Parameters:
+        driver_lines (list of str, optional): List of driver lines to consider.
+        fly_dirs (list of str, optional): List of fly directories to process.
+        figures_path (str, optional): Directory path to save generated figures.
+
+    Returns:
+        None
+    """
     if fly_dirs is None:
         fly_dirs = ["/mnt/nas2/JB/220816_MDN3xCsChrimson/Fly5", "/mnt/nas2/JB/230125_BPNxCsChrimson/Fly1"]
     if figures_path is None:
