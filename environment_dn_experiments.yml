@@ -1,4 +1,4 @@
-name: twop_df3d
+name: dn_experiments
 channels:
   - defaults
 dependencies:
