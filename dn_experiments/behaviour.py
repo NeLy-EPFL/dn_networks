@@ -1,5 +1,6 @@
 """
-module for behavioural processing with functions for behaviour classification and behaviour onset detection
+module for behavioural processing with functions for behaviour classification and behaviour onset detection.
+Author: jonas.braun@epfl.ch
 """
 
 import os

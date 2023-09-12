@@ -1,3 +1,12 @@
+dn_connectomics/data/
+dn_connectomics/data/*
+dn_connectomics/figures/*
+dn_experiments/tmpdata/
+dn_experiments/tmpdata/*
+dn_experiments/figures/
+dn_experiments/figures/*
+dn_experiments/test.py
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

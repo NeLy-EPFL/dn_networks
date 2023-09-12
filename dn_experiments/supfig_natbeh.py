@@ -1,4 +1,7 @@
-
+"""
+Module to compare natural behaviour and stimulus responses in more detail.
+Author: jonas.braun@epfl.ch
+"""
 import os
 import sys
 
@@ -18,6 +21,19 @@ import params, summarydf, loaddata, stimulation, behaviour, plotpanels, fig_func
 from twoppp import plot as myplt
 
 def analyse_natbehaviour_responses_DNp09(figures_path=None, tmpdata_path=None, pre_stim="not_walk", min_n_resp=params.min_n_resp_natbeh, n_neurons_select=10):
+    """
+    Analyze and plot natural behavior responses for the DNp09 line.
+
+    Parameters:
+        figures_path (str, optional): Directory path to save generated figures.
+        tmpdata_path (str, optional): Directory path for temporary data storage.
+        pre_stim (str, optional): Pre-stimulation condition.
+        min_n_resp (int, optional): Minimum number of responses required.
+        n_neurons_select (int, optional): Number of neurons to select for analysis.
+
+    Returns:
+        None
+    """
     if figures_path is None:
         figures_path = params.plot_base_dir
     if tmpdata_path is None:
@@ -182,6 +198,20 @@ def analyse_natbehaviour_responses_DNp09(figures_path=None, tmpdata_path=None, p
     _ = [plt.close(fig) for fig in [fig1, fig2, fig3]]
 
 def analyse_natbehaviour_responses_singlefly(GAL4="MDN3", tmpdata_path=None, min_n_resp=params.min_n_resp_natbeh, pre_stim=None, fly_id=None, contrast_color=myplt.DARKCYAN):
+    """
+    Analyze and plot natural behavior responses for a single fly of a single GAL4 line.
+
+    Parameters:
+        GAL4 (str): GAL4 line identifier.
+        tmpdata_path (str, optional): Directory path for temporary data storage.
+        min_n_resp (int, optional): Minimum number of responses required.
+        pre_stim (str, optional): Pre-stimulation condition.
+        fly_id (str, optional): Fly ID for a specific analysis.
+        contrast_color (str, optional): Color for contrasting natural behavior.
+
+    Returns:
+        fig (matplotlib.figure.Figure): Generated figure.
+    """
     if tmpdata_path is None:
         tmpdata_path = params.plotdata_base_dir
     data_file = os.path.join(tmpdata_path, f"natbeh_{pre_stim}_resp_{GAL4}.pkl")
@@ -244,6 +274,17 @@ def analyse_natbehaviour_responses_singlefly(GAL4="MDN3", tmpdata_path=None, min
     return fig
 
 def analyse_natbehaviour_responses_all_genotypes(figures_path=None, tmpdata_path=None, min_n_resp=params.min_n_resp_natbeh):
+    """
+    Analyze and plot natural behavior responses for multiple GAL4 lines.
+
+    Parameters:
+        figures_path (str, optional): Directory path to save generated figures.
+        tmpdata_path (str, optional): Directory path for temporary data storage.
+        min_n_resp (int, optional): Minimum number of responses required.
+
+    Returns:
+        None
+    """
     if figures_path is None:
         figures_path = params.plot_base_dir
     if tmpdata_path is None:

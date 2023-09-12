@@ -1,3 +1,8 @@
+"""
+Script used to decompress all data downloaded from Harvard Dataverse.
+Please read the README.md and follow the instructions where to download the data.
+Author: jonas.braun@epfl.ch
+"""
 import os
 
 from copy_data import decompress_imaging, decompress_headless_predictions, decompress_other

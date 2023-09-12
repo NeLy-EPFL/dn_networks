@@ -1,3 +1,7 @@
+"""
+Module to plot effect of different stimulation powers on behaviour.
+Author: jonas.braun@epfl.ch
+"""
 import os
 import sys
 
@@ -19,6 +23,15 @@ from twoppp import utils
 
 
 def plot_stim_p_effect(figures_path=None):
+    """
+    Plot the effect of stimulation power levels on behavior.
+
+    Parameters:
+        figures_path (str, optional): Directory path to save generated figures.
+
+    Returns:
+        None
+    """
     if figures_path is None:
         figures_path = params.plot_base_dir
 

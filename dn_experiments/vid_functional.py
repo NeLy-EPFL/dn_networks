@@ -1,3 +1,7 @@
+"""
+Module used to create videos from functional imaging data
+Author: jonas.braun@epfl.ch
+"""
 import os
 import sys
 
@@ -35,10 +39,30 @@ presentation_natbeh_flies_DNp09 = {
     "DNp09": 15,
 }
 
-def make_functional_example_stim_video(pre_stim="walk", overwrite=False, subtract_pre=False, clim=[0,1],
+def make_functional_example_stim_video(pre_stim="walk", overwrite=False, subtract_pre=True, clim=[0,1],
                                        show_centers=False, show_mask=False, show_beh=False,
                                        make_fig=False, make_vid=True, select_group_of_flies="presentation", trigger="laser_start"):
+    """
+    Generate functional example stimulation video.
+    Can also be used to generate natural behaviour videos.
+    Also used to generate plots in Figure 2b
 
+    Args:
+        pre_stim (str): Pre-stimulation condition ("walk", "rest", "not_walk", None).
+        overwrite (bool): Whether to overwrite existing pre-computed data.
+        subtract_pre (bool): Whether to subtract the pre-stimulus baseline.
+        clim (list): Color limit range for the video.
+        show_centers (bool): Whether to show ROI centers.
+        show_mask (bool): Whether to show ROI masks.
+        show_beh (bool): Whether to show behavior.
+        make_fig (bool): Whether to create a figure of the maximum response for this fly (Shown in Figure 2b).
+        make_vid (bool): Whether to create a video.
+        select_group_of_flies (str): Selected group of flies.
+        trigger (str): Stimulation trigger ("laser_start", "olfac_start", etc.).
+
+    Returns:
+        None
+    """
     if select_group_of_flies == "presentation":
         selected_flies = presentation_flies
     elif select_group_of_flies == "natbeh_DNp09":
@@ -282,13 +306,6 @@ def make_functional_example_stim_video(pre_stim="walk", overwrite=False, subtrac
                     beh_samples.append(closest_beh_sample)
                 beh_generators = [videos.utils_video.generators.resample(beh_generator, beh_samples) for beh_generator in beh_generators]
 
-                # def brighter_generator(generator, factor=1):
-                #     for i, img in enumerate(generator):
-                #         img = np.clip(np.array(img*factor, dtype=np.uint8), 0, 255)
-                #         yield img
-
-                # if "wheel" in beh_trial_dir:
-                #     beh_generators = [brighter_generator(beh_generator, 2.5) for beh_generator in beh_generators]
                 rows = [generator_2p]
                 for i in range(N_beh_repeats//2):
                     i_start = i * 2
@@ -298,6 +315,25 @@ def make_functional_example_stim_video(pre_stim="walk", overwrite=False, subtrac
 
 
 def merge_two_videos(vid_1,vid_2,out_dir, video_name, fps=params.fs_2p, n_frames=-1, text_1=None, text_2=None, c_1=(255,255,255), c_2=(255,255,255), tex_pos=(10,725)):
+    """
+    Merge two videos into one.
+
+    Args:
+        vid_1 (str): Path to the first video.
+        vid_2 (str): Path to the second video.
+        out_dir (str): Output directory for the merged video.
+        video_name (str): Name of the merged video.
+        fps (int): Frames per second for the merged video.
+        n_frames (int): Number of frames to include (-1 for all frames).
+        text_1 (str): Text to overlay on the first video.
+        text_2 (str): Text to overlay on the second video.
+        c_1 (tuple): Color for text overlay on the first video.
+        c_2 (tuple): Color for text overlay on the second video.
+        tex_pos (tuple): Text position (x, y) on the videos.
+
+    Returns:
+        None
+    """
     gen_1 = videos.generator_video(vid_1)
     gen_2 = videos.generator_video(vid_2)
     if text_1 is not None:
@@ -307,11 +343,103 @@ def merge_two_videos(vid_1,vid_2,out_dir, video_name, fps=params.fs_2p, n_frames
     generator = videos.utils_video.generators.stack([gen_1,gen_2], axis=1)
     videos.make_video(os.path.join(out_dir, video_name), generator, fps=fps, n_frames=n_frames)
 
+
+def make_DNp09_natbeh_video():
+    """
+    Create a video comparing DNp09 optogenetic stimulation with natural walking behavior.
+
+    Returns:
+        None
+    """
+    make_functional_example_stim_video(pre_stim="not_walk", overwrite=False,
+        subtract_pre=True, show_centers=False, show_mask=False, show_beh=True,
+        make_fig=True, make_vid=True, select_group_of_flies="natbeh_DNp09", trigger="laser_start")
+    
+    make_functional_example_stim_video(pre_stim="not_walk", overwrite=False,
+        subtract_pre=True, show_centers=False, show_mask=False, show_beh=True,
+        make_fig=True, make_vid=True, select_group_of_flies="natbeh_DNp09", trigger="walk_trig_start")
+    
+    GAL4 = "DNp09"
+    fly_id = 15
+    trigger = "laser_start"
+    vid_1 = os.path.join(out_dir, f"{GAL4}_{fly_id}_neural_beh_resp_example_{trigger}.mp4")
+    text_1 = "DNp09 stimulation"
+    c_1 = (255,255,255)
+    trigger = "walk_trig_start"
+    vid_2 = os.path.join(out_dir, f"{GAL4}_{fly_id}_neural_beh_resp_example_{trigger}.mp4")
+    text_2 = "spontaneous forward walking"
+    c_2 = (255,255,255)
+    video_name = f"{GAL4}_{fly_id}_compare.mp4"
+    merge_two_videos(vid_1,vid_2,out_dir, video_name, fps=params.fs_2p, n_frames=-1, text_1=text_1, text_2=text_2, c_1=c_1, c_2=c_2, tex_pos=(10,725))
+
+def make_aDN2_natbeh_video():
+    """
+    Create a video comparing aDN2 optogenetic stimulation with natural grooming behavior.
+
+    Returns:
+        None
+    """
+    make_functional_example_stim_video(pre_stim=None, overwrite=False,
+        subtract_pre=True, show_centers=False, show_mask=False, show_beh=True,
+        make_fig=True, make_vid=True, select_group_of_flies="natbeh_aDN2", trigger="laser_start")
+    make_functional_example_stim_video(pre_stim=None, overwrite=False,
+        subtract_pre=True, show_centers=False, show_mask=False, show_beh=True,
+        make_fig=True, make_vid=True, select_group_of_flies="natbeh_aDN2", trigger="olfac_start")
+
+    GAL4 = "aDN2"
+    fly_id = 32
+    trigger = "laser_start"
+    vid_1 = os.path.join(out_dir, f"{GAL4}_{fly_id}_neural_beh_resp_example_{trigger}.mp4")
+    text_1 = "aDN2 stimulation"
+    c_1 = (255,255,255)
+    trigger = "olfac_start"
+    vid_2 = os.path.join(out_dir, f"{GAL4}_{fly_id}_neural_beh_resp_example_{trigger}.mp4")
+    text_2 = "puff elicited grooming"
+    c_2 = (255,255,255)
+    video_name = f"{GAL4}_{fly_id}_compare.mp4"
+    merge_two_videos(vid_1,vid_2,out_dir, video_name, fps=params.fs_2p, n_frames=-1, text_1=text_1, text_2=text_2, c_1=c_1, c_2=c_2, tex_pos=(10,725))
+
+def make_MDN_natbeh_video():
+    """
+    Create a video comparing MDN optogenetic stimulation with natural backward walking behavior.
+
+    Returns:
+        None
+    """
+     make_functional_example_stim_video(pre_stim=None, overwrite=False,
+        subtract_pre=True, show_centers=False, show_mask=False, show_beh=True,
+        make_fig=False, make_vid=True, select_group_of_flies="natbeh_MDN", trigger="laser_start")
+    make_functional_example_stim_video(pre_stim=None, overwrite=False,
+        subtract_pre=True, show_centers=False, show_mask=False, show_beh=True,
+        make_fig=False, make_vid=True, select_group_of_flies="natbeh_MDN", trigger="back_trig_start")
+
+    GAL4 = "MDN"
+    fly_id = 72
+    trigger = "laser_start"
+    vid_1 = os.path.join(out_dir, f"{GAL4}_{fly_id}_neural_beh_resp_example_{trigger}.mp4")
+    text_1 = "MDN stimulation"
+    c_1 = (255,255,255)
+    trigger = "back_trig_start" 
+    vid_2 = os.path.join(out_dir, f"{GAL4}_{fly_id}_neural_beh_resp_example_{trigger}.mp4")
+    text_2 = "spontaneous backward walking"
+    c_2 = (255,255,255)
+    video_name = f"{GAL4}_{fly_id}_compare.mp4"
+    merge_two_videos(vid_1,vid_2,out_dir, video_name, fps=params.fs_2p, n_frames=-1, text_1=text_1, text_2=text_2, c_1=c_1, c_2=c_2, tex_pos=(10,725))
         
 def make_stim_resp_figure(stim_trig_stack, start_stim, clim=[-0.8,0.8], n_avg=params.response_n_avg, n_latest_max=params.response_n_latest_max):
-    # n_avg=params.response_n_latest_max, clim=[0,1]):
-    
-    # img = np.mean(stim_trig_stack[start_stim:start_stim+n_avg], axis=0)
+    """
+    Create a figure for stimulation response. Shown in Figure 2b
+
+    Args:
+        stim_trig_stack (numpy.ndarray): Stimulation-triggered stack.
+        start_stim (int): Start frame for stimulation.
+        clim (list): Color limit range for the figure.
+        n_avg (int): Number of frames to average.
+        n_latest_max (int): Maximum number of latest frames to consider.
+
+    Returns:
+        matplotlib.figure.Figure: Generated figure.
+    """
     n_avg = n_avg // 2
     i_stim_response_max = np.argmax(np.abs(stim_trig_stack[start_stim:start_stim+n_latest_max]), axis=0) + start_stim
     img = np.zeros_like(stim_trig_stack[0])
@@ -346,73 +474,15 @@ def make_stim_resp_figure(stim_trig_stack, start_stim, clim=[-0.8,0.8], n_avg=pa
 
 
 if __name__ == "__main__":
-    # make_functional_example_stim_video(pre_stim="walk", overwrite=False,
-    #     subtract_pre=True, show_centers=False, show_mask=False, show_beh=True,
-    #     make_fig=True, make_vid=False, select_group_of_flies="presentation", trigger="laser_start")
-    # """
-    make_functional_example_stim_video(pre_stim="not_walk", overwrite=False,
+    # Videos 1-4: Stimulation response videos
+    make_functional_example_stim_video(pre_stim="walk", overwrite=False,
         subtract_pre=True, show_centers=False, show_mask=False, show_beh=True,
-        make_fig=True, make_vid=True, select_group_of_flies="natbeh_DNp09", trigger="laser_start")
-    
-    make_functional_example_stim_video(pre_stim="not_walk", overwrite=False,
-        subtract_pre=True, show_centers=False, show_mask=False, show_beh=True,
-        make_fig=True, make_vid=True, select_group_of_flies="natbeh_DNp09", trigger="walk_trig_start")
-    
-    GAL4 = "DNp09"
-    fly_id = 15
-    trigger = "laser_start"
-    vid_1 = os.path.join(out_dir, f"{GAL4}_{fly_id}_neural_beh_resp_example_{trigger}.mp4")
-    text_1 = "DNp09 stimulation"
-    c_1 = (255,255,255)
-    trigger = "walk_trig_start"
-    vid_2 = os.path.join(out_dir, f"{GAL4}_{fly_id}_neural_beh_resp_example_{trigger}.mp4")
-    text_2 = "spontaneous forward walking"
-    c_2 = (255,255,255)
-    video_name = f"{GAL4}_{fly_id}_compare.mp4"
-    merge_two_videos(vid_1,vid_2,out_dir, video_name, fps=params.fs_2p, n_frames=-1, text_1=text_1, text_2=text_2, c_1=c_1, c_2=c_2, tex_pos=(10,725))
-    # """
-    # """
-    # make_functional_example_stim_video(pre_stim=None, overwrite=False,
-    #     subtract_pre=True, show_centers=False, show_mask=False, show_beh=True,
-    #     make_fig=True, make_vid=True, select_group_of_flies="natbeh_aDN2", trigger="laser_start")
-    make_functional_example_stim_video(pre_stim=None, overwrite=False,
-        subtract_pre=True, show_centers=False, show_mask=False, show_beh=True,
-        make_fig=True, make_vid=True, select_group_of_flies="natbeh_aDN2", trigger="olfac_start")
+        make_fig=True, make_vid=False, select_group_of_flies="presentation", trigger="laser_start")
 
-    GAL4 = "aDN2"
-    fly_id = 32
-    trigger = "laser_start"
-    vid_1 = os.path.join(out_dir, f"{GAL4}_{fly_id}_neural_beh_resp_example_{trigger}.mp4")
-    text_1 = "aDN2 stimulation"
-    c_1 = (255,255,255)
-    trigger = "olfac_start"  # "groom_trig_start"
-    vid_2 = os.path.join(out_dir, f"{GAL4}_{fly_id}_neural_beh_resp_example_{trigger}.mp4")
-    text_2 = "puff elicited grooming"
-    c_2 = (255,255,255)
-    video_name = f"{GAL4}_{fly_id}_compare.mp4"
-    merge_two_videos(vid_1,vid_2,out_dir, video_name, fps=params.fs_2p, n_frames=-1, text_1=text_1, text_2=text_2, c_1=c_1, c_2=c_2, tex_pos=(10,725))
-    """
-    # """
-    make_functional_example_stim_video(pre_stim=None, overwrite=False,
-        subtract_pre=True, show_centers=False, show_mask=False, show_beh=True,
-        make_fig=False, make_vid=True, select_group_of_flies="natbeh_MDN", trigger="laser_start")
-    make_functional_example_stim_video(pre_stim=None, overwrite=False,
-        subtract_pre=True, show_centers=False, show_mask=False, show_beh=True,
-        make_fig=False, make_vid=True, select_group_of_flies="natbeh_MDN", trigger="back_trig_start")
-
-    GAL4 = "MDN"
-    fly_id = 72
-    trigger = "laser_start"
-    vid_1 = os.path.join(out_dir, f"{GAL4}_{fly_id}_neural_beh_resp_example_{trigger}.mp4")
-    text_1 = "MDN stimulation"
-    c_1 = (255,255,255)
-    trigger = "back_trig_start" 
-    vid_2 = os.path.join(out_dir, f"{GAL4}_{fly_id}_neural_beh_resp_example_{trigger}.mp4")
-    text_2 = "spontaneous backward walking"
-    c_2 = (255,255,255)
-    video_name = f"{GAL4}_{fly_id}_compare.mp4"
-    merge_two_videos(vid_1,vid_2,out_dir, video_name, fps=params.fs_2p, n_frames=-1, text_1=text_1, text_2=text_2, c_1=c_1, c_2=c_2, tex_pos=(10,725))
-    # """
-    
-
-
+    # Video 5: Comparing optogenetic DNp09 stimulation with natural walking
+    make_DNp09_natbeh_video()
+    # Video 6: Comparing optogenetic aDN stimulation with natural grooming
+    make_aDN2_natbeh_video()
+    # Video 7: Comparing optogenetic MDN stimulation with natural backward walking on the wheel
+    make_MDN_natbeh_video()
+   

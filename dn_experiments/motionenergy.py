@@ -1,3 +1,8 @@
+"""
+Module to compute pixel motion energy from side view video of the fly (camera 5).
+Not used anymore. Use motion energy of SLEAP tracked keypoints instead.
+Author: jonas.braun@epfl.ch
+"""
 import os
 import sys
 import numpy as np
@@ -13,6 +18,18 @@ from scipy.ndimage import gaussian_filter1d, gaussian_filter, median_filter
 import params
 
 def get_frames_mean(video_file, load_frames=True, me_cam_mean=params.me_cam_mean):
+    """
+    Calculate the mean frame from a video file and optionally load individual frames.
+
+    Args:
+        video_file (str): Path to the video file.
+        load_frames (bool): Whether to load individual frames.
+        me_cam_mean (str): Path to save the mean frame image.
+
+    Returns:
+        frames (list): List of loaded frames.
+        mean_frame (numpy.ndarray): Mean frame of the video.
+    """
     frames = []
     images_dir = os.path.dirname(video_file)
     mean_frame_file = os.path.join(images_dir, me_cam_mean)
@@ -37,11 +54,32 @@ def get_frames_mean(video_file, load_frames=True, me_cam_mean=params.me_cam_mean
     return frames, mean_frame
 
 def get_mask(mean_frame):
+    """
+    Generate a mask of the fly based on OTSU thresholding the mean frame.
+
+    Args:
+        mean_frame (numpy.ndarray): Mean frame image.
+
+    Returns:
+        mask (numpy.ndarray): Binary mask.
+    """
     ret2,th2 = cv2.threshold(mean_frame,0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)
     mask = th2.astype(bool)
     return mask
 
 def detect_front(mean_frame, bottom_of_shin=120, top_of_ball=240, default=640):
+    """
+    Detect the front of the fly's head (x axis) in the mean frame.
+
+    Args:
+        mean_frame (numpy.ndarray): Mean frame image.
+        bottom_of_shin (int): Top boundary for detection = bottom of shin.
+        top_of_ball (int): Bottom boundary for detection = top of ball.
+        default (int): Default position if front is not detected.
+
+    Returns:
+        front (int): Detected front position.
+    """
     # detect the front of the head
     ret2,th2 = cv2.threshold(mean_frame,0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)
     thres_image = th2.astype(bool)
@@ -53,6 +91,18 @@ def detect_front(mean_frame, bottom_of_shin=120, top_of_ball=240, default=640):
     return int(x_front[-1])
 
 def get_front_mask(mean_frame, bottom_of_shin=120, top_of_ball=320, ball_mask=None):
+    """
+    Generate a mask for the region around the front of the fly. Can be used to calculate a proxy of frontleg motion energy.
+
+    Args:
+        mean_frame (numpy.ndarray): Mean frame image.
+        bottom_of_shin (int): Top boundary for front detection.
+        top_of_ball (int): Bottom boundary for front detection.
+        ball_mask (numpy.ndarray): Binary mask for the ball.
+
+    Returns:
+        thres_image_front (numpy.ndarray): Front mask.
+    """
     front = detect_front(mean_frame, top_of_ball=top_of_ball)
     ret2,th2 = cv2.threshold(mean_frame,0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)
     thres_image = th2.astype(bool)
@@ -65,6 +115,18 @@ def get_front_mask(mean_frame, bottom_of_shin=120, top_of_ball=320, ball_mask=No
     return thres_image_front
 
 def detect_neck(mean_frame, top_lim=150, right_lim=550, left_lim=400):
+    """
+    Detect the neck position in the mean frame.
+
+    Args:
+        mean_frame (numpy.ndarray): Mean frame image.
+        top_lim (int): Top boundary for neck detection.
+        right_lim (int): Right boundary for neck detection.
+        left_lim (int): Left boundary for neck detection.
+
+    Returns:
+        neck (int): Detected neck position.
+    """
     ret2,th2 = cv2.threshold(mean_frame,0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)
     thres_image = th2.astype(bool)
     thres_image_detect = thres_image[top_lim:, left_lim:right_lim]
@@ -74,6 +136,18 @@ def detect_neck(mean_frame, top_lim=150, right_lim=550, left_lim=400):
     return int(x_neck[0]+left_lim)
 
 def get_back_mask(mean_frame, top_of_ball=320, ball_mask=None, neck=480):
+    """
+    Generate a mask for the back region of the fly. Can be used to compute a proxy of the hindleg motion energy.
+
+    Args:
+        mean_frame (numpy.ndarray): Mean frame image.
+        top_of_ball (int): Top boundary for back detection.
+        ball_mask (numpy.ndarray): Binary mask for the ball.
+        neck (int): Neck position. Otherwise detect neck position.
+
+    Returns:
+        thres_image_back (numpy.ndarray): Back mask.
+    """
     if neck is None:
         neck = detect_neck(mean_frame)
     ret2,th2 = cv2.threshold(mean_frame,0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)
@@ -87,6 +161,18 @@ def get_back_mask(mean_frame, top_of_ball=320, ball_mask=None, neck=480):
     return thres_image_back
 
 def get_mid_mask(mean_frame, top_of_ball=320, ball_mask=None, neck=480):
+    """
+    Generate a mask for the mid region of the fly. Can be used to compute a proxy of motion energy in the central region of the frame.
+
+    Args:
+        mean_frame (numpy.ndarray): Mean frame image.
+        top_of_ball (int): Bottom boundary for region detection to exclude the ball.
+        ball_mask (numpy.ndarray): Binary mask for the ball.
+        neck (int): Detected neck position.
+
+    Returns:
+        thres_image_mid (numpy.ndarray): Mid mask.
+    """
     if neck is None:
         neck = detect_neck(mean_frame)
     front = detect_front(mean_frame, top_of_ball=top_of_ball)
@@ -102,6 +188,19 @@ def get_mid_mask(mean_frame, top_of_ball=320, ball_mask=None, neck=480):
     return thres_image_mid
 
 def get_ball_mask(mean_frame, y_min=240, return_top=False, r_adjust=10):
+    """
+    Generate a mask for the ball. Used to exclude from other masks
+
+    Args:
+        mean_frame (numpy.ndarray): Mean frame image.
+        y_min (int): Minimum Y coordinate for ball detection.
+        return_top (bool): Whether to return the top position.
+        r_adjust (int): Radius adjustment. Increases the ball radius to incldue proximal pixels.
+
+    Returns:
+        circle_mask (numpy.ndarray): Ball mask.
+        top_of_ball (int): Top position of the ball.
+    """
     img = cv2.medianBlur(mean_frame, 5)[y_min:,:]
     black = np.zeros_like(img)
     extended_img = np.concatenate((img,black,black,black,black,black),axis=0)
@@ -120,6 +219,21 @@ def get_ball_mask(mean_frame, y_min=240, return_top=False, r_adjust=10):
     return circle_mask
 
 def compute_me(frames, mean_frame, mask_dir=None, mask_name="me_mask.png"):
+    """
+    Compute motion energy from frames using multiple masks.
+
+    Args:
+        frames (list): List of frames.
+        mean_frame (numpy.ndarray): Mean frame image.
+        mask_dir (str or list): Directory for saving masks.
+        mask_name (str or list): Mask file name.
+
+    Returns:
+        meo_filt (numpy.ndarray): Motion energy for the whole fly.
+        mef_filt (numpy.ndarray): Motion energy for the front.
+        meb_filt (numpy.ndarray): Motion energy for the back.
+        mem_filt (numpy.ndarray): Motion energy for the mid.
+    """
     mask = get_mask(mean_frame)
     
     n_frames = len(frames) if frames is not None else 0
@@ -168,6 +282,20 @@ def compute_me(frames, mean_frame, mask_dir=None, mask_name="me_mask.png"):
     return meo_filt, mef_filt, meb_filt, mem_filt
 
 def add_me_to_df(meo_filt, mef_filt, meb_filt, mem_filt, index_df, df_out_dir=None):
+    """
+    Add motion energy data to a DataFrame.
+
+    Args:
+        meo_filt (numpy.ndarray): Motion energy for the whole fly.
+        mef_filt (numpy.ndarray): Motion energy for the front.
+        meb_filt (numpy.ndarray): Motion energy for the back.
+        mem_filt (numpy.ndarray): Motion energy for the mid.
+        index_df (pandas.DataFrame or str): DataFrame or path to DataFrame file.
+        df_out_dir (str): Output directory for the DataFrame.
+
+    Returns:
+        index_df (pandas.DataFrame): Updated DataFrame.
+    """
     if isinstance(index_df, str) and os.path.isfile(index_df):
         index_df = pd.read_pickle(index_df)
     if index_df is not None:
@@ -185,6 +313,18 @@ def add_me_to_df(meo_filt, mef_filt, meb_filt, mem_filt, index_df, df_out_dir=No
     return index_df
 
 def compute_and_add_me_to_df(trial_dir, beh_df, camera_name=params.me_cam):
+    """
+    Compute motion energy and add it to a behavior DataFrame.
+    High level interface to the external.
+
+    Args:
+        trial_dir (str): Path to the trial directory.
+        beh_df (pandas.DataFrame): Behavior DataFrame.
+        camera_name (str): Name of the camera.
+
+    Returns:
+        beh_df (pandas.DataFrame): Updated behavior DataFrame.
+    """
     video_file = os.path.join(trial_dir,"behData", "images", "camera_5.mp4")
     if not os.path.isfile(beh_df):
         print("No beh_df.pkl exists. Continuing.")
@@ -202,36 +342,5 @@ def compute_and_add_me_to_df(trial_dir, beh_df, camera_name=params.me_cam):
         del frames
         beh_df = add_me_to_df(meo_filt, mef_filt, meb_filt, mem_filt, index_df=beh_df, df_out_dir=beh_df)
     return beh_df
-
-if __name__ == "__main__":
-    data_summary_dir = "/mnt/nas2/JB/_data_summary"
-    csv_dir = os.path.join(data_summary_dir, "fly_selection_manual_230224.csv")
-    df_all = pd.read_csv(csv_dir,)
-    df_include = df_all[np.logical_not(df_all.exclude == True)]
-    df_xz = df_include[df_include.image_type == "xz"]
-    df = df_xz[np.logical_and(df_xz.CO2 == False, [not "co2_puff" in trial_name for trial_name in df_xz.trial_name])]
-    print(f"Working on {len(df)} trials")
-
-    for i, (index, row) in enumerate(df.iterrows()):
-        # if not "221117" in row.trial_dir:
-        #     continue
-        trial_dir = row.trial_dir
-        print(f"{i}/{len(df)} {trial_dir}")
-        video_file = os.path.join(trial_dir,"behData", "images", "camera_5.mp4")
-        beh_df = os.path.join(trial_dir, "processed", "beh_df.pkl")
-        if not os.path.isfile(beh_df):
-            print("No beh_df.pkl exists. Continuing.")
-            continue
-        print("get frames")
-        frames, mean_frame = get_frames_mean(video_file)  # , load_frames=False)
-
-        mask_dir = [os.path.join(trial_dir, "processed"), os.path.join(data_summary_dir, "plots", "me_masks")]
-        mask_name = ["me_mask.png", f"me_mask_{row.fly_id}_{row.date}_{row.fly_number}_{row.trial_number}.png"]
-        print("compute motion energy")
-        meo_filt, mef_filt, meb_filt, mem_filt = compute_me(frames, mean_frame, mask_dir, mask_name)
-        
-        if frames is not None:
-            del frames
-            add_me_to_df(meo_filt, mef_filt, meb_filt, mem_filt, index_df=beh_df, df_out_dir=beh_df)
 
     

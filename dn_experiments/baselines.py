@@ -1,5 +1,6 @@
 """
-module used to compute different types of baselines for neural signals and to add the DF/F signals to the twop_df
+module used to compute different types of baselines for neural signals and to add the DF/F signals to the twop_df.
+Author: jonas.braun@epfl.ch
 """
 import sys
 import numpy as np

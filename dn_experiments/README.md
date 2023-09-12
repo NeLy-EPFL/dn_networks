@@ -33,3 +33,7 @@ Run the [decompress_data.py](decompress_data.py) script in this folder to assemb
 
 **Making all figures:**
 Run the [make_all_plots.py](make_all_plots.py) script in this folder to create all plots from experimental data.
+
+**Making all videos:**
+Re-making all videos requires the raw data (~1TB) that is available upon request to the authors.
+The code can be inspected anyway in the [make_all_videos.py](make_all_videos.py) script.
