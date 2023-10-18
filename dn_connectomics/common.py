@@ -112,6 +112,8 @@ def convert_rootid_index(equiv_index_rootid, neuron_subset):
     define which indices in the matrix correspond to the neurons
     of interest
     """
+    if isinstance(neuron_subset, int):
+        neuron_subset = [neuron_subset]
     indices = [
         equiv_index_rootid.loc[equiv_index_rootid["root_id"] == neuron].index[
             0
@@ -126,8 +128,11 @@ def convert_index_root_id(equiv_index_rootid, indices_subset):
     define which rids correspond to the neurons
     of interest in the matrix
     """
-    if isinstance(indices_subset, int):
-        indices_subset = [indices_subset]
+    if ~isinstance(indices_subset, list):
+        rid = equiv_index_rootid.loc[
+            equiv_index_rootid.index == indices_subset
+        ].root_id.values[0]
+        return rid
     rids = [
         equiv_index_rootid.loc[
             equiv_index_rootid.index == neuron

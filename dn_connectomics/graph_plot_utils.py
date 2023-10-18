@@ -144,6 +144,68 @@ def sort_existing_pos(
     return pos
 
 
+def positions_by_degree(graph):
+    """
+    Define graph node positions based on the degree of the nodes, i.e. place the
+    nodes with the highest degree in the center of the graph, input nodes at the
+    top and output nodes at the bottom.
+
+    Parameters
+    ----------
+    graph : nx.MultiDiGraph
+        Graph to define the positions for.
+
+    Returns
+    -------
+    dict
+        Dictionary of positions for each node.
+    """
+    # for each edge, add an attribute 'abs_weight' that is the absolute value of the weight
+    for edge in graph.edges:
+        graph.edges[edge]["abs_weight"] = np.abs(graph.edges[edge]["weight"])
+
+    # identify the input and output nodes
+    input_nodes = [node for node, degree in graph.in_degree() if degree == 0]
+    output_nodes = [node for node, degree in graph.out_degree() if degree == 0]
+
+    # define the positions of the remaining nodes based on their degree
+    remaining_nodes = [
+        node
+        for node in graph.nodes()
+        if node not in input_nodes + output_nodes
+    ]
+    central_graph = graph.subgraph(remaining_nodes)
+    central_pos = nx.circular_layout(central_graph)  # , weight="abs_weight")
+
+    # define the positions of the input and output nodes
+    def lin_mapping(x, n, a=-1, b=1):
+        return ((x / n) - (0.5 - (a + b) / 2)) * (b - a)
+
+    ymin = min([y for _, y in central_pos.values()])
+    ymax = max([y for _, y in central_pos.values()])
+    xmin, xmax = min([x for x, _ in central_pos.values()]), max(
+        [x for x, _ in central_pos.values()]
+    )
+
+    input_positions = {
+        node: (lin_mapping(i, len(input_nodes), a=xmin, b=xmax), ymax + 0.5)
+        for i, node in enumerate(input_nodes)
+    }
+
+    output_positions = {
+        node: (lin_mapping(i, len(output_nodes), a=xmin, b=xmax), ymin - 0.5)
+        for i, node in enumerate(output_nodes)
+    }
+
+    # combine the positions
+    positions = {
+        **input_positions,
+        **output_positions,
+        **central_pos,
+    }
+    return positions
+
+
 def add_edge_legend(
     ax: plt.Axes,
     normalized_weights: list,
@@ -155,7 +217,9 @@ def add_edge_legend(
     """
     color = Counter(color_list).most_common(1)[0][0]
     lines = []
-    edges_weight_list = sorted(normalized_weights)
+    edges_weight_list = sorted(
+        [np.abs(w) for w in normalized_weights if w != 0], reverse=True
+    )
     for _, width in enumerate(edges_weight_list):
         lines.append(Line2D([], [], linewidth=width, color=color))
     # keep only 3 legend entries, evenly spaced, including the first and last
@@ -1288,6 +1352,72 @@ def plot_communities_graphs(
         else:
             ax.set_title(f"Community {d+1}")
             plot_indivual_community_graphs(H, ax)
+    return ax
+
+
+def draw_graph_selfstanding(
+    graph: nx.DiGraph, ax: plt.Axes = None, edge_norm: float = None, pos=None
+):
+    """
+    Draw a graph with the nodes and edges attributes based on the
+    nx.draw_networkx function and the properties of the graph itself.
+    """
+    if ax is None:
+        fig, ax = plt.subplots(figsize=(10, 8), dpi=120)
+
+    # define the positions of the nodes
+    if pos is None:
+        pos = nx.spring_layout(graph)
+
+    # define the colors of the nodes
+    node_colors = [
+        graph.nodes[n]["node_color"]
+        if "node_color" in graph.nodes[n].keys()
+        else "k"
+        for n in graph.nodes
+    ]
+
+    node_labels = {
+        n: graph.nodes[n]["node_label"]
+        if "node_label" in graph.nodes[n].keys()
+        else ""
+        for n in graph.nodes
+    }
+
+    # define the colors and widths of the edges based on the weights
+    if edge_norm is None:
+        edge_norm = max([graph.edges[e]["weight"] for e in graph.edges]) / 5
+    widths = [graph.edges[e]["weight"] / edge_norm for e in graph.edges]
+    edges_colors = [
+        plot_params.EXCIT_COLOR
+        if graph.edges[e]["weight"] > 0
+        else plot_params.INHIB_COLOR
+        for e in graph.edges
+    ]
+
+    # Plot graph
+    nx.draw(
+        graph,
+        pos,
+        nodelist=graph.nodes,
+        with_labels=True,
+        labels=node_labels,
+        alpha=0.5,
+        node_size=100,
+        node_color=node_colors,
+        edge_color=edges_colors,
+        width=widths,
+        connectionstyle="arc3,rad=0.1",
+        font_size=5,
+        font_color="black",
+        ax=ax,
+    )
+    add_edge_legend(
+        ax,
+        normalized_weights=widths,
+        color_list=edges_colors,
+        arrow_norm=1 / edge_norm,
+    )
     return ax
 
 
