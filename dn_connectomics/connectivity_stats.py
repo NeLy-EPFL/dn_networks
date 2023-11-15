@@ -16,7 +16,7 @@ from scipy import stats
 import plot_params
 import neuron_params
 from loaddata import load_graph_and_matrices, load_nodes_and_edges, load_names
-from statistics import connectivity_stats
+from statistics_utils import connectivity_stats
 from graph_plot_utils import make_nice_spines, make_axis_disappear
 
 
@@ -41,16 +41,19 @@ def prepare_table(
     dns_info : pd.DataFrame
         Dataframe containing the information about the neurons of interest.
     """
-    dns_info = equiv_index_rootid_.copy()
+    info = equiv_index_rootid_.copy()
     root_id_names_df = load_names()
+    dn_names = root_id_names_df[
+        root_id_names_df["name"].str.contains('DN')
+    ]["root_id"].values
     highlighted_neurons = root_id_names_df[
         root_id_names_df["name"].str.contains(marker)
     ]["root_id"].values
     # formatting to reuse the code
-    dns_info["DN"] = True
-    dns_info["all"] = True
-    dns_info["GNG_DN"] = dns_info["root_id"].isin(highlighted_neurons)
-    return dns_info
+    info["DN"] = info["root_id"].isin(dn_names)
+    info["all"] = True
+    info["GNG_DN"] = info["root_id"].isin(highlighted_neurons)
+    return info
 
 
 def scatter_plot(ax, x, y, args):

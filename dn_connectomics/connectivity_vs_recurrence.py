@@ -15,7 +15,7 @@ import pickle
 import math
 
 from loaddata import load_graph_and_matrices, load_nodes_and_edges
-from statistics import connectivity_stats_to_dict
+from statistics_utils import connectivity_stats_to_dict
 from graph_plot_utils import get_downstream_specs
 import plot_params
 import neuron_params

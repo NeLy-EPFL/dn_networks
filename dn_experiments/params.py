@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 
 # handling summary data of all recording
 # ====================== CHANGE THIS PARAMETER TO THE FOLDER WHERE YOUR DOWNLOADED DATA IS ==============
-data_summary_dir = "/mnt/nas2/JB/_paper_data/DN_Networks"  # "/mnt/nas2/JB/_data_summary"
+data_summary_dir = "/mnt/nas2/FH/from_Jonas/_data_summary"  # "/mnt/nas2/JB/_data_summary"
 # =======================================================================================================
 # ====================== VERIFY THAT THESE FOLDERS ARE CORRECT ==========================================
 imaging_data_dir = os.path.join(data_summary_dir, "Optogenetics_Dfd_population_imaging")
