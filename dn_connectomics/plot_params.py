@@ -30,6 +30,9 @@ NT_TYPES = {
     "OCT": {"color": LIGHTGREY, "linestyle": "-"},
 }
 
+NODE_GENETIC_COLORS = ['k', LIGHTGREY] # colours between neurons likely to have a genetic label or not
+DEFAULT_NODE_COLOR = "k"
+
 # --- Plotting parameters for the flower plots --- #
 FLOWER_PLOT_PARAMS = {}
 FLOWER_PLOT_PARAMS["folder"] = os.path.join(
@@ -55,7 +58,8 @@ FLOWER_PLOT_PARAMS["indirect_layout_args"] = {
     "feedback_direct_plot": False,
     "feedback_downstream_plot": True,
 }
-FLOWER_PLOT_PARAMS["plot_each_neuron"] = False
+FLOWER_PLOT_PARAMS["plot_each_neuron"] = True # False for paper
+FLOWER_PLOT_PARAMS["display_names"] = True
 
 # --- Plotting parameters for the clustering --- #
 CLUSTERING_ARGS = {}
@@ -69,6 +73,10 @@ CLUSTERING_ARGS["folder"] = os.path.join(
     "whole_network",
     "louvain",
 )
+CLUSTERING_ARGS["drawings_folder"] = os.path.join(
+    CLUSTERING_ARGS["folder"],
+    "cluster_drawings",
+)
 CLUSTERING_ARGS["data_folder"] = os.path.join(
     CLUSTERING_ARGS["folder"],
     "data",
@@ -81,6 +89,22 @@ CLUSTERING_ARGS["confusion_mat_values"] = "relative"
 CLUSTERING_ARGS["confusion_mat_size_threshold"] = 10
 CLUSTERING_ARGS["confusion_mat_count_synpases"] = True
 CLUSTERING_ARGS["confusion_mat_normalise"] = True
+# Define a list of 12 colors for the clusters, comment the effective colors for user readability
+CLUSTERING_ARGS["cluster_colors"] = [
+    "#bcbd22", # yellow
+    "#9467bd", # purple
+    "#2ca02c", # green
+    "#d62728", # red
+    "#17becf", # cyan
+    "#e377c2", # pink
+    "#7f7f7f", # grey
+    "#ffbb78", # light orange
+    "#1f77b4", # blue
+    "#ff7f0e", # orange
+    "#8c564b", # brown
+    "#aec7e8", # light blue
+]
+
 
 META_GRAPH = {}
 META_GRAPH["edge_normalisation"] = 5
@@ -114,3 +138,15 @@ NETWORK_STATS_ARGS["method"] = "median"
 NETWORK_STATS_ARGS["all_lines"] = True
 NETWORK_STATS_ARGS["extend_lines"] = True
 NETWORK_STATS_ARGS["overlay_method"] = True
+
+# --- Network-wide representation --- #
+NETWORK_PLOT_ARGS = {}
+NETWORK_PLOT_ARGS["folder"] = os.path.join(
+    params.FIGURES_DIR,
+    "network_visualisations",
+    "whole_network",
+    "network_plot",
+)
+NETWORK_PLOT_ARGS["restricted_nodes"] = None #'known_only'
+NETWORK_PLOT_ARGS["restricted_clusters"] = [3,5,9]
+NETWORK_PLOT_ARGS["restricted_connections"] = None

@@ -14,53 +14,18 @@ import numpy as np
 
 import plot_params
 
-from louvain_clustering import confusion_matrix_communities
+from louvain_clustering import confusion_matrix_communities, load_communities
 from loaddata import load_graph_and_matrices, get_name_from_rootid
 from common import convert_index_root_id
-from graph_plot_utils import make_nice_spines, add_edge_legend
-
-
-def load_communities(
-    path: str,
-    return_type: str = "set",
-    threshold: int = 2,
-    data_type: str = "node_index",
-):
-    """
-    Load the communities from a file.
-
-    Parameters
-    ----------
-    path : str
-        The path to the file containing the communities.
-    return_type : str
-        The type of the return value. Can be either "set" or "list".
-
-    Returns
-    -------
-    communities : list[return_type[int]]
-        The list of communities.
-    """
-    df = pd.read_csv(os.path.join(path, "clustering.csv"))
-    if data_type not in df.columns:
-        data_type = "node_index"
-    if return_type == "set":
-        communities_ = [
-            set(df[df["cluster"] == cluster][data_type].values)
-            for cluster in df["cluster"].unique()
-        ]
-    elif return_type == "list":
-        communities_ = [
-            df[df["cluster"] == cluster][data_type].values
-            for cluster in df["cluster"].unique()
-        ]
-    else:
-        raise ValueError("return_type must be either set or list")
-
-    communities_ = [
-        community for community in communities_ if len(community) > threshold
-    ]
-    return communities_
+from graph_processing_utils import (
+                    add_names_to_nodes,
+                    add_cluster_information,
+                    add_node_colors,
+                    add_weight_to_edges,
+                    add_genetic_match_to_nodes,
+                    remove_inhbitory_connections,
+                    remove_excitatory_connections)
+from graph_plot_utils import make_nice_spines, add_edge_legend, draw_graph_selfstanding
 
 
 def define_meta_graph(
@@ -92,8 +57,7 @@ def define_meta_graph(
             graph_.nodes[node]["composition"] = communities_used[node]
     return graph_
 
-
-def add_names_to_nodes(graph_: nx.DiGraph, equiv_index_rootid_):
+def add_names_to_indexed_nodes(graph_: nx.DiGraph, equiv_index_rootid_):
     """
     Add the names of the neurons to the attributes of the nodes.
     """
@@ -115,7 +79,7 @@ def plot_meta_graph(
     graph_name: str = "meta_graph",
 ):
     """
-    Plot the meta graph.
+    Plot the meta graph, i.e. the graph where each node is a cluster of neurons.
 
     Parameters
     ----------
@@ -230,6 +194,185 @@ def draw_meta_network():
             graph_name="meta_graph_literature_analysis_normalised_cluster_size",
         )
 
+def draw_clusters_interactions(graph, filename):
+    """
+    Draw the clusters interactions. The plot resembles a large flower,
+    where each petal is a cluster of neurons. Each petal is coloured according
+    to the type of the neurons it contains.Each petal is made of three
+    concentric circles, where the neurons are placed. The neurons are placed
+    according to their connectiivty within the cluster. The inner circle
+    contains only neurons that output to other neurons within the cluster
+    without receiving any input from them. The middle circle contains neurons
+    that receive inputs and outputs from other neurons within the cluster. The
+    outer circle is the rest (only inputs or no connections within the cluster
+    in case we restrict to a subset).
+    In the middle of the flower, there is a circle containing the neurons that
+    are not part of any cluster.
+    """
+
+    # count the number of clusters defined
+    cluster_list = []
+    for graph_node in graph.nodes():
+        if 'cluster' in graph.nodes[graph_node].keys() and graph.nodes[graph_node]['cluster'] == graph.nodes[graph_node]['cluster']:
+            cluster_list.append(graph.nodes[graph_node]['cluster'])
+    
+    clusters = list(set(cluster_list))
+
+    if clusters == []:
+        raise ValueError('No clusters defined in the graph')
+    nb_clusters = len(clusters)
+
+
+    cluster_centers = [
+        (1.2*nb_clusters*np.cos(2*np.pi*cluster_nb/nb_clusters),
+        1.2*nb_clusters*np.sin(2*np.pi*cluster_nb/nb_clusters))
+        for cluster_nb in range(nb_clusters)
+        ]
+
+    positions = {}
+    for cluster_idx, cluster_nb in enumerate(clusters):
+        cluster_nb
+        # get a subset of the graph known_graph, where the 'cluster' attribute is equal to cluster_of_interest
+        subgraph = graph.subgraph(
+            [
+                node
+                for node in graph.nodes()
+                if graph.nodes[node]['cluster'] == cluster_nb
+            ]
+            )
+        # draw the graph
+        pos = draw_graph_selfstanding(subgraph,center=cluster_centers[cluster_idx],output='pos')
+        positions = {**positions, **pos}
+
+    # additional nodes that are not clustered
+    additional_nodes = [node for node in graph.nodes() if not graph.nodes[node]['cluster'] in clusters]
+    subgraph = graph.subgraph(additional_nodes)
+    pos = draw_graph_selfstanding(subgraph,center=(0,0),output='pos',radius_scaling=2)
+    positions = {**positions, **pos}
+
+
+    # draw the graph
+    fig, ax = plt.subplots(figsize=(10,10))
+
+    edge_norm = max([np.abs(graph.edges[e]["weight"]) for e in graph.edges]) / 5
+    widths = [np.abs(graph.edges[e]["weight"]) / edge_norm for e in graph.edges]
+    edges_colors = [
+            plot_params.EXCIT_COLOR
+            if graph.edges[e]["weight"] > 0
+            else plot_params.INHIB_COLOR
+            for e in graph.edges
+        ]
+    node_labels = {
+            n: graph.nodes[n]["node_label"]
+            if "node_label" in graph.nodes[n].keys()
+            else ""
+            for n in graph.nodes
+    }
+    node_colors = [
+            graph.nodes[n]["node_color"]
+            if "node_color" in graph.nodes[n].keys()
+            else "grey"
+            for n in graph.nodes
+        ]
+    nx.draw(
+        graph,
+        pos=positions,
+        nodelist=graph.nodes,
+        with_labels=True,
+        labels=node_labels,
+        alpha=0.5,
+        node_size=20,
+        node_color=node_colors,
+        edge_color=edges_colors,
+        width=widths,
+        connectionstyle="arc3,rad=0.1",
+        font_size=2,
+        font_color="black",
+        ax=ax,
+    )
+    add_edge_legend(ax, normalized_weights=widths,
+                    color_list=edges_colors,
+                    arrow_norm=1 / edge_norm,)
+    
+    # check if savign folder exists
+    if not os.path.exists(plot_params.NETWORK_PLOT_ARGS["folder"]):
+        os.makedirs(plot_params.NETWORK_PLOT_ARGS["folder"])
+    
+    plt.savefig(os.path.join(
+        plot_params.NETWORK_PLOT_ARGS["folder"],
+        filename + '.png'
+    ),  
+    dpi=300)
+    plt.savefig(os.path.join(
+        plot_params.NETWORK_PLOT_ARGS["folder"],
+        filename + '.pdf'
+    ),  
+    dpi=300)
+    plt.savefig(os.path.join(
+        plot_params.NETWORK_PLOT_ARGS["folder"],
+        filename + '.eps'
+    ),  
+    dpi=300)
+    return ax
+
+
+def draw_network_organised_by_clusters(
+    restricted_nodes = 'known_only',
+    restricted_clusters = None,
+    restricted_connections = None,):
+    """
+    Draw the network organised by clusters. 
+    Definition of the part of the graph to plot is done by the arguments:
+        restricted_nodes: 'known_only' or 'all'
+        restricted_clusters: list of clusters to plot, or None
+        restricted_connections: 'inhibitory', 'excitatory', or None
+    """
+    (
+        dn_graph,
+        _,
+        _,
+        _,
+        _,
+    ) = load_graph_and_matrices("dn")
+
+    # add cluster information to the graph
+    dn_graph = add_cluster_information(dn_graph)
+    # add a colour depending on the type of the neuron
+    dn_graph = add_node_colors(dn_graph, mode = 'cluster')
+    # add the names of the neurons to the graph
+    dn_graph = add_names_to_nodes(dn_graph)
+    # add a 'weight' attribute to the edges, equal to the effectve weight
+    dn_graph = add_weight_to_edges(dn_graph)
+    # add a field 'genetic_match' to the nodes, True if the node has a potential genetic match
+    dn_graph = add_genetic_match_to_nodes(dn_graph)
+
+    filename = 'network_in_clusters'
+    # restricting nodes:
+    if restricted_nodes == 'known_only':
+        dn_graph = dn_graph.subgraph(
+            [node for node in dn_graph.nodes() if dn_graph.nodes[node]["has_genetic_match"]]
+            )
+        filename += '_known_neurons_only'
+    if restricted_clusters is not None:
+        dn_graph = dn_graph.subgraph(
+            [node for node in dn_graph.nodes() if dn_graph.nodes[node]["cluster"] in restricted_clusters]
+            )
+        filename += '_restricted_clusters'
+        filename += '_'.join([str(cluster) for cluster in restricted_clusters])
+    if restricted_connections == 'inhibitory':
+        dn_graph = remove_inhbitory_connections(dn_graph)
+        filename += '_inhibitory_connections_only'
+    elif restricted_connections == 'excitatory':
+        dn_graph = remove_excitatory_connections(dn_graph)
+        filename += '_excitatory_connections_only'
+
+    ax = draw_clusters_interactions(dn_graph, filename=filename)
+
 
 if __name__ == "__main__":
-    draw_meta_network()
+    #draw_meta_network()
+    draw_network_organised_by_clusters(
+        restricted_nodes = plot_params.NETWORK_PLOT_ARGS["restricted_nodes"],
+        restricted_clusters = plot_params.NETWORK_PLOT_ARGS["restricted_clusters"],
+        restricted_connections = plot_params.NETWORK_PLOT_ARGS["restricted_connections"],
+        )

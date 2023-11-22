@@ -15,6 +15,8 @@ import seaborn as sns
 from collections import Counter
 from tqdm import tqdm
 
+from loaddata import get_name_from_rootid
+
 import plot_params
 
 NT_TYPES = plot_params.NT_TYPES
@@ -252,6 +254,7 @@ def plot_downstream_network(
     first_layer_opaque: bool = False,
     other_layer_visible: bool = False,
     arrow_norm: float = 0.1,
+    display_names: bool = False,
 ) -> dict:
     """
     Make a circular plot where the refernce neurons are in the center, and their
@@ -313,16 +316,16 @@ def plot_downstream_network(
         G,
         pos,
         nodelist=network_1["lookup"].values(),
-        with_labels=False,
-        # labels=network_1["node_labels"],
+        with_labels=display_names,
+        labels=network_1["node_labels"] if display_names else None,
         width=normalized_weights,
         alpha=alpha_1,
         node_size=node_size,
         node_color=network_1["node_colors"],
         edge_color=network_1["edge_colors"],
         style=network_1["edge_linestyle"],
-        # font_size=5,
-        # font_color="black",
+        font_size=5,
+        font_color="black",
         connectionstyle="arc3,rad=0.1",
         arrowstyle="->",
         arrowsize=10,
@@ -343,8 +346,8 @@ def plot_downstream_network(
         G,
         pos,
         nodelist=network_2["lookup"].values(),
-        # with_labels=True,
-        # labels=network_2["node_labels"],
+        with_labels=display_names,
+        labels=network_2["node_labels"] if display_names else None,
         width=normalized_weights,
         alpha=alpha_2,
         node_size=node_size,
@@ -352,8 +355,8 @@ def plot_downstream_network(
         edge_color=network_2["edge_colors"],
         style=network_2["edge_linestyle"],
         connectionstyle="arc3,rad=0.1",
-        # font_size=5,
-        # font_color="black",
+        font_size=5,
+        font_color="black",
         ax=ax,
     )
 
@@ -407,6 +410,17 @@ def get_downstream_specs(
 
     layer1_df = connectivity_df[mask]
 
+    if layer1_df.empty: # Return empty networks if no connections
+        network_1 = get_network_specs(
+            layer1_df, neurons_of_interest=neurons_of_interest, root_id_indexing=True
+            )   
+        network_2 = get_network_specs(
+            layer1_df,
+            neurons_of_interest=neurons_of_interest,  # table_connected_dns,
+            root_id_indexing=True,
+        )
+        return network_1, network_2
+
     # Collapse the connectivity table to sum the number of synapses between
     # the same neurons. Here the input group 'neurons_of_interest' is understood
     # as one unit and therefore connections are also summed
@@ -430,7 +444,11 @@ def get_downstream_specs(
     if named_dns is not None:
         table_connected_dns = {
             root_id: (
-                {"root_id": root_id, "color": "k", "name": "DN"}
+                {
+                    "root_id": root_id,
+                    "color": "k",
+                    "name": get_name_from_rootid(root_id, empty_type= 'DN')
+                }
                 if root_id not in named_dns.keys()
                 else named_dns[root_id]
             )
@@ -438,7 +456,11 @@ def get_downstream_specs(
         }
     else:
         table_connected_dns = {
-            root_id: {"root_id": root_id, "color": "k", "name": "DN"}
+            root_id: {
+                        "root_id": root_id,
+                        "color": "k",
+                        "name": get_name_from_rootid(root_id, empty_type= 'DN')
+                    }
             for root_id in list_layer_2_dns
         }
 
@@ -1354,20 +1376,73 @@ def plot_communities_graphs(
             plot_indivual_community_graphs(H, ax)
     return ax
 
+def get_ring_pos_sorted_alphabetically(node_list, graph, radius=3, center=(0,0)):
+    """
+    Define the positions of the nodes in a circular layout, sorted alphabetically.
+    """
+    if center is None:
+        center = (0,0)
+    subgraph = graph.subgraph(node_list)
+    raw_pos = nx.circular_layout(subgraph, scale=radius, center=center)
+    ordered_nodes = sorted(
+        subgraph.nodes,
+        key=lambda x: subgraph.nodes[x]["node_label"],
+    )
+    pos = {node_: pos_ for node_,pos_ in zip(ordered_nodes,list(raw_pos.values()))}
+    return pos
+
+
 
 def draw_graph_selfstanding(
-    graph: nx.DiGraph, ax: plt.Axes = None, edge_norm: float = None, pos=None
+    graph: nx.DiGraph, ax: plt.Axes = None, edge_norm: float = None, pos=None, center=None, radius_scaling=1, output='graph'
 ):
     """
     Draw a graph with the nodes and edges attributes based on the
     nx.draw_networkx function and the properties of the graph itself.
-    """
-    if ax is None:
-        fig, ax = plt.subplots(figsize=(10, 8), dpi=120)
 
-    # define the positions of the nodes
-    if pos is None:
-        pos = nx.spring_layout(graph)
+    Parameters
+    ----------
+    graph : nx.DiGraph
+        The graph to draw
+    ax : plt.Axes, optional
+        The axes to plot on, by default None
+    edge_norm : float, optional
+        The normalisation factor for the edge width, by default None
+    pos : dict, optional
+        The positions of the nodes, by default None
+    center : tuple, optional
+        The center of the graph, by default None
+    output : str, optional
+        Whether to return the figure 'graph' or the positions 'pos', by default 'graph'
+    """
+    
+
+    # prune network: if a an edge has weight 0, remove it
+    graph = graph.copy()
+    edges_to_remove = []
+    for u, v, data in graph.edges(data=True):
+        if data["weight"] == 0:
+            edges_to_remove.append((u, v))
+    graph.remove_edges_from(edges_to_remove)
+
+    # outer ring: nodes that don't output to other nodes
+    outer_ring = [
+        n for n in graph.nodes if len(list(graph.successors(n))) == 0
+    ]
+    pos_outer = get_ring_pos_sorted_alphabetically(outer_ring, graph, radius=radius_scaling*3, center=center)
+
+    # inner ring: nodes that only output to other nodes
+    input_only_nodes = [
+        n for n in graph.nodes if len(list(graph.predecessors(n))) == 0 and len(list(graph.successors(n))) > 0
+        ]
+    pos_inner = get_ring_pos_sorted_alphabetically(input_only_nodes, graph, radius=radius_scaling*1, center=center)
+
+    # central ring: nodes that both input and output to other nodes
+    central_ring = graph.nodes - set(outer_ring) - set(input_only_nodes)
+    pos_central = get_ring_pos_sorted_alphabetically(central_ring, graph, radius=radius_scaling*2, center=center)
+
+    # merge the positions
+    pos = {**pos_outer, **pos_inner, **pos_central}
 
     # define the colors of the nodes
     node_colors = [
@@ -1386,8 +1461,11 @@ def draw_graph_selfstanding(
 
     # define the colors and widths of the edges based on the weights
     if edge_norm is None:
-        edge_norm = max([graph.edges[e]["weight"] for e in graph.edges]) / 5
-    widths = [graph.edges[e]["weight"] / edge_norm for e in graph.edges]
+        try:
+            edge_norm = max([np.abs(graph.edges[e]["weight"]) for e in graph.edges]) / 5
+        except ValueError:
+            edge_norm = 1
+    widths = [np.abs(graph.edges[e]["weight"]) / edge_norm for e in graph.edges]
     edges_colors = [
         plot_params.EXCIT_COLOR
         if graph.edges[e]["weight"] > 0
@@ -1395,30 +1473,37 @@ def draw_graph_selfstanding(
         for e in graph.edges
     ]
 
-    # Plot graph
-    nx.draw(
-        graph,
-        pos,
-        nodelist=graph.nodes,
-        with_labels=True,
-        labels=node_labels,
-        alpha=0.5,
-        node_size=100,
-        node_color=node_colors,
-        edge_color=edges_colors,
-        width=widths,
-        connectionstyle="arc3,rad=0.1",
-        font_size=5,
-        font_color="black",
-        ax=ax,
-    )
-    add_edge_legend(
-        ax,
-        normalized_weights=widths,
-        color_list=edges_colors,
-        arrow_norm=1 / edge_norm,
-    )
-    return ax
+    if output == 'graph':
+        if ax is None:
+            fig, ax = plt.subplots(figsize=(10, 8), dpi=120)
+        # Plot graph
+        nx.draw(
+            graph,
+            pos,
+            nodelist=graph.nodes,
+            with_labels=True,
+            labels=node_labels,
+            alpha=0.5,
+            node_size=100,
+            node_color=node_colors,
+            edge_color=edges_colors,
+            width=widths,
+            connectionstyle="arc3,rad=0.1",
+            font_size=5,
+            font_color="black",
+            ax=ax,
+        )
+        if len(widths) > 0:
+            add_edge_legend(
+                ax,
+                normalized_weights=widths,
+                color_list=edges_colors,
+                arrow_norm=1 / edge_norm,
+            )
+        return ax
+    elif output == 'pos':
+        return pos
+    
 
 
 def make_nice_spines(ax, linewidth=2):

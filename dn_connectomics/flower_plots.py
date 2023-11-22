@@ -12,8 +12,8 @@ from tqdm import tqdm
 
 import plot_params
 import neuron_params
+from loaddata import load_nodes_and_edges, get_name_from_rootid
 from common import identify_rids_from_name
-from loaddata import load_nodes_and_edges
 from graph_plot_utils import get_downstream_specs, plot_downstream_network
 
 
@@ -23,6 +23,7 @@ def make_flower_plot(
     neurons_of_interest: dict = None,
     layout_args: dict = None,
     plot_all_neurons: bool = True,
+    display_names: bool = False,
 ):
     """
     Make a flower plot for a given neuron, i.e. the neuron of interest in the
@@ -55,8 +56,8 @@ def make_flower_plot(
     """
     # Format data necessary
     rids = identify_rids_from_name(neuron_name, neurons_of_interest)
-    if rids is None:
-        raise ValueError("Neuron not found in neurons of interest.")
+    if rids is {}:
+        raise ValueError(f"Neuron {neuron_name} not found in neurons of interest.")
     direct_plot = True if layout_args["level"] == 1 else False
     list_nodes = neurons_of_interest.keys()
 
@@ -92,11 +93,16 @@ def make_flower_plot(
                 arrow_norm=layout_args["arrow_norm"]
                 if "arrow_norm" in layout_args
                 else 0.1,
+                display_names=display_names,
             )
             ax[i].set_title(neuron_name + " downstream DNs")
             ax[i].set_aspect("equal")
 
+        # if ax is a list, then the last element is the overall plot
+        if nbr_graphs > 1:
             ax_overall = ax[nbr_graphs - 1]
+        else:
+            ax_overall = ax
 
     else:
         fig_size_factor = (
@@ -127,6 +133,7 @@ def make_flower_plot(
         arrow_norm=layout_args["arrow_norm"]
         if "arrow_norm" in layout_args
         else 0.1,
+        display_names=display_names,
     )
     ax_overall.set_title("overall downstream DNs")
     # plt.tight_layout()
@@ -171,18 +178,16 @@ def draw_all_flower_plots():
         root_id: {
             "root_id": root_id,
             "color": plot_params.DARKORANGE
-            if (not pd.isna(label) and "DNg" in label)
+            if (not pd.isna(get_name_from_rootid(root_id)) and "DNg" in get_name_from_rootid(root_id))
             else plot_params.DARKPURPLE,
-            "name": label,
+            "name": get_name_from_rootid(root_id),
         }
-        for root_id, label in zip(nodes["root_id"], nodes["name_taken"])
-        if not pd.isna(label)
+        for root_id in nodes["root_id"]
+        if not pd.isna(get_name_from_rootid(root_id))
     }
     # Replace the neurons where the root_ids are already defined
     dictionary_dns.update(neuron_params.REF_DNS)
-    neuron_names = [
-        v["database_name"] for _, v in neuron_params.KNOWN_DNS.items()
-    ]
+    neuron_names = neuron_params.FLOWER_PLOTS_TO_MAKE
 
     for neuron_name in tqdm(neuron_names):
         # ------------------- Flower plot for direct connections -------------------
@@ -195,6 +200,7 @@ def draw_all_flower_plots():
             plot_all_neurons=plot_params.FLOWER_PLOT_PARAMS[
                 "plot_each_neuron"
             ],
+            display_names=plot_params.FLOWER_PLOT_PARAMS["display_names"],
         )
         fig1.savefig(
             os.path.join(
@@ -214,6 +220,7 @@ def draw_all_flower_plots():
             plot_all_neurons=plot_params.FLOWER_PLOT_PARAMS[
                 "plot_each_neuron"
             ],
+            display_names=plot_params.FLOWER_PLOT_PARAMS["display_names"],
         )
         fig2.savefig(
             os.path.join(

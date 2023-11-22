@@ -12,6 +12,7 @@ import scipy.cluster.hierarchy as sch
 from loaddata import get_name_from_rootid
 
 
+
 def connections_up_to_n_hops(matrix, n):
     """
     input: (sparse) matrix
@@ -222,3 +223,4 @@ def plot_matrix_simple(
     if savefig is not None:
         plt.savefig(savefig)
     return ax
+
