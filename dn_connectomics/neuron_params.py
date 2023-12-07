@@ -49,8 +49,44 @@ KNOWN_DNS = {**REF_DNS, **VALIDATION_DNS}
 #FLOWER_PLOTS_TO_MAKE = [
 #    v["database_name"] for _, v in KNOWN_DNS.items()
 #]
-FLOWER_PLOTS_TO_MAKE = ['DNb01', 'DNg_BDN2', 'DNa03', 'DNa06', 'DNg_oDN1','DNg16', 'DNp42','DNg_aDN2']
+FLOWER_PLOTS_TO_MAKE = ['DNb01', 'DNg_BDN2', 'DNa03', 'DNa06', 'DNg_oDN1','DNg16', 'DNp42','DNg_aDN2','DNg11','DNp_oviDNa', 'DNp_oviDNb']
 FLOWER_PLOTS_TO_MAKE.extend([
     v["database_name"] for _, v in KNOWN_DNS.items()
 ])
-#FLOWER_PLOTS_TO_MAKE = ['DNg_BDN2','DNg_oDN1']
+
+
+# DNs having similar behaviour phenotypes
+grooming_color = plot_params.DARKRED
+walking_color = plot_params.DARKGREEN
+turning_color = plot_params.LIGHTGREEN
+abdomen_color = plot_params.DARKPURPLE
+backwards_color = plot_params.DARKCYAN
+grooming_aDN1 = make_dict_special_neurons("aDN1", "DNg_aDN1", color= grooming_color)
+groomig_aDN2 = make_dict_special_neurons("aDN2", "DNg_aDN2", color= grooming_color)
+turning_DNa01 = make_dict_special_neurons("DNa01", "DNa01", color= turning_color)
+turning_DNa02 = make_dict_special_neurons("DNa02", "DNa02", color= turning_color)
+truning_DNb02 = make_dict_special_neurons("DNb02", "DNb02", color= turning_color)
+walking_BDN2 = make_dict_special_neurons("BDN2", "DNg_BDN2", color= walking_color)
+walking_oDN1 = make_dict_special_neurons("oDN1", "DNg_oDN1", color= walking_color)
+walking_DNp09 = make_dict_special_neurons("DNp09", "DNp09", color= walking_color)
+abdomen_DNg14 = make_dict_special_neurons("DNg14", "DNg14", color= abdomen_color)
+abdomen_ovDNb = make_dict_special_neurons("oviDNb", "DNp_oviDNb", color= abdomen_color)
+abdomen_ovDNa = make_dict_special_neurons("oviDNa", "DNp_oviDNa", color= abdomen_color)
+backwards_MDN = make_dict_special_neurons("MDN", "DNp_MDN", color= backwards_color)
+DNg11 = make_dict_special_neurons("DNg11", "DNg11", color= plot_params.DARKYELLOW)
+
+BEHAVIOUR_DNS = {
+    **walking_BDN2, 
+    **walking_oDN1, 
+    **walking_DNp09,
+    **turning_DNa01,
+    **turning_DNa02,
+    **truning_DNb02,
+    **abdomen_DNg14,
+    **abdomen_ovDNb, 
+    **abdomen_ovDNa,
+    **DNg11,
+    **grooming_aDN1,
+    **groomig_aDN2,
+    **backwards_MDN,
+    }

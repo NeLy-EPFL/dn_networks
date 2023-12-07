@@ -128,21 +128,23 @@ def remove_inhbitory_connections(graph):
     """
     Remove inhibitory connections from the graph.
     """
+    graph_ = graph.copy()
     edges_to_remove = []
-    for edge in graph.edges():
-        if graph.edges[edge]["eff_weight"] < 0:
+    for edge in graph_.edges():
+        if graph_.edges[edge]["eff_weight"] < 0:
             edges_to_remove.append(edge)
-    graph.remove_edges_from(edges_to_remove)
-    return graph
+    graph_.remove_edges_from(edges_to_remove)
+    return graph_
 
 def remove_excitatory_connections(graph):
     """
     Remove excitatory connections from the graph.
     """
+    graph_ = graph.copy()
     edges_to_remove = []
-    for edge in graph.edges():
-        if graph.edges[edge]["eff_weight"] > 0:
+    for edge in graph_.edges():
+        if graph_.edges[edge]["eff_weight"] > 0:
             edges_to_remove.append(edge)
-    graph.remove_edges_from(edges_to_remove)
-    return graph
+    graph_.remove_edges_from(edges_to_remove)
+    return graph_
     

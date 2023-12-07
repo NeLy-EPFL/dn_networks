@@ -17,6 +17,8 @@ DARKORANGE = "#d17c04"
 DARKPURPLE = "#730d71"
 LIGHTGREY = "#c3c3c3"
 DARKPINK = "#C20C6D"
+LIGHTGREEN = "#7FC97F"
+DARKYELLOW = "#FFB200"
 
 INHIB_COLOR = "navy"
 EXCIT_COLOR = "darkred"
@@ -139,14 +141,31 @@ NETWORK_STATS_ARGS["all_lines"] = True
 NETWORK_STATS_ARGS["extend_lines"] = True
 NETWORK_STATS_ARGS["overlay_method"] = True
 
+# --- Interneuron influence stats --- #
+INTERNEURON_STATS_ARGS = {}
+INTERNEURON_STATS_ARGS["folder"] = os.path.join(
+    params.FIGURES_DIR,
+    "statistics",
+    "interneuron_influence",
+)
+INTERNEURON_STATS_ARGS["measured_feature"] = 'inputs' # 'outputs', 'inputs'
+INTERNEURON_STATS_ARGS["connection_type"] = 'all' # 'inhibitory', 'excitatory', 'all'
+INTERNEURON_STATS_ARGS["reference_sorting"] = 'direct' # 'direct', 'indirect', 'all_interneurons'
+INTERNEURON_STATS_ARGS['color_schema'] = 'copper' # 'bone, "RdBu", 'pink'
+
+
 # --- Network-wide representation --- #
 NETWORK_PLOT_ARGS = {}
 NETWORK_PLOT_ARGS["folder"] = os.path.join(
     params.FIGURES_DIR,
     "network_visualisations",
     "whole_network",
+    #"cluster_detail"
     "network_plot",
 )
-NETWORK_PLOT_ARGS["restricted_nodes"] = None #'known_only'
-NETWORK_PLOT_ARGS["restricted_clusters"] = [3,5,9]
-NETWORK_PLOT_ARGS["restricted_connections"] = None
+NETWORK_PLOT_ARGS["restricted_nodes"] = 'known_only' #None, 'known_only'
+NETWORK_PLOT_ARGS["restricted_clusters"] = [10] #None, [3,5,9]
+NETWORK_PLOT_ARGS["restricted_connections"] = None # 'inhibitory', 'excitatory', None
+NETWORK_PLOT_ARGS["position_reference"] = 'all' # 'inhibitory', 'excitatory', 'all'
+NETWORK_PLOT_ARGS["node_size"] = 40  #20
+NETWORK_PLOT_ARGS["fig_size"] =  (6,6) #(6,6) (8,4)

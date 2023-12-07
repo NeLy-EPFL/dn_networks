@@ -194,7 +194,12 @@ def draw_meta_network():
             graph_name="meta_graph_literature_analysis_normalised_cluster_size",
         )
 
-def draw_clusters_interactions(graph, filename):
+def draw_clusters_interactions(
+        graph: nx.DiGraph,
+        filename: str,
+        restricted_connections: str = None,
+        position_reference: str = None,
+        ):
     """
     Draw the clusters interactions. The plot resembles a large flower,
     where each petal is a cluster of neurons. Each petal is coloured according
@@ -208,6 +213,8 @@ def draw_clusters_interactions(graph, filename):
     in case we restrict to a subset).
     In the middle of the flower, there is a circle containing the neurons that
     are not part of any cluster.
+    The positions can be defined with regards to a specific type of connection
+    (inhibitory or excitatory) or all connections. 
     """
 
     # count the number of clusters defined
@@ -224,8 +231,8 @@ def draw_clusters_interactions(graph, filename):
 
 
     cluster_centers = [
-        (1.2*nb_clusters*np.cos(2*np.pi*cluster_nb/nb_clusters),
-        1.2*nb_clusters*np.sin(2*np.pi*cluster_nb/nb_clusters))
+        ((1+1.2*nb_clusters)*np.cos(2*np.pi*cluster_nb/nb_clusters),
+        (1+1.2*nb_clusters)*np.sin(2*np.pi*cluster_nb/nb_clusters))
         for cluster_nb in range(nb_clusters)
         ]
 
@@ -240,6 +247,12 @@ def draw_clusters_interactions(graph, filename):
                 if graph.nodes[node]['cluster'] == cluster_nb
             ]
             )
+        # use the network with specific connectivity to define the positions of the neurons
+        if position_reference == 'inhibitory': 
+            subgraph = remove_excitatory_connections(subgraph)
+        elif position_reference == 'excitatory':
+            subgraph = remove_inhbitory_connections(subgraph)
+
         # draw the graph
         pos = draw_graph_selfstanding(subgraph,center=cluster_centers[cluster_idx],output='pos')
         positions = {**positions, **pos}
@@ -247,12 +260,21 @@ def draw_clusters_interactions(graph, filename):
     # additional nodes that are not clustered
     additional_nodes = [node for node in graph.nodes() if not graph.nodes[node]['cluster'] in clusters]
     subgraph = graph.subgraph(additional_nodes)
+    if position_reference == 'inhibitory': 
+        subgraph = remove_excitatory_connections(subgraph)
+    elif position_reference == 'excitatory':
+        subgraph = remove_inhbitory_connections(subgraph)
     pos = draw_graph_selfstanding(subgraph,center=(0,0),output='pos',radius_scaling=2)
     positions = {**positions, **pos}
 
 
     # draw the graph
-    fig, ax = plt.subplots(figsize=(10,10))
+    fig, ax = plt.subplots(figsize=plot_params.NETWORK_PLOT_ARGS["fig_size"])
+
+    if restricted_connections == 'inhibitory': 
+        graph = remove_excitatory_connections(graph)
+    elif restricted_connections == 'excitatory':
+        graph = remove_inhbitory_connections(graph)
 
     edge_norm = max([np.abs(graph.edges[e]["weight"]) for e in graph.edges]) / 5
     widths = [np.abs(graph.edges[e]["weight"]) / edge_norm for e in graph.edges]
@@ -281,7 +303,7 @@ def draw_clusters_interactions(graph, filename):
         with_labels=True,
         labels=node_labels,
         alpha=0.5,
-        node_size=20,
+        node_size=plot_params.NETWORK_PLOT_ARGS["node_size"],
         node_color=node_colors,
         edge_color=edges_colors,
         width=widths,
@@ -317,15 +339,20 @@ def draw_clusters_interactions(graph, filename):
 
 
 def draw_network_organised_by_clusters(
-    restricted_nodes = 'known_only',
-    restricted_clusters = None,
-    restricted_connections = None,):
+    restricted_nodes: str = 'known_only',
+    restricted_clusters: list[int] = None,
+    restricted_connections: str = None,
+    position_reference: str = None,):
     """
     Draw the network organised by clusters. 
     Definition of the part of the graph to plot is done by the arguments:
         restricted_nodes: 'known_only' or 'all'
         restricted_clusters: list of clusters to plot, or None
         restricted_connections: 'inhibitory', 'excitatory', or None
+        position_reference: None, 'inhibitory', 'excitatory', 'all'. Base the 
+            position of the neurons on the connections within the cluster
+            taking into account only the connections of the type specified. If
+            None, it is the same as restricted_connections.
     """
     (
         dn_graph,
@@ -360,13 +387,24 @@ def draw_network_organised_by_clusters(
         filename += '_restricted_clusters'
         filename += '_'.join([str(cluster) for cluster in restricted_clusters])
     if restricted_connections == 'inhibitory':
-        dn_graph = remove_inhbitory_connections(dn_graph)
+    #    dn_graph = remove_excitatory_connections(dn_graph)
         filename += '_inhibitory_connections_only'
     elif restricted_connections == 'excitatory':
-        dn_graph = remove_excitatory_connections(dn_graph)
+    #    dn_graph = remove_inhbitory_connections(dn_graph)
         filename += '_excitatory_connections_only'
+    if position_reference is None:
+        position_reference = restricted_connections
+    if position_reference == None:
+        filename += '_position_reference_all'
+    else:
+        filename += '_position_reference_' + position_reference
 
-    ax = draw_clusters_interactions(dn_graph, filename=filename)
+    ax = draw_clusters_interactions(
+        dn_graph,
+        filename=filename,
+        restricted_connections=restricted_connections,
+        position_reference=position_reference,
+        )
 
 
 if __name__ == "__main__":
@@ -375,4 +413,5 @@ if __name__ == "__main__":
         restricted_nodes = plot_params.NETWORK_PLOT_ARGS["restricted_nodes"],
         restricted_clusters = plot_params.NETWORK_PLOT_ARGS["restricted_clusters"],
         restricted_connections = plot_params.NETWORK_PLOT_ARGS["restricted_connections"],
+        position_reference = plot_params.NETWORK_PLOT_ARGS["position_reference"],
         )
