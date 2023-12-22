@@ -61,14 +61,17 @@ def frame_count(video_path, manual=False):
     cap.release()
     return frames
 
-def add_flies_to_data_summary(genotype_dir, path=None, headless=False, predictions=False):
-    if path is None and not headless and not predictions:
+def add_flies_to_data_summary(genotype_dir, path=None, headless=False, predictions=False, revisions=False):
+    if path is None and not headless and not predictions and not revisions:
         path = params.data_summary_csv_dir
     elif path is None and headless:
         path = params.data_headless_summary_csv_dir
     elif path is None and predictions:
         path = params.data_predictions_summary_csv_dir
+    elif path is None and revisions:
+        path = params.data_revisions_summary_dir
     df = pd.read_csv(path)
+
 
     if not isinstance(genotype_dir, list):
         genotype_dir = [genotype_dir]
@@ -82,7 +85,7 @@ def add_flies_to_data_summary(genotype_dir, path=None, headless=False, predictio
     base_df = pd.DataFrame(columns=df.columns, index=[0])  # df[:1].copy()
     min_fly_id = df.fly_id.max() + 1
 
-    if headless or predictions:
+    if headless or predictions or revisions:
         all_trial_dfs = get_trial_info_headless(base_df, all_trial_dirs, min_fly_id)
     else:
         all_trial_dfs = get_trial_info(base_df, all_trial_dirs, min_fly_id)
@@ -236,10 +239,29 @@ def get_trial_info_headless(base_df, all_trial_dirs, min_fly_id):
             else:
                 trial_df.stim_location = ""
             
-            if "nohead" in trial_name:
+            if ("nohead" in trial_name) or ("headless" in trial_name):
                 trial_df["head"] = False
             else:
                 trial_df["head"] = True
+
+            # Leg amputation
+            if "amp" in trial_name:
+                if "HL" in trial_name:
+                    trial_df["leg_amp"] = 'HL'
+                elif "ML" in trial_name:
+                    trial_df["leg_amp"] = 'ML'
+                elif "FL" in trial_name:
+                    trial_df["leg_amp"] = 'FL'
+                else:
+                    trial_df["leg_amp"] = 'no'
+                
+                if 'FeTi' in trial_name:
+                    trial_df["joint_amp"] = 'FeTi'
+                elif 'TiTa' or 'tarsus' in trial_name:
+                    trial_df["joint_amp"] = 'TiTa'
+                else:
+                    trial_df["joint_amp"] = 'no'
+
 
             # camera frame counts to see if there has been an aqcuisisiton issue
             seven_camera_metadata_file = find_seven_camera_metadata_file(
@@ -470,8 +492,8 @@ def plot_trial_number_summary(dfs, df_names, plot_base_dir=params.data_summary_d
 
 
 if __name__ == "__main__":
-    genotype_dirs = find_genotyp_dirs(nas_base_dir="/mnt/nas2/FH", min_date=230703, max_date=None, contains="CsChrimson", exclude="copy") # exclude = "headless"
-    add_flies_to_data_summary(genotype_dir=genotype_dirs, path=None, headless=False, predictions=True)
+    genotype_dirs = find_genotyp_dirs(nas_base_dir="/mnt/nas2/FH", min_date=231123, max_date=None, contains="CsChrimson", exclude="BAD") # exclude = "headless"
+    add_flies_to_data_summary(genotype_dir=genotype_dirs, path=None, headless=False, predictions=False, revisions=True)
 
     
 """

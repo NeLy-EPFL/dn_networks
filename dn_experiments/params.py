@@ -10,6 +10,8 @@ today = date.today().strftime("%y%m%d")
 
 # handling summary data of all recording
 data_summary_dir = "/mnt/nas2/JB/_data_summary"
+data_summary_dir_FH = "/mnt/nas2/FH/_data_summary"
+
 data_summary_csv_dir = os.path.join(data_summary_dir, "fly_selection_manual_230224.csv")
 data_headless_summary_csv_dir = os.path.join(data_summary_dir, "fly_selection_nohead_230406.csv")
 data_predictions_summary_csv_dir = os.path.join(data_summary_dir, "fly_selection_predictions_230712.csv")
@@ -17,6 +19,7 @@ plot_base_dir = os.path.join(data_summary_dir, "plots")
 plotdata_base_dir = os.path.join(data_summary_dir, "plotdata")
 predictionsdata_base_dir = os.path.join(data_summary_dir, "predictionsdata")
 predictionsplot_base_dir = os.path.join(data_summary_dir, "predictionsplots")
+data_revisions_summary_dir = os.path.join(data_summary_dir_FH, "fly_selection_revisions_231222.csv")
 
 video_base_dir = os.path.join(data_summary_dir, "videos")
 twop_df_save_name="twop_df_comp.pkl"
