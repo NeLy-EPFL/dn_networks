@@ -11,6 +11,7 @@ from tqdm import tqdm
 from scipy.stats import mannwhitneyu
 
 import params, summarydf, loaddata, stimulation, behaviour, plotpanels, fig_headless, filters
+from fig_predictions import concatenate
 
 from twoppp import plot as myplt
 
@@ -34,7 +35,7 @@ base_fly_data = {
 }
 
 
-def load_data_one_genotype(
+def load_data_one_genotype_amputation(
     exp_df, figure_params, predictions_save=None, overwrite=False
 ):
     if (
@@ -47,14 +48,13 @@ def load_data_one_genotype(
     else:
         # load data for all flies
         all_fly_data = []
-        summary_fly_data = base_fly_data.copy()
 
         for i_fly, (fly_id, fly_df) in enumerate(exp_df.groupby("fly_id")):
             fly_data = base_fly_data.copy()
             fly_data["fly_df"] = fly_df
             fly_data["fly_dir"] = np.unique(fly_df.fly_dir)[0]
             fly_data["trial_names"] = fly_df.trial_name.values
-            headless_trial_exists = False
+            amputation_trial_exists = False
             for index, trial_df in fly_df.iterrows():
                 if (
                     not trial_df.walkon == "ball"
@@ -62,10 +62,10 @@ def load_data_one_genotype(
                 ):
                     continue  # TODO: make no ball analysis
                 else:
-                    if trial_df["head"]:
+                    if not trial_df["leg_amp"] in ['HL','ML','FL'] :
                         beh_key = "beh_responses_pre"
                         beh_class_key = "beh_class_responses_pre"
-                        headless_trial_exists = True
+                        amputation_trial_exists = True
                     else:
                         beh_key = "beh_responses_post"
                         beh_class_key = "beh_class_responses_post"
@@ -115,8 +115,8 @@ def load_data_one_genotype(
                 del beh_df
 
             if (
-                not headless_trial_exists
-                and figure_params["accept_headless_only_flies"]
+                not amputation_trial_exists
+                and figure_params["accept_amputated_only_flies"]
             ):
                 fly_data["beh_responses_pre"] = (
                     np.zeros_like(fly_data["beh_responses_post"]) * np.nan
@@ -127,7 +127,7 @@ def load_data_one_genotype(
                 print(
                     f"WARNING: Setting intact behavioural response to NaN because no data for fly {fly_data['fly_dir']}"
                 )
-            elif not headless_trial_exists:
+            elif not amputation_trial_exists:
                 del fly_data
                 continue
 
@@ -145,18 +145,6 @@ def load_data_one_genotype(
                 pickle.dump(all_fly_data, f)
 
     return all_fly_data
-
-
-def concatenate(
-    all_fly_data,
-    column: str,
-):
-    data_list = [
-        fly_data[column]
-        for fly_data in all_fly_data
-        if ((fly_data[column] is not None and not np.all(np.isnan(fly_data[column]))))
-    ]
-    return np.concatenate(data_list, axis=-1)
 
 
 def plot_data_one_genotype(figure_params, all_fly_data):
@@ -200,8 +188,10 @@ def plot_data_one_genotype(figure_params, all_fly_data):
     return fig
 
 
-def summarise_predictions_one_genotype(
+def summarise_predictions_dofs(
     GAL4,
+    specific_joint='TiTa',
+    specific_leg='HL',
     overwrite=False,
     allflies_only=False,
     beh_name="walk",
@@ -212,16 +202,20 @@ def summarise_predictions_one_genotype(
     return_var_ylabel=r"$v_{||}$ (mm/s)",
     data_save_location=params.predictionsdata_base_dir,
     plot_save_location=params.predictionsplot_base_dir,
-    accept_headless_only_flies=True,
-    include_noball_data=False,
+    accept_amputated_only_flies=True,
     filter_pre_stim_beh=None,
 ):
-    """make a figure for one genotype and one behavioural response, before and after head cutting
+    """make a figure for one genotype and one behavioural response,
+     before and after leg cutting
 
     Parameters
     ----------
     GAL4 : str
         which GAL4 line to analyse
+    specific_joint : str, optional
+        which joint to restrict the analysis to
+    specific_leg : str, optional
+        which leg to restrict the analysis to
     overwrite : bool, optional
         whether to overwrite previously saved intermediate results, by default False
     allflies_only : bool, optional
@@ -242,9 +236,9 @@ def summarise_predictions_one_genotype(
         base directory where to save intermediate results, by default params.predictionsdata_base_dir
     plots_save_location : str, optional
         base directory where to save plots, by default params.predictionsplots_base_dir
-    accept_headless_only_flies : bool, optional
-        whether to also consider flies that have only headless experiments and no intact experiments.
-        This will set the intact data to zero when it encounters a fly with only headless data, by default True
+    accept_amputated_only_flies : bool, optional
+        whether to also consider flies that have only leg cutting experiments and no intact experiments.
+        This will set the intact data to zero when it encounters a fly with only leg cutting data, by default True
     filter_pre_stim_beh : str, optional
         whether to filter the pre-stimulus behaviour.
         E.g. "rest" will only consider trials where the fly was resting before
@@ -257,6 +251,9 @@ def summarise_predictions_one_genotype(
     """
     df = summarydf.get_predictions_df()
     df = summarydf.get_selected_df(df, select_dicts=[{"CsChrimson": GAL4}])
+    df = summarydf.get_selected_df(df, select_dicts=[{"joint_amp": specific_joint}])
+    df = summarydf.get_selected_df(df, select_dicts=[{"leg_amp": specific_leg}])
+
     # df = summarydf.get_selected_df(df, select_dicts=[{"experimenter": 'FH'}])
     # df = summarydf.get_selected_df(df, select_dicts=[{"date": 230704}])
 
@@ -275,16 +272,15 @@ def summarise_predictions_one_genotype(
         "mosaic": mosaic_predictions_panel,
         "allflies_only": allflies_only,
         "ylim": None,
-        "accept_headless_only_flies": accept_headless_only_flies,
+        "accept_amputated_only_flies": accept_amputated_only_flies,
         "filter_pre_stim_beh": filter_pre_stim_beh,
-        "include_noball_data": include_noball_data,
     }
     add_str = "_allflies_only" if allflies_only else ""
 
     predictions_save = os.path.join(
         data_save_location, f"predictions_{GAL4}_{return_var}.pkl"
     )
-    all_fly_data = load_data_one_genotype(
+    all_fly_data = load_data_one_genotype_amputation(
         df, figure_params, predictions_save, overwrite=overwrite
     )
     fig = plot_data_one_genotype(figure_params, all_fly_data)
@@ -299,14 +295,15 @@ def summarise_predictions_one_genotype(
 
 
 if __name__ == "__main__":
-    fig = summarise_predictions_one_genotype(
-        "DNg11",
-        beh_name="groom",
-        return_var="mef_tita", #"me_front",
-        return_var_ylabel="front legs TiTa motion energy",
+    fig = summarise_predictions_dofs(
+        "DNp09",
+        specific_joint='TiTa',
+        specific_leg='HL',
+        beh_name="walk",
+        return_var="v_forw",
+        return_var_ylabel=r"$v_{||}$ (mm/s)",
         overwrite=True,
-        accept_headless_only_flies=True,
+        accept_amputated_only_flies=True,
         return_var_flip=False,
-        include_noball_data=False,
         filter_pre_stim_beh=None,  # 'rest'
     )
