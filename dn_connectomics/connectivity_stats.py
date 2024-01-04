@@ -20,6 +20,14 @@ from statistics_utils import connectivity_stats
 from graph_plot_utils import make_nice_spines, make_axis_disappear
 from common import connections_up_to_n_hops
 
+def pearson(y_true, y_pred):
+    """
+    Compute the R2 score between two lists.
+    """
+    y_true_ = np.array(y_true)
+    y_pred_ = np.array(y_pred)
+    return stats.pearsonr(y_true_, y_pred_)
+
 
 def prepare_table(
     equiv_index_rootid_,
@@ -530,6 +538,9 @@ def compute_connectivity_stats():
     make_specific_neurons_plot(dns_info, specific_neurons=neuron_params.BEHAVIOUR_DNS, show_insert = False)
     plt.savefig(os.path.join(working_folder, "behaviour_neurons_plot.pdf"))
 
+    make_specific_neurons_plot(dns_info, specific_neurons=neuron_params.STRONGLY_CONNECTED_DNS, show_insert = False)
+    plt.savefig(os.path.join(working_folder, "strongly_connected_neurons_plot.pdf"))
+
     ## --- Print some stats for the paper to a file --- ##
     write_relevant_stats(working_folder, dns_info, edges)
 
@@ -682,13 +693,17 @@ def compare_connectivity_stats(
     for i, stats in enumerate([direct_dn_stats, indirect_dn_stats, indirect_interneuron_stats]):
         # get the number of connections for each neuron
         connections = [stats[n] for n in sorted_neurons]
+        # quantification of correlation
+        ref_connection = [reference_stats[n] for n in sorted_neurons]
+        r, _ = pearson(connections, ref_connection)
         # make the plot
+        label_ = label[i] + '\n' + '(r2={:.2f})'.format(r**2)
         ax[i].scatter(
             range(len(neurons)),
             connections,
             c=[color_dict[n] for n in sorted_neurons],
             s=20,
-            label=label[i]
+            label=label_,
         )
         ax[i].set_ylabel('Number of DNs connected')
         ax[i].set_xlabel('DNs')

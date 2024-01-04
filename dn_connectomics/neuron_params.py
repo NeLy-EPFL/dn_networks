@@ -90,3 +90,14 @@ BEHAVIOUR_DNS = {
     **groomig_aDN2,
     **backwards_MDN,
     }
+
+# DNS strongly connected
+DNb01 = make_dict_special_neurons("DNb01", "DNb01", color="#1034A6")
+DNg16 = make_dict_special_neurons("DNg16", "DNg16", color="#722B6A")
+DNp42 = make_dict_special_neurons("DNp42", "DNp42", color="#D3212D")
+
+STRONGLY_CONNECTED_DNS = {
+    **DNp42,
+    **DNb01,
+    **DNg16,
+    }
