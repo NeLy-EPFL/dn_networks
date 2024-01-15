@@ -62,7 +62,7 @@ def load_data_one_genotype_amputation(
                 ):
                     continue  # TODO: make no ball analysis
                 else:
-                    if not trial_df["leg_amp"] in ['HL','ML','FL'] :
+                    if not trial_df["leg_amp"] in ["HL", "ML", "FL"]:
                         beh_key = "beh_responses_pre"
                         beh_class_key = "beh_class_responses_pre"
                         amputation_trial_exists = True
@@ -190,8 +190,8 @@ def plot_data_one_genotype(figure_params, all_fly_data):
 
 def summarise_predictions_dofs(
     GAL4,
-    specific_joint='TiTa',
-    specific_leg='HL',
+    specific_joint="TiTa",
+    specific_leg="HL",
     overwrite=False,
     allflies_only=False,
     beh_name="walk",
@@ -251,8 +251,17 @@ def summarise_predictions_dofs(
     """
     df = summarydf.get_predictions_df()
     df = summarydf.get_selected_df(df, select_dicts=[{"CsChrimson": GAL4}])
-    df = summarydf.get_selected_df(df, select_dicts=[{"joint_amp": specific_joint}])
-    df = summarydf.get_selected_df(df, select_dicts=[{"leg_amp": specific_leg}])
+    #print(df[['fly_dir', 'joint_amp', 'leg_amp']])
+    # intact flies
+    df_intact = summarydf.get_selected_df(df, select_dicts=[{"leg_amp": 'FALSE', "head": True}])
+    # need to filter for flies that have had specific amputations, but keep the controls
+    df_target = summarydf.get_selected_df(
+        df, select_dicts=[{"joint_amp": specific_joint}]
+    )
+    df_target = summarydf.get_selected_df(
+        df_target, select_dicts=[{"leg_amp": specific_leg}]
+    )
+    df = df[df.trial_dir.isin(df_target.trial_dir.unique()) | df.trial_dir.isin(df_intact.trial_dir.unique())]
 
     # df = summarydf.get_selected_df(df, select_dicts=[{"experimenter": 'FH'}])
     # df = summarydf.get_selected_df(df, select_dicts=[{"date": 230704}])
@@ -276,6 +285,7 @@ def summarise_predictions_dofs(
         "filter_pre_stim_beh": filter_pre_stim_beh,
     }
     add_str = "_allflies_only" if allflies_only else ""
+    add_str += "_{}_{}".format(specific_joint, specific_leg)
 
     predictions_save = os.path.join(
         data_save_location, f"predictions_{GAL4}_{return_var}.pkl"
@@ -297,11 +307,11 @@ def summarise_predictions_dofs(
 if __name__ == "__main__":
     fig = summarise_predictions_dofs(
         "DNp09",
-        specific_joint='TiTa',
-        specific_leg='HL',
+        specific_joint="TiTa",
+        specific_leg="FL",
         beh_name="walk",
-        return_var="v_forw",
-        return_var_ylabel=r"$v_{||}$ (mm/s)",
+        return_var='v_forw',
+        return_var_ylabel= r"$v_{||}$ (mm/s)",
         overwrite=True,
         accept_amputated_only_flies=True,
         return_var_flip=False,

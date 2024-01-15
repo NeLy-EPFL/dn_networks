@@ -52,11 +52,11 @@ def get_one_fly_headless_panel(fig, axd, fly_data, figure_params):
     if not figure_params["allflies_only"]:
         # V: volocity response pre head cut
         plotpanels.plot_ax_behavioural_response(fly_data["beh_responses_pre"], ax=axd["V"], x="beh",
-                response_name="head intact", response_ylabel=figure_params["beh_response_ylabel"])
+                response_name="intact", response_ylabel=figure_params["beh_response_ylabel"])
 
         # W: volocity response post head cut
         plotpanels.plot_ax_behavioural_response(fly_data["beh_responses_post"], ax=axd["W"], x="beh",
-                response_name="no head", response_ylabel=None)
+                response_name="amputated", response_ylabel=None)
     
     
         if figure_params["ylim"] is None:

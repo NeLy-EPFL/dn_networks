@@ -593,8 +593,8 @@ def plot_trial_number_summary(dfs, df_names, plot_base_dir=params.data_summary_d
 if __name__ == "__main__":
     genotype_dirs = find_genotyp_dirs(
         nas_base_dir="/mnt/nas2/FH",
-        min_date=231123,
-        max_date=None,
+        min_date=240101,
+        max_date=240110,
         contains="CsChrimson",
         exclude="BAD",
     )  # exclude = "headless"

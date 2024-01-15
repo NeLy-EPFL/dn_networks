@@ -300,10 +300,10 @@ def summarise_predictions_one_genotype(
 
 if __name__ == "__main__":
     fig = summarise_predictions_one_genotype(
-        "DNg11",
-        beh_name="groom",
-        return_var="mef_tita", #"me_front",
-        return_var_ylabel="front legs TiTa motion energy",
+        "CantonS",
+        beh_name="back",
+        return_var='v_forw',  # "me_front",
+        return_var_ylabel=r"$v_{||}$ (mm/s)",
         overwrite=True,
         accept_headless_only_flies=True,
         return_var_flip=False,
