@@ -593,11 +593,12 @@ def plot_trial_number_summary(dfs, df_names, plot_base_dir=params.data_summary_d
 if __name__ == "__main__":
     genotype_dirs = find_genotyp_dirs(
         nas_base_dir="/mnt/nas2/FH",
-        min_date=240101,
-        max_date=240110,
+        min_date=240111,
+        max_date=None,
         contains="CsChrimson",
         exclude="BAD",
-    )  # exclude = "headless"
+    )
+      # exclude = "headless"
     add_flies_to_data_summary(
         genotype_dir=genotype_dirs,
         path=None,

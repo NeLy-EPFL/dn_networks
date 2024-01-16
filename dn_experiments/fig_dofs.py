@@ -79,6 +79,7 @@ def load_data_one_genotype_amputation(
                     trials=[trial_df.trial_name],
                     stim_p=figure_params["stim_p"],
                     beh_var=figure_params["return_var"],
+                    baseline_zero=figure_params["zero_baseline"],
                 )
                 beh_class_responses = stimulation.get_beh_class_responses(
                     beh_df,
@@ -177,7 +178,6 @@ def plot_data_one_genotype(figure_params, all_fly_data):
     summary_fly_data["beh_class_responses_post"] = concatenate(
         all_fly_data, "beh_class_responses_post"
     )
-
     fig_headless.get_one_fly_headless_panel(
         fig, axds[-1], summary_fly_data, figure_params
     )
@@ -204,6 +204,7 @@ def summarise_predictions_dofs(
     plot_save_location=params.predictionsplot_base_dir,
     accept_amputated_only_flies=True,
     filter_pre_stim_beh=None,
+    zero_baseline=False,
 ):
     """make a figure for one genotype and one behavioural response,
      before and after leg cutting
@@ -250,6 +251,7 @@ def summarise_predictions_dofs(
         Matplotlib figure
     """
     df = summarydf.get_predictions_df()
+    #df = summarydf.get_selected_df(df, select_dicts=[{"date": 240112}])
     df = summarydf.get_selected_df(df, select_dicts=[{"CsChrimson": GAL4}])
     #print(df[['fly_dir', 'joint_amp', 'leg_amp']])
     # intact flies
@@ -283,6 +285,7 @@ def summarise_predictions_dofs(
         "ylim": None,
         "accept_amputated_only_flies": accept_amputated_only_flies,
         "filter_pre_stim_beh": filter_pre_stim_beh,
+        "zero_baseline": zero_baseline,
     }
     add_str = "_allflies_only" if allflies_only else ""
     add_str += "_{}_{}".format(specific_joint, specific_leg)
@@ -308,12 +311,13 @@ if __name__ == "__main__":
     fig = summarise_predictions_dofs(
         "DNp09",
         specific_joint="TiTa",
-        specific_leg="FL",
-        beh_name="walk",
-        return_var='v_forw',
-        return_var_ylabel= r"$v_{||}$ (mm/s)",
+        specific_leg="HL",
+        beh_name="back",
+        return_var='integrated_forward_movement',
+        return_var_ylabel= r"$d_{forward}$", #r"$v_{||}$ (mm/s)",
         overwrite=True,
         accept_amputated_only_flies=True,
         return_var_flip=False,
         filter_pre_stim_beh=None,  # 'rest'
+        zero_baseline=True,
     )

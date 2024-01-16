@@ -79,6 +79,7 @@ def load_data_one_genotype(
                     trials=[trial_df.trial_name],
                     stim_p=figure_params["stim_p"],
                     beh_var=figure_params["return_var"],
+                    baseline_zero=figure_params["zero_baseline"],
                 )
                 beh_class_responses = stimulation.get_beh_class_responses(
                     beh_df,
@@ -215,6 +216,7 @@ def summarise_predictions_one_genotype(
     accept_headless_only_flies=True,
     include_noball_data=False,
     filter_pre_stim_beh=None,
+    zero_baseline=False,
 ):
     """make a figure for one genotype and one behavioural response, before and after head cutting
 
@@ -278,6 +280,7 @@ def summarise_predictions_one_genotype(
         "accept_headless_only_flies": accept_headless_only_flies,
         "filter_pre_stim_beh": filter_pre_stim_beh,
         "include_noball_data": include_noball_data,
+        "zero_baseline":zero_baseline,
     }
     add_str = "_allflies_only" if allflies_only else ""
 
@@ -300,13 +303,14 @@ def summarise_predictions_one_genotype(
 
 if __name__ == "__main__":
     fig = summarise_predictions_one_genotype(
-        "CantonS",
-        beh_name="back",
-        return_var='v_forw',  # "me_front",
-        return_var_ylabel=r"$v_{||}$ (mm/s)",
+        "DNg11",
+        beh_name="groom",
+        return_var='ang_frtibia_neck',  # "me_front",
+        return_var_ylabel=r'$ang_{tibia}$',#r"$v_{||}$ (mm/s)",
         overwrite=True,
         accept_headless_only_flies=True,
         return_var_flip=False,
         include_noball_data=False,
         filter_pre_stim_beh=None,  # 'rest'
+        zero_baseline=True,
     )

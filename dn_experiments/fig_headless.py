@@ -29,7 +29,7 @@ mosaic_headless_summary_panel = """
 ....
 """
 
-def get_one_fly_headless_panel(fig, axd, fly_data, figure_params):
+def get_one_fly_headless_panel(fig, axd, fly_data, figure_params, set_baseline_zero=True):
 
     if (not isinstance(fly_data["beh_class_responses_pre"], np.ndarray) or (
         np.isnan(fly_data["beh_class_responses_pre"].all()))):
