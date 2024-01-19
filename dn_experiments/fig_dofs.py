@@ -205,6 +205,8 @@ def summarise_predictions_dofs(
     accept_amputated_only_flies=True,
     filter_pre_stim_beh=None,
     zero_baseline=False,
+    stats_period=(500,750),
+
 ):
     """make a figure for one genotype and one behavioural response,
      before and after leg cutting
@@ -251,7 +253,6 @@ def summarise_predictions_dofs(
         Matplotlib figure
     """
     df = summarydf.get_predictions_df()
-    #df = summarydf.get_selected_df(df, select_dicts=[{"date": 240112}])
     df = summarydf.get_selected_df(df, select_dicts=[{"CsChrimson": GAL4}])
     #print(df[['fly_dir', 'joint_amp', 'leg_amp']])
     # intact flies
@@ -286,6 +287,8 @@ def summarise_predictions_dofs(
         "accept_amputated_only_flies": accept_amputated_only_flies,
         "filter_pre_stim_beh": filter_pre_stim_beh,
         "zero_baseline": zero_baseline,
+        "stats_period":stats_period,
+
     }
     add_str = "_allflies_only" if allflies_only else ""
     add_str += "_{}_{}".format(specific_joint, specific_leg)
@@ -309,15 +312,16 @@ def summarise_predictions_dofs(
 
 if __name__ == "__main__":
     fig = summarise_predictions_dofs(
-        "DNp09",
+        "MDN",
         specific_joint="TiTa",
         specific_leg="HL",
         beh_name="back",
-        return_var='integrated_forward_movement',
-        return_var_ylabel= r"$d_{forward}$", #r"$v_{||}$ (mm/s)",
+        return_var="integrated_forward_movement",
+        return_var_ylabel=r"$d_{forward}$", #r"$v_{||}$ (mm/s)",
         overwrite=True,
         accept_amputated_only_flies=True,
         return_var_flip=False,
         filter_pre_stim_beh=None,  # 'rest'
         zero_baseline=True,
+        stats_period=(999,1000),
     )

@@ -46,17 +46,28 @@ def get_one_fly_headless_panel(fig, axd, fly_data, figure_params, set_baseline_z
     plotpanels.plot_ax_behavioural_response(fly_data["beh_responses_pre"], ax=axd["X"], x="beh",
             response_name=response_name,
             response_ylabel=figure_params["beh_response_ylabel"] if figure_params["allflies_only"] else None,
-            beh_responses_2=fly_data["beh_responses_post"], beh_response_2_color=behaviour.get_beh_color(figure_params["beh_name"]))
+            beh_responses_2=fly_data["beh_responses_post"], beh_response_2_color=behaviour.get_beh_color(figure_params["beh_name"]),
+            period=figure_params["stats_period"])
 
 
     if not figure_params["allflies_only"]:
         # V: volocity response pre head cut
-        plotpanels.plot_ax_behavioural_response(fly_data["beh_responses_pre"], ax=axd["V"], x="beh",
-                response_name="intact", response_ylabel=figure_params["beh_response_ylabel"])
+        plotpanels.plot_ax_behavioural_response(
+            fly_data["beh_responses_pre"],
+            ax=axd["V"],
+            x="beh",
+            response_name="intact",
+            response_ylabel=figure_params["beh_response_ylabel"],
+            period=figure_params["stats_period"])
 
         # W: volocity response post head cut
-        plotpanels.plot_ax_behavioural_response(fly_data["beh_responses_post"], ax=axd["W"], x="beh",
-                response_name="amputated", response_ylabel=None)
+        plotpanels.plot_ax_behavioural_response(
+            fly_data["beh_responses_post"],
+            ax=axd["W"],
+            x="beh",
+            response_name="amputated",
+            response_ylabel=None,
+            period=figure_params["stats_period"])
     
     
         if figure_params["ylim"] is None:
@@ -371,96 +382,10 @@ def summarise_all_headless(overwrite=False, allflies_only=False):
     _ = [plt.close(fig) for fig in figs]
 
 
-def headless_stat_test():
-    headless_files = {
-        "MDN": os.path.join(params.plotdata_base_dir, "headless_MDN3.pkl"),
-        "DNp09": os.path.join(params.plotdata_base_dir, "headless_DNp09.pkl"),
-        "aDN2": os.path.join(params.plotdata_base_dir, "headless_aDN2.pkl"),
-        "PR": os.path.join(params.plotdata_base_dir, "headless_PR.pkl"),
-    }
-    with open(headless_files["MDN"], "rb") as f:
-        MDN = pickle.load(f)
-    with open(headless_files["DNp09"], "rb") as f:
-        DNp09 = pickle.load(f)
-    with open(headless_files["aDN2"], "rb") as f:
-        aDN2 = pickle.load(f)
-    with open(headless_files["PR"], "rb") as f:
-        PR = pickle.load(f)
-    
-    def test_stats_pre_post(all_flies, i_beh, GAL4, beh_name, i_0=500, i_1=750):
-        v_pre = []
-        p_pre = []
-        v_post = []
-        p_post = []
-        for fly in all_flies:
-            v_pre.append(np.mean(fly["beh_responses_pre"][i_0:i_1], axis=0))
-            v_post.append(np.mean(fly["beh_responses_post"][i_0:i_1], axis=0))
-            p_pre.append(np.mean(fly["beh_class_responses_pre"][i_0:i_1] == i_beh, axis=0))
-            p_post.append(np.mean(fly["beh_class_responses_post"][i_0:i_1] == i_beh, axis=0))
-        v_pre = np.concatenate(v_pre).flatten()
-        v_post = np.concatenate(v_post).flatten()
-        p_pre = np.concatenate(p_pre).flatten()
-        p_post = np.concatenate(p_post).flatten()
-        print(f"{GAL4} v:", mannwhitneyu(v_pre, v_post))
-        print(f"{GAL4} {beh_name} beh class:", mannwhitneyu(p_pre, p_post))
-        
-    test_stats_pre_post(MDN, i_beh=3, GAL4="MDN", beh_name="back")
-    test_stats_pre_post(DNp09, i_beh=1, GAL4="DNp09", beh_name="walk")
-    test_stats_pre_post(aDN2, i_beh=4, GAL4="aDN2", beh_name="groom")
-    test_stats_pre_post(PR, i_beh=2, GAL4="PR", beh_name="rest")
-
-    detailled_files = {
-        "DNp09_anus": os.path.join(params.plotdata_base_dir, "headless_DNp09_anus.pkl"),
-        "PR_anus": os.path.join(params.plotdata_base_dir, "headless_PR_anus.pkl"),
-        "aDN2_height": os.path.join(params.plotdata_base_dir, "headless_aDN2_frleg_height.pkl"),
-        "PR_height": os.path.join(params.plotdata_base_dir, "headless_PR_frleg_height.pkl"),
-        "aDN2_angle": os.path.join(params.plotdata_base_dir, "headless_aDN2_tibia_angle.pkl"),
-        "PR_angle": os.path.join(params.plotdata_base_dir, "headless_PR_tibia_angle.pkl"),
-        "aDN2_dist_tita": os.path.join(params.plotdata_base_dir, "headless_aDN2_frtita_dist.pkl"),
-        "PR_dist_tita": os.path.join(params.plotdata_base_dir, "headless_PR_frtita_dist.pkl"),
-        "aDN2_dist_feti": os.path.join(params.plotdata_base_dir, "headless_aDN2_frfeti_dist.pkl"),
-        "PR_dist_feti": os.path.join(params.plotdata_base_dir, "headless_PR_frfeti_dist.pkl"),
-    }
-    with open(detailled_files["DNp09_anus"], "rb") as f:
-        DNp09_anus = pickle.load(f)
-    with open(detailled_files["PR_anus"], "rb") as f:
-        PR_anus = pickle.load(f)
-    with open(detailled_files["aDN2_height"], "rb") as f:
-        aDN2_height = pickle.load(f)
-    with open(detailled_files["PR_height"], "rb") as f:
-        PR_height = pickle.load(f)
-    with open(detailled_files["aDN2_angle"], "rb") as f:
-        aDN2_angle = pickle.load(f)
-    with open(detailled_files["PR_angle"], "rb") as f:
-        PR_angle = pickle.load(f)
-    with open(detailled_files["aDN2_dist_tita"], "rb") as f:
-        aDN2_dist_tita = pickle.load(f)
-    with open(detailled_files["PR_dist_tita"], "rb") as f:
-        PR_dist_tita = pickle.load(f)
-    with open(detailled_files["aDN2_dist_feti"], "rb") as f:
-        aDN2_dist_feti = pickle.load(f)
-    with open(detailled_files["PR_dist_feti"], "rb") as f:
-        PR_dist_feti = pickle.load(f)
-
-    def test_stats_beh_control(all_flies, all_flies_control, GAL4, beh_name, i_0=500, i_1=750):
-        beh = []
-        beh_control = []
-        for fly, fly_control in zip(all_flies, all_flies_control):
-            beh.append(np.mean(fly["beh_responses_post"][i_0:i_1], axis=0))
-            beh_control.append(np.mean(fly_control["beh_responses_post"][i_0:i_1], axis=0))
-        beh = np.concatenate(beh).flatten()
-        beh_control = np.concatenate(beh_control).flatten()
-        print(f"{GAL4} {beh_name}:", mannwhitneyu(beh, beh_control))
-
-    test_stats_beh_control(DNp09_anus, PR_anus, GAL4="DNp09", beh_name="anus", i_0=500, i_1=750)
-
-    # test_stats_beh_control(aDN2_height, PR_height, GAL4="aDN2", beh_name="height", i_0=750, i_1=1000)
-    # test_stats_beh_control(aDN2_angle, PR_angle, GAL4="aDN2", beh_name="angle", i_0=750, i_1=1000)
-    test_stats_beh_control(aDN2_dist_tita, PR_dist_tita, GAL4="aDN2", beh_name="dist tita", i_0=500, i_1=750)
-    test_stats_beh_control(aDN2_dist_feti, PR_dist_feti, GAL4="aDN2", beh_name="dist feti", i_0=500, i_1=750)
 
 
 if __name__ == "__main__":
-    summarise_all_headless(overwrite=True, allflies_only=False)
-    summarise_all_headless(overwrite=False, allflies_only=True)
-    headless_stat_test()
+    #summarise_all_headless(overwrite=True, allflies_only=False)
+    #summarise_all_headless(overwrite=False, allflies_only=True)
+    #headless_stat_test()
+    revisions_stat_test()

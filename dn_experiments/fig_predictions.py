@@ -217,6 +217,7 @@ def summarise_predictions_one_genotype(
     include_noball_data=False,
     filter_pre_stim_beh=None,
     zero_baseline=False,
+    stats_period=(500,750),
 ):
     """make a figure for one genotype and one behavioural response, before and after head cutting
 
@@ -251,6 +252,13 @@ def summarise_predictions_one_genotype(
         whether to filter the pre-stimulus behaviour.
         E.g. "rest" will only consider trials where the fly was resting before
         the stimulus onset with p > 0.75, by default 'None',
+    include_noball_data : bool, optional
+        whether to include trials without ball, by default False
+    zero_baseline : bool, optional
+        whether to set the signal to zero just at stimulation onset to zero, by
+        default False
+    stats_period : tuple, optional
+        which period to use for statistics, by default (500,750)
 
     Returns
     -------
@@ -281,6 +289,7 @@ def summarise_predictions_one_genotype(
         "filter_pre_stim_beh": filter_pre_stim_beh,
         "include_noball_data": include_noball_data,
         "zero_baseline":zero_baseline,
+        "stats_period":stats_period,
     }
     add_str = "_allflies_only" if allflies_only else ""
 
@@ -303,14 +312,15 @@ def summarise_predictions_one_genotype(
 
 if __name__ == "__main__":
     fig = summarise_predictions_one_genotype(
-        "DNg11",
-        beh_name="groom",
-        return_var='ang_frtibia_neck',  # "me_front",
-        return_var_ylabel=r'$ang_{tibia}$',#r"$v_{||}$ (mm/s)",
+        "DNb01",
+        beh_name="walk",
+        return_var='v_forw',#'frtita_y',#'ovum_y',  # "me_front",
+        return_var_ylabel=r"$v_{||}$ (mm/s)", #r'y_{frTiTa}', #r'$y_{ovum}$',#r"$v_{||}$ (mm/s)",
         overwrite=True,
-        accept_headless_only_flies=True,
-        return_var_flip=False,
+        accept_headless_only_flies=False,
+        return_var_flip=True,
         include_noball_data=False,
         filter_pre_stim_beh=None,  # 'rest'
-        zero_baseline=True,
+        zero_baseline=False,
+        stats_period=(500,750),#(999,1000) #(500,750),
     )

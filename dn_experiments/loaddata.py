@@ -94,6 +94,8 @@ def get_beh_df_with_me(fly_dir, all_trial_dirs, q_me=params.q_me, add_sleap=True
         beh_df["v"] = np.zeros(beh_df.shape[0])
         print(f"Warning: missing 'v' and 'v_forw' in fly {fly_dir} with trials {all_trial_dirs}")
 
+    # integrate v_forw to get the displacement 'd_forw'
+    beh_df["d_forw"] = np.cumsum(beh_df["v_forw"].values) / params.fs_beh
 
     if add_me:
         beh_df["me_front_q"] = utils.normalise_quantile(beh_df["me_front"].values, q=q_me)

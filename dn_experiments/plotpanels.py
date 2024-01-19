@@ -4,6 +4,8 @@ import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 from scipy.ndimage import gaussian_filter
+from scipy.stats import mannwhitneyu
+
 
 from twoppp import plot as myplt
 from twoppp import utils
@@ -28,7 +30,17 @@ def make_nice_spines(ax):
     ax.spines["top"].set_linewidth(0)
     ax.spines["right"].set_linewidth(0)
 
-def plot_ax_behavioural_response(beh_responses, response_name=None, response_ylabel=None, ax=None, beh_responses_2=None, beh_response_2_color=myplt.BLACK, x="2p", ylim=None):
+def stat_test_sign(p):
+    if p < 0.001:
+        return '***'
+    elif p < 0.01:
+        return '**'
+    elif p < 0.05:
+        return '*'
+    else:
+        return 'ns'
+
+def plot_ax_behavioural_response(beh_responses, response_name=None, response_ylabel=None, ax=None, beh_responses_2=None, beh_response_2_color=myplt.BLACK, x="2p", ylim=None,period=[500,750]):
 
     ax = plt.gca() if ax is None else ax
     if x == "2p":
@@ -50,6 +62,32 @@ def plot_ax_behavioural_response(beh_responses, response_name=None, response_yla
     if beh_responses_2 is not None:
         myplt.plot_mu_sem(mu=np.mean(beh_responses_2, axis=-1), err=utils.conf_int(beh_responses, axis=-1),
                             x=x, ax=ax, color=beh_response_2_color, linewidth=2*linewidth)
+
+    # --- EDITS 240117 ---    
+    if (
+        beh_responses is not None
+        and beh_responses != []
+        and beh_responses_2 is not None
+        and beh_responses_2 != []
+        ):
+        # statistical test (Mann-Whitney U) between two conditions
+        print(np.mean(beh_responses[period[0]:period[1],:],axis=0).shape)
+        p = mannwhitneyu(
+            np.mean(beh_responses[period[0]:period[1],:],axis=0),
+            np.mean(beh_responses_2[period[0]:period[1],:],axis=0)
+        )
+        # add text to plot with p-value
+        ax.text(
+            0.8,
+            0.95,
+            'p: ' + stat_test_sign(p.pvalue),
+            horizontalalignment='center',
+            verticalalignment='center',
+            transform=ax.transAxes,
+            fontsize=16
+        )
+    # --- END EDITS 240117 ---
+         
             
     ax.set_xticks([0,params.response_t_params_2p_label[1]])
     ax.set_xticklabels(["", ""])
