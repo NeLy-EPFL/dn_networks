@@ -10,7 +10,8 @@ import matplotlib.pyplot as plt
 from scipy.ndimage import gaussian_filter
 
 from twoppp import plot as myplt
-from twoppp import utils
+from twoppp.plot import show3d
+from twoppp import utils, load
 
 import params, behaviour
 
@@ -432,3 +433,36 @@ def plot_ax_behprob(labels, ax=None, cmap=behaviour.beh_cmaplist.copy(), beh_map
     ax.set_ylabel(ylabel)
 
     make_nice_spines(ax)
+
+
+def plot_vnccut(flydata, ax=None, mean="z", show_title=True):
+    ax = plt.gca() if ax is None else ax
+    fly_dir = flydata["fly_dir"]
+    trial_dirs = load.get_trials_from_fly(fly_dir)[0]
+
+    trial_dir = [trial_dir for trial_dir in trial_dirs if "cc_t1_vol" in trial_dir][0]
+
+    green = os.path.join(trial_dir, load.PROCESSED_FOLDER, "green.tif")
+    green = green if os.path.isfile(green) else None
+    green_avg = os.path.join(trial_dir, load.PROCESSED_FOLDER, "green_avg.tif") if green is not None else None
+    red = os.path.join(trial_dir, load.PROCESSED_FOLDER, "red.tif")
+    red = red if os.path.isfile(red) else None
+    red_avg = os.path.join(trial_dir, load.PROCESSED_FOLDER, "red_avg.tif") if red is not None else None
+
+    rgb_imgs = show3d.plot_projections_3d(green, red, out_dir=None, green_avg=green_avg, red_avg=red_avg, return_data=True)
+
+    if mean == "z":
+        proj_mean_img = rgb_imgs[0]  # 0 for mean image, 1 for max image, 2 for std image
+    elif mean == "y":
+        proj_mean_img = rgb_imgs[3]  # 3 for mean image, 4 for max image, 5 for std image
+    elif mean == "x":
+        proj_mean_img = rgb_imgs[6]  # 6 for mean image, 7 for max image, 8 for std image
+
+
+    ax.imshow(proj_mean_img)
+    if show_title:
+        ax.set_title(f"VNC {mean} mean projection")
+    ax.spines['right'].set_visible(False)
+    ax.spines['top'].set_visible(False)
+    ax.spines['left'].set_visible(False)
+    ax.spines['bottom'].set_visible(False)
