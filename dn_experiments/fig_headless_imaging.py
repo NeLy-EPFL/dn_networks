@@ -1,3 +1,7 @@
+"""
+Functions to generate plots to analyse the imaging of command neurons in intact and headless flies.
+Author: jonas.braun@epfl.ch
+"""
 import os
 import sys
 
@@ -17,7 +21,17 @@ from twoppp import plot as myplt
 
 
 
-def get_calcium_transients(twop_df):  # TODO
+def get_calcium_transients(twop_df):
+    """
+    Calculate the mean calcium transients in response to stimulation.
+    Takes the mean across all neurons (2 for DNp09, 4 for MDN)
+
+    Parameters:
+    - twop_df (DataFrame): DataFrame containing two-photon imaging data.
+
+    Returns:
+    - ndarray: Mean calcium responses across all neurons.
+    """
     all_stim_responses, all_beh_responses = stimulation.get_neural_responses(twop_df, "laser_start",
                                                                         trials=None,
                                                                         stim_p=[10],
@@ -26,6 +40,17 @@ def get_calcium_transients(twop_df):  # TODO
     return np.mean(all_stim_responses, axis=1)  # take the mean across all neurons
 
 def get_beh_data(beh_df, var2, var2_rel=[400,500]):
+    """
+    Extract behavioral responses to stimulation.
+
+    Parameters:
+    - beh_df (DataFrame): DataFrame containing behavioral data.
+    - var2 (str): Behavioral variable of interest.
+    - var2_rel (list, optional): Time window for baseline correction. Defaults to [400, 500].
+
+    Returns:
+    - ndarray: Velocity responses and behavioral responses to stimulation.
+    """
     beh_responses = stimulation.get_beh_responses(beh_df, trigger="laser_start", trials=None,
                                            stim_p=[10],beh_var=var2)
     try:
@@ -43,9 +68,24 @@ def get_beh_data(beh_df, var2, var2_rel=[400,500]):
     return v_responses, beh_responses
 
 
-def get_headless_imaging_data():
-    genotypes = ["MDN", "DNp09"]  # fly ids in headless_df: MDN: 164, 165, 166; DNp09: 159, 172, 175
-    special_vars = ["meh_tita", "anus_dist"]
+def get_headless_imaging_data(genotypes=["MDN", "DNp09"], special_vars=["meh_tita", "anus_dist"]):
+        """
+    Extract headless imaging data for specified genotypes and conditions.
+
+    Parameters:
+    - genotypes (list, optional): List of genotypes to include. Defaults to ["MDN", "DNp09"].
+    - special_vars (list, optional): List of special variables for behavioral analysis. Defaults to ["meh_tita", "anus_dist"].
+
+    Returns:
+    - tuple: Tuple containing arrays of calcium data, velocity data, and behavioral data.
+      The shape of each array is (N_genotypes, N_flies_per_genotype, 2, 2, N_samples, N_stims), where:
+      - N_genotypes: Number of specified genotypes.
+      - N_flies_per_genotype: Number of flies per genotype. (Hardcoded to 3)
+      - 2 (first dimension): Represents the presence (0) or absence (1) of head.
+      - 2 (second dimension): Represents the presence (0) or absence (1) of ball.
+      - N_samples: Number of samples.
+      - N_stims: Number of stimulations per condition. (Hardcoded to 10)
+    """
     N_genotypes = len(genotypes)
     N_flies_per_genotype = 3
     N_stims = 10
@@ -90,6 +130,20 @@ def get_headless_imaging_data():
     return all_calcium_data, all_v_data, all_beh_data
 
 def make_one_headless_imaging_panel(fig, axd, calcium_data, v_data, beh_data, ylim_beh=None, ylim_v=None, ylabel=None, title=None):
+    """
+    Create a panel in the headless imaging figure with comparisons of neural, velocity, and behavioral responses.
+
+    Parameters:
+    - fig: Figure object.
+    - axd: Dictionary of Axes objects.
+    - calcium_data (list): List of calcium response data before and after stimulation.
+    - v_data (list): List of velocity response data before and after stimulation.
+    - beh_data (list): List of behavioral response data before and after stimulation.
+    - ylim_beh (list, optional): Y-axis limits for behavioral response plot. Defaults to None.
+    - ylim_v (list, optional): Y-axis limits for velocity response plot. Defaults to None.
+    - ylabel (str, optional): Y-axis label for behavioral response plot. Defaults to None.
+    - title (str, optional): Title of the panel. Defaults to None.
+    """
     # N: neural response comparison
     plotpanels.plot_ax_behavioural_response(calcium_data[0], ax=axd["N"], x="2p", ylim=[-0.2, 0.8],
             response_name=title,
@@ -107,7 +161,16 @@ def make_one_headless_imaging_panel(fig, axd, calcium_data, v_data, beh_data, yl
             response_ylabel=ylabel,
             beh_responses_2=beh_data[1], beh_response_2_color=myplt.DARKRED)
 
-def make_headless_imaging_figure():
+def make_headless_imaging_figure(figures_path=None):
+    """
+    Create a figure summarizing headless imaging data for specific hardcoded genotypes and conditions.
+
+    Parameters:
+    - figures_path (str, optional): Path to save the figure. Defaults to None.
+    """
+    if figures_path is None:
+        figures_path = os.path.join(params.plot_base_dir, "revision")
+
     genotypes = ["MDN", "DNp09"]  # fly ids in headless_df: MDN: 164, 165, 166; DNp09: 159, 172, 175
     conditions = ["onball", "hanging"]
     special_vars = ["meh_tita", "anus_dist"]
@@ -124,7 +187,7 @@ def make_headless_imaging_figure():
     subfigs = fig.subfigures(nrows=1, ncols=4, squeeze=True)
     axds = [subfig.subplot_mosaic(mosaic) for subfig in subfigs]
 
-    all_calcium_data, all_v_data, all_beh_data = get_headless_imaging_data()
+    all_calcium_data, all_v_data, all_beh_data = get_headless_imaging_data(genotypes=genotypes, special_vars=special_vars)
     # quantile normalise calcium data for each fly
     for i_gen in range(all_calcium_data.shape[0]):
         for i_fly in range(all_calcium_data.shape[1]):
@@ -162,8 +225,6 @@ def make_headless_imaging_figure():
                                         ylim_beh=ylim_beh, ylim_v=ylim_v,
                                         ylabel=special_var_ylabel, title=title)
     
-    # fig.tight_layout()
-    figures_path = os.path.join(params.plot_base_dir, "revision")
     with PdfPages(os.path.join(figures_path, f"fig_headless_imaging_summary.pdf")) as pdf:
         pdf.savefig(fig)
     plt.close(fig)

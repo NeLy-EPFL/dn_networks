@@ -1,3 +1,7 @@
+"""
+Functions to generate plots to analyse the antennae cutting experiments.
+Author: jonas.braun@epfl.ch
+"""
 import os
 import sys
 
@@ -16,7 +20,7 @@ from twoppp import plot as myplt
 
 def summarise_all_antennacut(overwrite=False, allflies_only=True, tmpdata_path=None, figures_path=None):
     """
-    Summarize and visualize behavioral responses of multiple fly genotypes and save them as a PDF.
+    Summarize and visualize behavioral responses before and after antenna cutting and save them as a PDF.
 
     Args:
         overwrite (bool): If True, overwrite existing temporary data files.
@@ -84,7 +88,7 @@ def summarise_all_antennacut(overwrite=False, allflies_only=True, tmpdata_path=N
 
 def antennacut_stat_test(tmpdata_path=None):
     """
-    Perform statistical tests on behavioral data for different fly genotypes and experimental conditions.
+    Perform statistical tests on behavioral data before and after antenna cutting.
 
     Args:
         tmpdata_path (str): Path to the directory containing temporary data files.

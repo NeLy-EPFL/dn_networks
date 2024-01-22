@@ -28,12 +28,11 @@ vnc_cut_presentation_flies = {
     "PR": [95],
 }
 
-def summarise_vnccut_resp(pre_stim=None, overwrite=False, mode="pdf", figures_path=None, tmpdata_path=None):
+def summarise_vnccut_resp(overwrite=False, mode="pdf", figures_path=None, tmpdata_path=None):
     """
     Summarize all neuronal and behavioural responses for flies that have the VNC cut.
 
     Parameters:
-        pre_stim (str, optional): The type of pre-stimulus behavior to consider. Default is None.
         overwrite (bool, optional): Whether to overwrite cached data if it exists. Default is False.
         mode (str, optional): The mode for generating summary figures (e.g., "pdf"). Default is "pdf".
         figures_path (str, optional): Path to save generated figures. Default is None.
@@ -67,7 +66,7 @@ def summarise_vnccut_resp(pre_stim=None, overwrite=False, mode="pdf", figures_pa
         "response_beh_lim": None,
         "response_q_max": 0.95,
         "suptitle": "",
-        "pre_stim": pre_stim,
+        "pre_stim": None,
         "panel_size": (15,4),
         "mosaic": fig_functional.mosaic_vnccut_stim_resp_panel,
         "min_resp": 10,
@@ -108,6 +107,4 @@ def summarise_vnccut_resp(pre_stim=None, overwrite=False, mode="pdf", figures_pa
     _ = [plt.close(fig) for fig in figs if fig is not None]
 
 if __name__ == "__main__":
-    summarise_vnccut_resp(pre_stim=None, overwrite=False, mode="pdf", figures_path=revision_figures_path)
-    # summarise_vnccut_resp(pre_stim=None, overwrite=False, mode="presentation", figures_path=revision_figures_path)
-    # summarise_vnccut_resp(pre_stim=None, overwrite=False, mode="presentationsummary", figures_path=revision_figures_path)
+    summarise_vnccut_resp(overwrite=False, mode="pdf", figures_path=revision_figures_path)
