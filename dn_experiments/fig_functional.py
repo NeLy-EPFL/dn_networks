@@ -39,6 +39,17 @@ BBBBBBBBBBBBBBBB.NNNNNNNNL....SSSSSSSSSSSSSSSSSSSS
 BBBBBBBBBBBBBBBB.NNNNNNNNL....SSSSSSSSSSSSSSSSSSSS
 BBBBBBBBBBBBBBBB.NNNNNNNNL....SSSSSSSSSSSSSSSSSSSS
 """
+
+mosaic_vnccut_stim_resp_panel = """
+..................................................
+IIIIIIIIIIIIIIII.NNNNNNNNL....SSSSSSSSSSSSSSSSSSSS
+IIIIIIIIIIIIIIII.NNNNNNNNL....SSSSSSSSSSSSSSSSSSSS
+IIIIIIIIIIIIIIII.NNNNNNNNL....SSSSSSSSSSSSSSSSSSSS
+IIIIIIIIIIIIIIII.NNNNNNNNL....SSSSSSSSSSSSSSSSSSSS
+JJJJJJJJJJJJJJJJ.NNNNNNNNL....SSSSSSSSSSSSSSSSSSSS
+JJJJJJJJJJJJJJJJ.NNNNNNNNL....SSSSSSSSSSSSSSSSSSSS
+"""
+
 mosaic_stim_resp_panel_presentation = """
 VVVVVVVVVVVVVV.NNNNNNNNL...SSSSSSSSSSSSSSSSSSSS
 VVVVVVVVVVVVVV.NNNNNNNNL...SSSSSSSSSSSSSSSSSSSS
@@ -47,6 +58,17 @@ VVVVVVVVVVVVVV.NNNNNNNNL...SSSSSSSSSSSSSSSSSSSS
 BBBBBBBBBBBBBB.NNNNNNNNL...SSSSSSSSSSSSSSSSSSSS
 BBBBBBBBBBBBBB.NNNNNNNNL...SSSSSSSSSSSSSSSSSSSS
 BBBBBBBBBBBBBB.NNNNNNNNL...SSSSSSSSSSSSSSSSSSSS
+...............................................
+"""
+
+mosaic_vnccut_stim_resp_panel_presentation = """
+IIIIIIIIIIIIII.NNNNNNNNL...SSSSSSSSSSSSSSSSSSSS
+IIIIIIIIIIIIII.NNNNNNNNL...SSSSSSSSSSSSSSSSSSSS
+IIIIIIIIIIIIII.NNNNNNNNL...SSSSSSSSSSSSSSSSSSSS
+IIIIIIIIIIIIII.NNNNNNNNL...SSSSSSSSSSSSSSSSSSSS
+IIIIIIIIIIIIII.NNNNNNNNL...SSSSSSSSSSSSSSSSSSSS
+IIIIIIIIIIIIII.NNNNNNNNL...SSSSSSSSSSSSSSSSSSSS
+IIIIIIIIIIIIII.NNNNNNNNL...SSSSSSSSSSSSSSSSSSSS
 ...............................................
 """
 
@@ -60,6 +82,32 @@ mosaic_stim_resp_panel_presentationsummary = """
 ....BBBBBBBBBBBBBBBBBBBBBB.....
 ....BBBBBBBBBBBBBBBBBBBBBB.....
 ....BBBBBBBBBBBBBBBBBBBBBB.....
+...............................
+...............................
+SSSSSSSSSSSSSSSSSSSSSSSSSSL....
+SSSSSSSSSSSSSSSSSSSSSSSSSSL....
+SSSSSSSSSSSSSSSSSSSSSSSSSSL....
+SSSSSSSSSSSSSSSSSSSSSSSSSSL....
+SSSSSSSSSSSSSSSSSSSSSSSSSSL....
+SSSSSSSSSSSSSSSSSSSSSSSSSSL....
+DDDDDDDDDDDDDDDDDDDDDDDDDD.....
+DDDDDDDDDDDDDDDDDDDDDDDDDD.....
+DDDDDDDDDDDDDDDDDDDDDDDDDD.....
+DDDDDDDDDDDDDDDDDDDDDDDDDD.....
+DDDDDDDDDDDDDDDDDDDDDDDDDD.....
+DDDDDDDDDDDDDDDDDDDDDDDDDD.....
+"""
+
+mosaic_vnccut_stim_resp_panel_presentationsummary = """
+....IIIIIIIIIIIIIIIIIIIIII.....
+....IIIIIIIIIIIIIIIIIIIIII.....
+....IIIIIIIIIIIIIIIIIIIIII.....
+....IIIIIIIIIIIIIIIIIIIIII.....
+....IIIIIIIIIIIIIIIIIIIIII.....
+....IIIIIIIIIIIIIIIIIIIIII.....
+....IIIIIIIIIIIIIIIIIIIIII.....
+....IIIIIIIIIIIIIIIIIIIIII.....
+....IIIIIIIIIIIIIIIIIIIIII.....
 ...............................
 ...............................
 SSSSSSSSSSSSSSSSSSSSSSSSSSL....
@@ -144,12 +192,21 @@ def get_one_fly_stim_resp_panel(fig, axd, fly_data, figure_params):
         summary_title = None
     
     # V: volocity response
-    plotpanels.plot_ax_behavioural_response(fly_data["beh_responses"], ax=axd["V"],
-            response_name=response_name, response_ylabel=figure_params["beh_response_ylabel"],
-            ylim=figure_params["response_beh_lim"])
+    if "V" in axd.keys():
+        plotpanels.plot_ax_behavioural_response(fly_data["beh_responses"], ax=axd["V"],
+                response_name=response_name, response_ylabel=figure_params["beh_response_ylabel"],
+                ylim=figure_params["response_beh_lim"])
     
     # B: behavioural class
-    plotpanels.plot_ax_behprob(fly_data["beh_class_responses"], ax=axd["B"])
+    if "B" in axd.keys():
+        plotpanels.plot_ax_behprob(fly_data["beh_class_responses"], ax=axd["B"])
+
+    # I: image of VNC cut:
+    if "I" in axd.keys():
+        plotpanels.plot_vnccut(fly_data, ax=axd["I"], mean="z", show_title=False)
+    # J: image of VNC cut (coronal view):
+    if "J" in axd.keys():
+        plotpanels.plot_vnccut(fly_data, ax=axd["J"], mean="x", show_title=False)
     
     # N: all neurons matrix with confidence interval
     plotpanels.plot_ax_allneurons_confidence(fly_data["stim_responses"], ax=axd["N"],
@@ -279,6 +336,7 @@ def summarise_stim_resp(exp_df, figure_params, stim_resp_save=None, overwrite=Fa
             "n_responses": None,
             "n_sel_responses": None,
             "n_other_responses": None,
+            "vnccut": False,
         }
 
         all_fly_data = []
@@ -288,7 +346,9 @@ def summarise_stim_resp(exp_df, figure_params, stim_resp_save=None, overwrite=Fa
             # if stim_resp_fly_save is not None and os.path.isfile(stim_resp_fly_save) and not overwrite>=2:
             #     with open(stim_resp_fly_save, "rb") as f:
             #         fly_data = pickle.load(f)
-                    
+            if "selected_fly_ids" in list(figure_params.keys()):
+                if not fly_id in figure_params["selected_fly_ids"]:
+                    continue
             fly_data = base_fly_data.copy()
             fly_data["fly_df"] = fly_df
             fly_data["fly_dir"] = np.unique(fly_df.fly_dir)[0]
@@ -296,20 +356,34 @@ def summarise_stim_resp(exp_df, figure_params, stim_resp_save=None, overwrite=Fa
             # TODO: work out difference between all trials and selected trials
             fly_data["background_image"] = loaddata.get_background_image(fly_data["fly_dir"])
             fly_data["roi_centers"] = loaddata.get_roi_centers(fly_data["fly_dir"])
-            twop_df, beh_df = loaddata.load_data(fly_data["fly_dir"], all_trial_dirs=fly_data["trial_names"]) 
+            if "vnccut" in list(figure_params.keys()):
+                if figure_params["vnccut"]:
+                    fly_data["vnccut"] = True
+            if fly_data["vnccut"]:
+                twop_df, beh_df = loaddata.load_data(fly_data["fly_dir"], all_trial_dirs=fly_data["trial_names"],
+                                                     add_sleap=False, add_me=False, vnccut_mode=True)
+            else:
+                twop_df, beh_df = loaddata.load_data(fly_data["fly_dir"], all_trial_dirs=fly_data["trial_names"]) 
 
             all_stim_responses, all_beh_responses = stimulation.get_neural_responses(twop_df, figure_params["trigger"],
                                                                         trials=fly_data["trial_names"],
                                                                         stim_p=figure_params["stim_p"],
-                                                                        return_var=figure_params["return_var"])
-            all_beh_class_responses = stimulation.get_beh_class_responses(beh_df, figure_params["trigger"],
-                                                                        trials=fly_data["trial_names"],
-                                                                        stim_p=figure_params["stim_p"])
+                                                                        return_var=figure_params["return_var"],
+                                                                        neural_regex=figure_params["normalisation_type"])
             fly_data["n_responses"] = all_stim_responses.shape[-1]
-            walk_pre, rest_pre = behaviour.get_pre_stim_beh(beh_df, trigger=figure_params["trigger"],
-                                                            stim_p=figure_params["stim_p"],
-                                                            n_pre_stim=params.pre_stim_n_samples_beh,
-                                                            trials=fly_data["trial_names"])  # selected_trials
+            if fly_data["vnccut"]:
+                all_beh_class_responses = None
+                if figure_params["pre_stim"] is not None:
+                    raise NotImplementedError("For vnccut experiments, 'pre_stim' must be None.")
+            else:
+                all_beh_class_responses = stimulation.get_beh_class_responses(beh_df, figure_params["trigger"],
+                                                                            trials=fly_data["trial_names"],
+                                                                            stim_p=figure_params["stim_p"])
+            
+                walk_pre, rest_pre = behaviour.get_pre_stim_beh(beh_df, trigger=figure_params["trigger"],
+                                                                stim_p=figure_params["stim_p"],
+                                                                n_pre_stim=params.pre_stim_n_samples_beh,
+                                                                trials=fly_data["trial_names"])  # selected_trials
             del twop_df, beh_df
 
             # select responses:
@@ -323,7 +397,7 @@ def summarise_stim_resp(exp_df, figure_params, stim_resp_save=None, overwrite=Fa
                 select_pre = np.logical_not(walk_pre)
                 fly_data["n_other_responses"] = np.sum(walk_pre)
             elif figure_params["pre_stim"] is None:
-                select_pre = np.ones_like(rest_pre)
+                select_pre = np.ones((fly_data["n_responses"]), dtype=bool)
                 fly_data["n_other_responses"] = 0
             else:
                 raise NotImplementedError
@@ -335,8 +409,8 @@ def summarise_stim_resp(exp_df, figure_params, stim_resp_save=None, overwrite=Fa
             fly_data["stim_responses"] = all_stim_responses[:,:,select_pre]
             fly_data["response_values"] = stimulation.summarise_responses(fly_data["stim_responses"])
             fly_data["sort_ind"] = np.argsort(fly_data["response_values"])
-            fly_data["beh_responses"] = all_beh_responses[:,select_pre]
-            fly_data["beh_class_responses"] = all_beh_class_responses[:,select_pre]
+            fly_data["beh_responses"] = all_beh_responses[:,select_pre] if all_beh_responses is not None else None
+            fly_data["beh_class_responses"] = all_beh_class_responses[:,select_pre] if all_beh_class_responses is not None else None
             if figure_params["response_clim"] is None:
                 try:
                     fly_data["clim"] = np.quantile(np.abs(fly_data["response_values"]), q=figure_params["response_q_max"])
@@ -353,7 +427,7 @@ def summarise_stim_resp(exp_df, figure_params, stim_resp_save=None, overwrite=Fa
         if stim_resp_save is not None:
             with open(stim_resp_save, "wb") as f:
                 pickle.dump(all_fly_data, f)
-
+    # if not any([fly_data["vnccut"] for fly_data in all_fly_data]):
     collect_data_stat_comparison_activation(all_fly_data, pre_stim=figure_params["pre_stim"], overwrite=overwrite, tmpdata_path=tmpdata_path)
     
     if figure_params["mode"] == "presentationsummary":
@@ -390,21 +464,28 @@ def summarise_stim_resp(exp_df, figure_params, stim_resp_save=None, overwrite=Fa
         axd_summary = axds[-2]
         axd_summary["N"].axis("off")
         ax_density = axds[-1]["S"]
-        axds[-1]["B"].axis("off")
-        axds[-1]["V"].axis("off")
+        if "B" in axds[-1].keys():
+            axds[-1]["B"].axis("off")
+        if "V" in axds[-1].keys():
+            axds[-1]["V"].axis("off")
+        if "I" in axds[-1].keys():
+            axds[-1]["I"].axis("off")
+        if "J" in axds[-1].keys():
+            axds[-1]["J"].axis("off")
         axds[-1]["N"].axis("off")
         axds[-1]["L"].axis("off")
         summary_title = f"N = {len(all_fly_data)} flies"
 
-    # V: all fly volocity response
-    beh_responses = np.concatenate([fly_data["beh_responses"] for fly_data in all_fly_data], axis=1)
-    plotpanels.plot_ax_behavioural_response(beh_responses, ax=axd_summary["V"],
-            response_name=f"N = {len(all_fly_data)} flies", response_ylabel=figure_params["beh_response_ylabel"],
-            ylim=figure_params["response_beh_lim"])
-    
-    # B: all fly behavioural class
-    beh_class_responses = np.concatenate([fly_data["beh_class_responses"] for fly_data in all_fly_data], axis=1)
-    plotpanels.plot_ax_behprob(beh_class_responses, ax=axd_summary["B"])
+    if not any([fly_data["vnccut"] for fly_data in all_fly_data]):
+        # V: all fly volocity response
+        beh_responses = np.concatenate([fly_data["beh_responses"] for fly_data in all_fly_data], axis=1)
+        plotpanels.plot_ax_behavioural_response(beh_responses, ax=axd_summary["V"],
+                response_name=f"N = {len(all_fly_data)} flies", response_ylabel=figure_params["beh_response_ylabel"],
+                ylim=figure_params["response_beh_lim"])
+        
+        # B: all fly behavioural class
+        beh_class_responses = np.concatenate([fly_data["beh_class_responses"] for fly_data in all_fly_data], axis=1)
+        plotpanels.plot_ax_behprob(beh_class_responses, ax=axd_summary["B"])
 
     
     # L: all fly legend colour bar
