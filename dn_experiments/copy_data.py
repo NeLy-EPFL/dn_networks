@@ -247,15 +247,29 @@ def copy_one_fly(trial_dirs, imaging=True, overwrite=False, base_dir=None):
         makedirs_safe(os.path.join(new_fly_dir, "processed"))
 
         if not os.path.isfile(os.path.join(fly_dir, "processed", "roi_center_annotation.pdf")):
-            make_roi_center_annotation_file(fly_dir)
-        copy_file(os.path.join(fly_dir, "processed", "roi_center_annotation.pdf"), fly_dir, new_fly_dir, overwrite=overwrite)
+            try:
+                make_roi_center_annotation_file(fly_dir)
+            except FileNotFoundError:
+                print(f"Warning: Could not make ROI center annotation file for fly {fly_dir}")
+        if os.path.isfile(os.path.join(fly_dir, "processed", "roi_center_annotation.pdf")):
+            copy_file(os.path.join(fly_dir, "processed", "roi_center_annotation.pdf"), fly_dir, new_fly_dir, overwrite=overwrite)
+        else:
+            print(f"Warning: Could not copy ROI center annotation file for fly {fly_dir}")
 
         if not os.path.isfile(os.path.join(fly_dir, "processed", "background_image.tif")):
-            make_background_image(fly_dir)
-        copy_file(os.path.join(fly_dir, "processed", "background_image.tif"), fly_dir, new_fly_dir, overwrite=overwrite)
-
-        copy_file(os.path.join(fly_dir, "processed", "ROI_centers.txt"), fly_dir, new_fly_dir, overwrite=overwrite)
-        copy_file(os.path.join(fly_dir, "processed", "ROI_mask.tif"), fly_dir, new_fly_dir, overwrite=overwrite)
+            try:
+                make_background_image(fly_dir)
+            except FileNotFoundError:
+                print(f"Warning: Could not make background file for fly {fly_dir}")
+        if os.path.isfile(os.path.join(fly_dir, "processed", "background_image.tif")):
+            copy_file(os.path.join(fly_dir, "processed", "background_image.tif"), fly_dir, new_fly_dir, overwrite=overwrite)
+        else:
+            print(f"Warning: Could not copy background file for fly {fly_dir}")
+        if os.path.isfile(os.path.join(fly_dir, "processed", "ROI_centers.txt")):
+            copy_file(os.path.join(fly_dir, "processed", "ROI_centers.txt"), fly_dir, new_fly_dir, overwrite=overwrite)
+            copy_file(os.path.join(fly_dir, "processed", "ROI_mask.tif"), fly_dir, new_fly_dir, overwrite=overwrite)
+        else:
+            print(f"Warning: Could not copy ROI_centers and ROI_mask file for fly {fly_dir}")
 
     for trial_dir in trial_dirs:
         copy_one_trial(new_fly_dir, trial_dir, imaging=imaging, overwrite=overwrite)
@@ -289,10 +303,12 @@ def copy_one_trial(new_fly_dir, trial_dir, imaging=True, overwrite=False):
     copy_file(utils2p.find_sync_metadata_file(trial_dir), trial_dir, new_trial_dir, overwrite=overwrite)
     copy_file(utils2p.find_seven_camera_metadata_file(trial_dir), trial_dir, new_trial_dir, overwrite=overwrite)
 
-    if imaging:
+    if imaging and os.path.isfile(os.path.join(trial_dir, "processed", "green_com_warped.tif")):
         copy_file(os.path.join(trial_dir, "processed", "twop_df.pkl"), trial_dir, new_trial_dir, overwrite=overwrite)
         copy_file(os.path.join(trial_dir, "processed", "green_com_warped.tif"), trial_dir, new_trial_dir, overwrite=overwrite)
         copy_file(utils2p.find_metadata_file(trial_dir), trial_dir, new_trial_dir, overwrite=overwrite)
+    elif imaging:
+        print(f"Warning: could not copy imaging data for trial {trial_dir}")
         
 
 def copy_file(file_path, old_trial_dir, new_trial_dir, overwrite=False):
