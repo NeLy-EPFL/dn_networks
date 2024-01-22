@@ -364,6 +364,8 @@ def summarise_stim_resp(exp_df, figure_params, stim_resp_save=None, overwrite=Fa
                                                      add_sleap=False, add_me=False, vnccut_mode=True)
             else:
                 twop_df, beh_df = loaddata.load_data(fly_data["fly_dir"], all_trial_dirs=fly_data["trial_names"]) 
+            twop_df, beh_df = loaddata.load_data(fly_data["fly_dir"], all_trial_dirs=fly_data["trial_names"]) 
+                twop_df, beh_df = loaddata.load_data(fly_data["fly_dir"], all_trial_dirs=fly_data["trial_names"]) 
 
             all_stim_responses, all_beh_responses = stimulation.get_neural_responses(twop_df, figure_params["trigger"],
                                                                         trials=fly_data["trial_names"],
@@ -427,7 +429,7 @@ def summarise_stim_resp(exp_df, figure_params, stim_resp_save=None, overwrite=Fa
         if stim_resp_save is not None:
             with open(stim_resp_save, "wb") as f:
                 pickle.dump(all_fly_data, f)
-    # if not any([fly_data["vnccut"] for fly_data in all_fly_data]):
+
     collect_data_stat_comparison_activation(all_fly_data, pre_stim=figure_params["pre_stim"], overwrite=overwrite, tmpdata_path=tmpdata_path)
     
     if figure_params["mode"] == "presentationsummary":

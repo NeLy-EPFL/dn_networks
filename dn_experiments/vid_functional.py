@@ -92,8 +92,6 @@ def make_functional_example_stim_video(pre_stim="walk", overwrite=False, subtrac
         df = summarydf.get_selected_df(df, [{"walkon": "ball"}])
 
     for GAL4, fly_id in selected_flies.items():
-        if GAL4 != "aDN24":
-            continue
         stim_p = stim_ps[GAL4]
         fly_df = df.loc[df.fly_id == fly_id]
         fly_dir = np.unique(fly_df.fly_dir)[0]
