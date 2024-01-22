@@ -40,7 +40,7 @@ FLOWER_PLOT_PARAMS = {}
 FLOWER_PLOT_PARAMS["folder"] = os.path.join(
     params.FIGURES_DIR,
     "network_visualisations",
-    "flower_plots",
+    "flower_plots_direct_edge_norm_noname",
 )
 FLOWER_PLOT_PARAMS["direct_layout_args"] = {
     "level": 1,
@@ -50,6 +50,7 @@ FLOWER_PLOT_PARAMS["direct_layout_args"] = {
     "include_legend": True,
     "feedback_direct_plot": False,
     "feedback_downstream_plot": False,
+    "normalise_edges_separately": True,
 }
 FLOWER_PLOT_PARAMS["indirect_layout_args"] = {
     "level": 2,
@@ -59,9 +60,10 @@ FLOWER_PLOT_PARAMS["indirect_layout_args"] = {
     "include_legend": True,
     "feedback_direct_plot": False,
     "feedback_downstream_plot": True,
+    "normalise_edges_separately": False,
 }
 FLOWER_PLOT_PARAMS["plot_each_neuron"] = True # False for paper
-FLOWER_PLOT_PARAMS["display_names"] = True
+FLOWER_PLOT_PARAMS["display_names"] = False
 
 # --- Plotting parameters for the clustering --- #
 CLUSTERING_ARGS = {}

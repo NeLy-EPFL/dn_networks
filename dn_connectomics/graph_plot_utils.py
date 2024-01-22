@@ -255,6 +255,7 @@ def plot_downstream_network(
     other_layer_visible: bool = False,
     arrow_norm: float = 0.1,
     display_names: bool = False,
+    normalise_edges_separately: bool = False,
 ) -> dict:
     """
     Make a circular plot where the refernce neurons are in the center, and their
@@ -304,13 +305,19 @@ def plot_downstream_network(
     G.remove_edges_from(network_2["edges"])
 
     # Add the labels for the edges
-    all_weights = np.concatenate(
-        (normalized_weights, network_2["weights"] * arrow_norm)
-    )
-    all_colors = np.concatenate(
-        (network_1["edge_colors"], network_2["edge_colors"])
-    )
-    ax = add_edge_legend(ax, all_weights, all_colors, arrow_norm)
+    if not normalise_edges_separately:
+        all_weights = np.concatenate(
+            (normalized_weights, network_2["weights"] * arrow_norm)
+        )
+        all_colors = np.concatenate(
+            (network_1["edge_colors"], network_2["edge_colors"])
+        )
+        ax = add_edge_legend(ax, all_weights, all_colors, arrow_norm)
+    else:
+        ax = add_edge_legend(
+            ax, normalized_weights, network_1["edge_colors"], arrow_norm
+        )
+        
 
     nx.draw(
         G,

@@ -48,6 +48,22 @@ def make_flower_plot(
         neurons are included.
             - arrow_norm : float
         Normalization factor for the arrow width. Default is 1.0.
+            - other_layer_visible : bool
+        Whether to include the other layer in the plot. Default is False.
+            - fig_size : float
+        Size of the figure. Default is 5.
+            - include_legend : bool
+        Whether to include a legend. Default is True.
+            - feedback_direct_plot : bool
+        Whether to include feedback connections in the direct plot. Default is
+        False.
+            - feedback_downstream_plot : bool
+        Whether to include feedback connections in the downstream plot. Default is
+        False.
+            - normalise_edges_separately : bool
+        Whether to normalise the edges separately for the direct and downstream
+        plot.
+
 
     Returns
     -------
@@ -94,6 +110,7 @@ def make_flower_plot(
                 if "arrow_norm" in layout_args
                 else 0.1,
                 display_names=display_names,
+                normalise_edges_separately=layout_args["normalise_edges_separately"]
             )
             ax[i].set_title(neuron_name + " downstream DNs")
             ax[i].set_aspect("equal")
@@ -134,6 +151,7 @@ def make_flower_plot(
         if "arrow_norm" in layout_args
         else 0.1,
         display_names=display_names,
+        normalise_edges_separately=layout_args["normalise_edges_separately"]
     )
     ax_overall.set_title("overall downstream DNs")
     # plt.tight_layout()
