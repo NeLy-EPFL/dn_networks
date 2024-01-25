@@ -593,7 +593,7 @@ def plot_trial_number_summary(dfs, df_names, plot_base_dir=params.data_summary_d
 if __name__ == "__main__":
     genotype_dirs = find_genotyp_dirs(
         nas_base_dir="/mnt/nas2/FH",
-        min_date=240111,
+        min_date=240115,
         max_date=None,
         contains="CsChrimson",
         exclude="BAD",

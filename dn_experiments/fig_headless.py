@@ -43,11 +43,16 @@ def get_one_fly_headless_panel(fig, axd, fly_data, figure_params, set_baseline_z
     else:
         response_name = f"{fly_data['fly_df'].date.values[0]} {fly_data['fly_df'].CsChrimson.values[0]} Fly {fly_data['fly_df'].fly_number.values[0]}"
     # X: volocity response comparison
-    plotpanels.plot_ax_behavioural_response(fly_data["beh_responses_pre"], ax=axd["X"], x="beh",
-            response_name=response_name,
-            response_ylabel=figure_params["beh_response_ylabel"] if figure_params["allflies_only"] else None,
-            beh_responses_2=fly_data["beh_responses_post"], beh_response_2_color=behaviour.get_beh_color(figure_params["beh_name"]),
-            period=figure_params["stats_period"])
+    plotpanels.plot_ax_behavioural_response(
+        fly_data["beh_responses_pre"],
+        ax=axd["X"],
+        x="beh",
+        response_name=response_name,
+        response_ylabel=figure_params["beh_response_ylabel"] if figure_params["allflies_only"] else None,
+        beh_responses_2=fly_data["beh_responses_post"],
+        beh_response_2_color=behaviour.get_beh_color(figure_params["beh_name"]),
+        period=figure_params["stats_period"],
+        ylim=figure_params["ylim"],)
 
 
     if not figure_params["allflies_only"]:
@@ -58,7 +63,8 @@ def get_one_fly_headless_panel(fig, axd, fly_data, figure_params, set_baseline_z
             x="beh",
             response_name="intact",
             response_ylabel=figure_params["beh_response_ylabel"],
-            period=figure_params["stats_period"])
+            period=figure_params["stats_period"],
+            ylim=figure_params["ylim"])
 
         # W: volocity response post head cut
         plotpanels.plot_ax_behavioural_response(
@@ -67,7 +73,8 @@ def get_one_fly_headless_panel(fig, axd, fly_data, figure_params, set_baseline_z
             x="beh",
             response_name="amputated",
             response_ylabel=None,
-            period=figure_params["stats_period"])
+            period=figure_params["stats_period"],
+            ylim=figure_params["ylim"])
     
     
         if figure_params["ylim"] is None:

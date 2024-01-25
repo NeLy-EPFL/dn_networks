@@ -206,6 +206,7 @@ def summarise_predictions_dofs(
     filter_pre_stim_beh=None,
     zero_baseline=False,
     stats_period=(500,750),
+    ylim=None,
 
 ):
     """make a figure for one genotype and one behavioural response,
@@ -283,7 +284,7 @@ def summarise_predictions_dofs(
         "panel_size": (20, 3) if not allflies_only else (3, 4),
         "mosaic": mosaic_predictions_panel,
         "allflies_only": allflies_only,
-        "ylim": None,
+        "ylim": ylim,
         "accept_amputated_only_flies": accept_amputated_only_flies,
         "filter_pre_stim_beh": filter_pre_stim_beh,
         "zero_baseline": zero_baseline,
@@ -294,7 +295,7 @@ def summarise_predictions_dofs(
     add_str += "_{}_{}".format(specific_joint, specific_leg)
 
     predictions_save = os.path.join(
-        data_save_location, f"predictions_{GAL4}_{return_var}.pkl"
+        data_save_location, f"predictions_{GAL4}_{specific_joint}_{specific_leg}_{return_var}.pkl"
     )
     all_fly_data = load_data_one_genotype_amputation(
         df, figure_params, predictions_save, overwrite=overwrite
@@ -312,9 +313,9 @@ def summarise_predictions_dofs(
 
 if __name__ == "__main__":
     fig = summarise_predictions_dofs(
-        "MDN",
+        "CantonS",
         specific_joint="TiTa",
-        specific_leg="HL",
+        specific_leg="FL",
         beh_name="back",
         return_var="integrated_forward_movement",
         return_var_ylabel=r"$d_{forward}$", #r"$v_{||}$ (mm/s)",
@@ -324,4 +325,5 @@ if __name__ == "__main__":
         filter_pre_stim_beh=None,  # 'rest'
         zero_baseline=True,
         stats_period=(999,1000),
+        ylim=[-2,40]
     )

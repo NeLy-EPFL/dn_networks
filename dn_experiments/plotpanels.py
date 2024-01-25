@@ -71,7 +71,6 @@ def plot_ax_behavioural_response(beh_responses, response_name=None, response_yla
         and beh_responses_2 != []
         ):
         # statistical test (Mann-Whitney U) between two conditions
-        print(np.mean(beh_responses[period[0]:period[1],:],axis=0).shape)
         p = mannwhitneyu(
             np.mean(beh_responses[period[0]:period[1],:],axis=0),
             np.mean(beh_responses_2[period[0]:period[1],:],axis=0)

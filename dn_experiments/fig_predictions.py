@@ -218,6 +218,7 @@ def summarise_predictions_one_genotype(
     filter_pre_stim_beh=None,
     zero_baseline=False,
     stats_period=(500,750),
+    ylim=None,
 ):
     """make a figure for one genotype and one behavioural response, before and after head cutting
 
@@ -284,7 +285,7 @@ def summarise_predictions_one_genotype(
         "panel_size": (20, 3) if not allflies_only else (3, 4),
         "mosaic": mosaic_predictions_panel,
         "allflies_only": allflies_only,
-        "ylim": None,
+        "ylim": ylim,
         "accept_headless_only_flies": accept_headless_only_flies,
         "filter_pre_stim_beh": filter_pre_stim_beh,
         "include_noball_data": include_noball_data,
@@ -312,15 +313,16 @@ def summarise_predictions_one_genotype(
 
 if __name__ == "__main__":
     fig = summarise_predictions_one_genotype(
-        "DNb01",
-        beh_name="walk",
+        "CantonS",
+        beh_name="back",
         return_var='v_forw',#'frtita_y',#'ovum_y',  # "me_front",
         return_var_ylabel=r"$v_{||}$ (mm/s)", #r'y_{frTiTa}', #r'$y_{ovum}$',#r"$v_{||}$ (mm/s)",
         overwrite=True,
         accept_headless_only_flies=False,
-        return_var_flip=True,
+        return_var_flip=False,
         include_noball_data=False,
         filter_pre_stim_beh=None,  # 'rest'
         zero_baseline=False,
         stats_period=(500,750),#(999,1000) #(500,750),
+        ylim=[-1.5,0.5]
     )
