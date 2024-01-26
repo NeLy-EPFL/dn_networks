@@ -34,16 +34,19 @@ REF_DNS = {**aDN2, **DNp09, **MDN}
 
 
 # DNs used in the validation experiments
-
-
-aDN1 = make_dict_special_neurons("aDN1", "DNg_aDN1", color="#1034A6")
-DNa02 = make_dict_special_neurons("DNa02", "DNa02", color="#412F88")
-DNa01 = make_dict_special_neurons("DNa01", "DNa01", color="#722B6A")
-DNb02 = make_dict_special_neurons("DNb02", "DNb02", color="#A2264B")
-mute = make_dict_special_neurons("mute", "DNg_mute", color="#D3212D")
+DNp42 = make_dict_special_neurons("DNp42", "DNp42", color="#00D0FF")
+aDN1 = make_dict_special_neurons("aDN1", "DNg_aDN1", color="#00B5DB")
+DNa02 = make_dict_special_neurons("DNa02", "DNa02", color="#00A4B0")
+DNa01 = make_dict_special_neurons("DNa01", "DNa01", color="#006270")
+DNb02 = make_dict_special_neurons("DNb02", "DNb02", color="#000000")
+oviDNa = make_dict_special_neurons("oviDNa", "DNp_oviDNa", color="#700000")
+oviDNb = make_dict_special_neurons("oviDNb", "DNp_oviDNb", color="#700000")
+oviDN = {**oviDNa, **oviDNb}
+DNg11 = make_dict_special_neurons("DNg11", "DNg11", color="#A50000")
+mute = make_dict_special_neurons("mute", "DNg_mute", color="#E3212D")
 DNg14 = make_dict_special_neurons("DNg14", "DNg14", color="#F62D2D")
 
-VALIDATION_DNS = {**aDN1, **DNa02, **DNa01, **DNb02, **mute, **DNg14}
+VALIDATION_DNS = {**DNp42,**aDN1, **DNa02, **DNa01, **DNb02, **oviDN,**DNg11,**mute, **DNg14}
 KNOWN_DNS = {**REF_DNS, **VALIDATION_DNS}
 
 #FLOWER_PLOTS_TO_MAKE = [

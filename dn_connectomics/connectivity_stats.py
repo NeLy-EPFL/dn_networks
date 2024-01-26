@@ -532,7 +532,7 @@ def compute_connectivity_stats():
     make_gng_dn_plot(dns_info)
     plt.savefig(os.path.join(working_folder, "gng_dn_plot.pdf"))
 
-    make_specific_neurons_plot(dns_info, specific_neurons=neuron_params.VALIDATION_DNS)
+    make_specific_neurons_plot(dns_info, specific_neurons=neuron_params.VALIDATION_DNS, show_insert=False)
     plt.savefig(os.path.join(working_folder, "tested_neurons_plot.pdf"))
 
     make_specific_neurons_plot(dns_info, specific_neurons=neuron_params.BEHAVIOUR_DNS, show_insert = False)
@@ -720,9 +720,9 @@ def compare_connectivity_stats(
     return
 
 if __name__ == "__main__":
-    #compute_connectivity_stats()
-    compare_connectivity_stats(
-        direction = plot_params.INTERNEURON_STATS_ARGS["measured_feature"],
-        connection = plot_params.INTERNEURON_STATS_ARGS["connection_type"],
-        reference_sorting = plot_params.INTERNEURON_STATS_ARGS["reference_sorting"],
-    )
+    compute_connectivity_stats()
+    #compare_connectivity_stats(
+    #    direction = plot_params.INTERNEURON_STATS_ARGS["measured_feature"],
+    #    connection = plot_params.INTERNEURON_STATS_ARGS["connection_type"],
+    #    reference_sorting = plot_params.INTERNEURON_STATS_ARGS["reference_sorting"],
+    #)
