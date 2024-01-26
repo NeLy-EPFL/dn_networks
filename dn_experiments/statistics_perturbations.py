@@ -374,5 +374,5 @@ def dofs_stat_test(overwrite=True,per_fly_avg=False):
 
 if __name__ == "__main__":
     #headless_stat_test()
-    revisions_stat_test(per_fly_avg=True)
-    #dofs_stat_test(per_fly_avg=True)
+    #revisions_stat_test(per_fly_avg=True)
+    dofs_stat_test(per_fly_avg=True)

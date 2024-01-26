@@ -313,9 +313,9 @@ def summarise_predictions_dofs(
 
 if __name__ == "__main__":
     fig = summarise_predictions_dofs(
-        "CantonS",
+        "MDN",
         specific_joint="TiTa",
-        specific_leg="FL",
+        specific_leg="HL",
         beh_name="back",
         return_var="integrated_forward_movement",
         return_var_ylabel=r"$d_{forward}$", #r"$v_{||}$ (mm/s)",
@@ -325,5 +325,5 @@ if __name__ == "__main__":
         filter_pre_stim_beh=None,  # 'rest'
         zero_baseline=True,
         stats_period=(999,1000),
-        ylim=[-2,40]
+        #ylim=[-2,40]
     )

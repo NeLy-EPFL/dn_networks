@@ -313,10 +313,10 @@ def summarise_predictions_one_genotype(
 
 if __name__ == "__main__":
     fig = summarise_predictions_one_genotype(
-        "CantonS",
-        beh_name="back",
-        return_var='v_forw',#'frtita_y',#'ovum_y',  # "me_front",
-        return_var_ylabel=r"$v_{||}$ (mm/s)", #r'y_{frTiTa}', #r'$y_{ovum}$',#r"$v_{||}$ (mm/s)",
+        "DNg11",
+        beh_name="groom",
+        return_var='frtita_y',#'frtita_y',#'ovum_y',  # "me_front",
+        return_var_ylabel=r'y_{frTiTa}', #r'y_{frTiTa}', #r'$y_{ovum}$',#r"$v_{||}$ (mm/s)",
         overwrite=True,
         accept_headless_only_flies=False,
         return_var_flip=False,
@@ -324,5 +324,5 @@ if __name__ == "__main__":
         filter_pre_stim_beh=None,  # 'rest'
         zero_baseline=False,
         stats_period=(500,750),#(999,1000) #(500,750),
-        ylim=[-1.5,0.5]
+        #ylim=[-1.5,0.5]
     )
