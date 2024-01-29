@@ -28,7 +28,7 @@ vnc_cut_presentation_flies = {
     "PR": [95],
 }
 
-def summarise_vnccut_resp(overwrite=False, mode="pdf", figures_path=None, tmpdata_path=None):
+def summarise_vnccut_resp(overwrite=False, mode="pdf", figures_path=None, tmpdata_path=None, force_vnc_images=False):
     """
     Summarize all neuronal and behavioural responses for flies that have the VNC cut.
 
@@ -37,6 +37,7 @@ def summarise_vnccut_resp(overwrite=False, mode="pdf", figures_path=None, tmpdat
         mode (str, optional): The mode for generating summary figures (e.g., "pdf"). Default is "pdf".
         figures_path (str, optional): Path to save generated figures. Default is None.
         tmpdata_path (str, optional): Path to save/load cached data. Default is None.
+        force_vnc_images (bool, optional): Whether to force that images of the VNC cut are shown. This raw data is not on Dataverse.
 
     Returns:
         None
@@ -75,6 +76,7 @@ def summarise_vnccut_resp(overwrite=False, mode="pdf", figures_path=None, tmpdat
         "pres_fly": None,
         "selected_fly_ids": None,
         "vnccut": True,
+        "force_vnc_images": force_vnc_images
     }
 
     if mode == "presentation":
@@ -107,4 +109,4 @@ def summarise_vnccut_resp(overwrite=False, mode="pdf", figures_path=None, tmpdat
     _ = [plt.close(fig) for fig in figs if fig is not None]
 
 if __name__ == "__main__":
-    summarise_vnccut_resp(overwrite=False, mode="pdf", figures_path=revision_figures_path)
+    summarise_vnccut_resp(overwrite=False, mode="pdf", figures_path=revision_figures_path, force_vnc_images=False)

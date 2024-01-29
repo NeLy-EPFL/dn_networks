@@ -181,6 +181,9 @@ def get_one_fly_stim_resp_panel(fig, axd, fly_data, figure_params):
     Returns:
         None
     """
+    fly_name = f"{fly_data['fly_df'].date.values[0]} Fly {fly_data['fly_df'].fly_number.values[0]}| " + \
+               f"ID {fly_data['fly_df'].fly_id.values[0]}| {fly_data['fly_df'].CsChrimson.values[0]}"
+
     clim = fly_data["clim"] if figure_params["response_clim"] is None else figure_params["response_clim"]
 
     if figure_params["mode"] == "presentation":
@@ -201,12 +204,18 @@ def get_one_fly_stim_resp_panel(fig, axd, fly_data, figure_params):
     if "B" in axd.keys():
         plotpanels.plot_ax_behprob(fly_data["beh_class_responses"], ax=axd["B"])
 
-    # I: image of VNC cut:
-    if "I" in axd.keys():
-        plotpanels.plot_vnccut(fly_data, ax=axd["I"], mean="z", show_title=False)
-    # J: image of VNC cut (coronal view):
-    if "J" in axd.keys():
-        plotpanels.plot_vnccut(fly_data, ax=axd["J"], mean="x", show_title=False)
+    try:
+        # I: image of VNC cut:
+        if "I" in axd.keys():
+            plotpanels.plot_vnccut(fly_data, ax=axd["I"], mean="z", show_title=False)
+        # J: image of VNC cut (coronal view):
+        if "J" in axd.keys():
+            plotpanels.plot_vnccut(fly_data, ax=axd["J"], mean="x", show_title=False)
+    except FileNotFoundError:
+        if not figure_params["force_vnc_images"]:
+            print(f"Warning: not showing VNC images for fly {fly_name} because data not present.")
+        else:
+            raise FileNotFoundError(f"Error: Could not find VNC images for fly {fly_name}.")
     
     # N: all neurons matrix with confidence interval
     plotpanels.plot_ax_allneurons_confidence(fly_data["stim_responses"], ax=axd["N"],
@@ -216,8 +225,6 @@ def get_one_fly_stim_resp_panel(fig, axd, fly_data, figure_params):
     plotpanels.plot_ax_cbar(fig=fig, ax=axd["L"], clim=clim, clabel=figure_params["clabel"])
 
     # S: summary of neurons over std image
-    fly_name = f"{fly_data['fly_df'].date.values[0]} Fly {fly_data['fly_df'].fly_number.values[0]}| " + \
-               f"ID {fly_data['fly_df'].fly_id.values[0]}| {fly_data['fly_df'].CsChrimson.values[0]}"
     plotpanels.plot_ax_response_summary(background_image=fly_data["background_image"],
         roi_centers=fly_data["roi_centers"],
         ax=axd["S"], response_values=fly_data["response_values"],
