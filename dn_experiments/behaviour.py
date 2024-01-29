@@ -889,13 +889,15 @@ def reduce_behaviour_class(values, thres=0.67, default=0):
     )
 
 
-def add_beh_class_to_dfs(twop_df, beh_df):
+def add_beh_class_to_dfs(twop_df, beh_df, allow_exceptions=False):
     """
     Adds behavioral class information to twop_df and beh_df DataFrames.
 
     Parameters:
     - twop_df (DataFrame): 2-photon imaging data DataFrame.
     - beh_df (DataFrame): Behavioral data DataFrame.
+    - allow_exceptions (bool): Whether to allow exceptions in behaviour classification.
+      If exception, replace all classifications by 0.
 
     Returns:
     - twop_df (DataFrame): Updated 2-photon imaging data DataFrame.
@@ -982,24 +984,31 @@ def add_beh_class_to_dfs(twop_df, beh_df):
     for trial_name in np.unique(beh_df.index.get_level_values("TrialName")):
         beh_df_index = beh_df.index.get_level_values("TrialName") == trial_name
         if twop_df is not None:
-            twop_df_index = (
-                twop_df.index.get_level_values("TrialName") == trial_name
-            )
 
-        walk, rest, back, groom, frub, post = discriminate_beh(
-            beh_df=beh_df.loc[beh_df_index]
-        )
-        beh_class = (
-            walk + 2 * rest + 3 * back + 4 * groom + 5 * frub + 6 * post
-        )
+            twop_df_index = twop_df.index.get_level_values("TrialName") == trial_name
+        if allow_exceptions:
+            try:
+                walk, rest, back, groom, frub, post = discriminate_beh(beh_df=beh_df.loc[beh_df_index])
+            except AttributeError:
+                print("Warning: could not run behaviour classification")
+                walk = np.zeros(len(beh_df.loc[beh_df_index]))
+                rest = np.zeros(len(beh_df.loc[beh_df_index]))
+                back = np.zeros(len(beh_df.loc[beh_df_index]))
+                groom = np.zeros(len(beh_df.loc[beh_df_index]))
+                frub = np.zeros(len(beh_df.loc[beh_df_index]))
+                post = np.zeros(len(beh_df.loc[beh_df_index]))
+        else:
+            walk, rest, back, groom, frub, post = discriminate_beh(beh_df=beh_df.loc[beh_df_index])
 
-        beh_df.loc[beh_df_index, "walk"] = walk
-        beh_df.loc[beh_df_index, "rest"] = rest
-        beh_df.loc[beh_df_index, "back"] = back
-        beh_df.loc[beh_df_index, "groom"] = groom
-        beh_df.loc[beh_df_index, "frub"] = frub
-        beh_df.loc[beh_df_index, "post"] = post
-        beh_df.loc[beh_df_index, "beh_class"] = beh_class
+        beh_class = walk + 2*rest + 3*back + 4*groom + 5*frub + 6*post
+
+        beh_df.loc[beh_df_index,"walk"] = walk
+        beh_df.loc[beh_df_index,"rest"] = rest
+        beh_df.loc[beh_df_index,"back"] = back
+        beh_df.loc[beh_df_index,"groom"] = groom
+        beh_df.loc[beh_df_index,"frub"] = frub
+        beh_df.loc[beh_df_index,"post"] = post
+        beh_df.loc[beh_df_index,"beh_class"] = beh_class
 
         if twop_df is not None:
             beh_class_2p = synchronisation.reduce_during_2p_frame(

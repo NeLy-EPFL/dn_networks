@@ -36,10 +36,11 @@ def plot_stim_p_effect(figures_path=None):
         figures_path = params.plot_base_dir
 
     df = summarydf.load_data_summary()
-    # df = summarydf.filter_data_summary(df, no_co2=True)  # , q_thres_neural=None)
+    df = summarydf.filter_data_summary(df, no_co2=True, imaging_type=None)  # , q_thres_neural=None)
     df = summarydf.get_selected_df(df, [{"laser_power": "1_5_10_20", "GCaMP": "Dfd",
-                                         "walkon": "ball", "stim_location": "cc"}])
-
+                                         "walkon": "ball", "stim_location": "cc", "CO2": False}])
+    # df = df[np.logical_not(df.exclude == True)]
+    # df = df[np.nan_to_num(df.behaviour_quality.values) <= 3]
     p_levels = [1,5,10,20]
     p_colors = [myplt.DARKGREEN, myplt.DARKYELLOW, myplt.DARKORANGE, myplt.DARKRED]
 
@@ -129,8 +130,8 @@ def plot_stim_p_effect(figures_path=None):
                                     x=x,colors=[myplt.WHITE, myplt.BLACK], ax=axs[0, i_g])
         axs[0, i_g].set_title(f"{genotype} {len(flies)} flies {beh_responses.shape[-1]} trials")
         axs[0, i_g].set_ylabel(r"$v_{||}$ (mm/s)")
-        axs[0, i_g].set_ylim([-2.5, 7.5])
-        axs[0, i_g].set_yticks([-2.5, 0, 2.5, 5, 7.5])
+        axs[0, i_g].set_ylim([-2.5, 10])
+        axs[0, i_g].set_yticks([-2.5, 0, 2.5, 5, 7.5, 10])
         axs[0, i_g].set_xticks([0,params.response_t_params_2p_label[1]])
         axs[0, i_g].set_xticklabels(["", ""])
         plotpanels.make_nice_spines(axs[0, i_g])

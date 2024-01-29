@@ -8,9 +8,12 @@ import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 from scipy.ndimage import gaussian_filter
+from scipy.stats import mannwhitneyu
+
 
 from twoppp import plot as myplt
-from twoppp import utils
+from twoppp.plot import show3d
+from twoppp import utils, load
 
 import params, behaviour
 
@@ -38,7 +41,17 @@ def make_nice_spines(ax):
     ax.spines["top"].set_linewidth(0)
     ax.spines["right"].set_linewidth(0)
 
-def plot_ax_behavioural_response(beh_responses, response_name=None, response_ylabel=None, ax=None, beh_responses_2=None, beh_response_2_color=myplt.BLACK, x="2p", ylim=None):
+def stat_test_sign(p):
+    if p < 0.001:
+        return '***'
+    elif p < 0.01:
+        return '**'
+    elif p < 0.05:
+        return '*'
+    else:
+        return 'ns'
+
+def plot_ax_behavioural_response(beh_responses, response_name=None, response_ylabel=None, ax=None, beh_responses_2=None, beh_response_2_color=myplt.BLACK, x="2p", ylim=None, period=[500,750]):
     """
     Plots behavioral response data on axis. Plots mean and 95% confidence interval.
 
@@ -51,6 +64,7 @@ def plot_ax_behavioural_response(beh_responses, response_name=None, response_yla
         beh_response_2_color (str, optional): Color for the second behavioral response. The first one will be black
         x (str, optional): Specifies the x-axis values, i.e. which time vector should be used ("2p" or "beh").
         ylim (list, optional): Limits for the y-axis.
+        period (list, optional): period over which to perform trial-to-trial statistical comparison
 
     Returns:
         matplotlib.axes.Axes: The axis on which the data is plotted.
@@ -75,6 +89,29 @@ def plot_ax_behavioural_response(beh_responses, response_name=None, response_yla
     if beh_responses_2 is not None:
         myplt.plot_mu_sem(mu=np.mean(beh_responses_2, axis=-1), err=utils.conf_int(beh_responses, axis=-1),
                             x=x, ax=ax, color=beh_response_2_color, linewidth=2*linewidth)
+ 
+    if (
+        beh_responses is not None
+        and beh_responses != []
+        and beh_responses_2 is not None
+        and beh_responses_2 != []
+        ):
+        # statistical test (Mann-Whitney U) between two conditions
+        p = mannwhitneyu(
+            np.mean(beh_responses[period[0]:period[1],:],axis=0),
+            np.mean(beh_responses_2[period[0]:period[1],:],axis=0)
+        )
+        # add text to plot with p-value
+        ax.text(
+            0.8,
+            0.95,
+            'p: ' + stat_test_sign(p.pvalue),
+            horizontalalignment='center',
+            verticalalignment='center',
+            transform=ax.transAxes,
+            fontsize=16
+        )
+         
             
     ax.set_xticks([0,params.response_t_params_2p_label[1]])
     ax.set_xticklabels(["", ""])
@@ -432,3 +469,36 @@ def plot_ax_behprob(labels, ax=None, cmap=behaviour.beh_cmaplist.copy(), beh_map
     ax.set_ylabel(ylabel)
 
     make_nice_spines(ax)
+
+
+def plot_vnccut(flydata, ax=None, mean="z", show_title=True):
+    ax = plt.gca() if ax is None else ax
+    fly_dir = flydata["fly_dir"]
+    trial_dirs = load.get_trials_from_fly(fly_dir)[0]
+
+    trial_dir = [trial_dir for trial_dir in trial_dirs if "cc_t1_vol" in trial_dir][0]
+
+    green = os.path.join(trial_dir, load.PROCESSED_FOLDER, "green.tif")
+    green = green if os.path.isfile(green) else None
+    green_avg = os.path.join(trial_dir, load.PROCESSED_FOLDER, "green_avg.tif") if green is not None else None
+    red = os.path.join(trial_dir, load.PROCESSED_FOLDER, "red.tif")
+    red = red if os.path.isfile(red) else None
+    red_avg = os.path.join(trial_dir, load.PROCESSED_FOLDER, "red_avg.tif") if red is not None else None
+
+    rgb_imgs = show3d.plot_projections_3d(green, red, out_dir=None, green_avg=green_avg, red_avg=red_avg, return_data=True)
+
+    if mean == "z":
+        proj_mean_img = rgb_imgs[0]  # 0 for mean image, 1 for max image, 2 for std image
+    elif mean == "y":
+        proj_mean_img = rgb_imgs[3]  # 3 for mean image, 4 for max image, 5 for std image
+    elif mean == "x":
+        proj_mean_img = rgb_imgs[6]  # 6 for mean image, 7 for max image, 8 for std image
+
+
+    ax.imshow(proj_mean_img)
+    if show_title:
+        ax.set_title(f"VNC {mean} mean projection")
+    ax.spines['right'].set_visible(False)
+    ax.spines['top'].set_visible(False)
+    ax.spines['left'].set_visible(False)
+    ax.spines['bottom'].set_visible(False)

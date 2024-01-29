@@ -101,9 +101,11 @@ def make_functional_example_stim_video(pre_stim="walk", overwrite=False, subtrac
         qmax_save = os.path.join(params.plotdata_base_dir, f"{GAL4}_{fly_id}_qmax.tif")
         dff_save = os.path.join(params.plotdata_base_dir, f"{GAL4}_{fly_id}_dff.tif")
 
-        roi_centers = loaddata.get_roi_centers(fly_dir)
-        roi_mask = utils.get_stack(os.path.join(fly_dir, load.PROCESSED_FOLDER, "ROI_mask.tif"))[y_crop_denoised[0]:y_crop_denoised[1], x_crop[0]:x_crop[1]].astype(bool)
-        roi_mask = np.logical_and(binary_dilation(roi_mask), np.logical_not(roi_mask))
+        if show_centers:
+            roi_centers = loaddata.get_roi_centers(fly_dir)
+        if show_mask:
+            roi_mask = utils.get_stack(os.path.join(fly_dir, load.PROCESSED_FOLDER, "ROI_mask.tif"))[y_crop_denoised[0]:y_crop_denoised[1], x_crop[0]:x_crop[1]].astype(bool)
+            roi_mask = np.logical_and(binary_dilation(roi_mask), np.logical_not(roi_mask))
         twop_df, beh_df = loaddata.load_data(fly_dir, all_trial_dirs=fly_df.trial_name.values)
 
         walk_pre, rest_pre, stim_starts_beh = behaviour.get_pre_stim_beh(beh_df, trigger=trigger,
@@ -406,7 +408,7 @@ def make_MDN_natbeh_video():
     Returns:
         None
     """
-     make_functional_example_stim_video(pre_stim=None, overwrite=False,
+    make_functional_example_stim_video(pre_stim=None, overwrite=False,
         subtract_pre=True, show_centers=False, show_mask=False, show_beh=True,
         make_fig=False, make_vid=True, select_group_of_flies="natbeh_MDN", trigger="laser_start")
     make_functional_example_stim_video(pre_stim=None, overwrite=False,
@@ -477,7 +479,7 @@ if __name__ == "__main__":
     # Videos 1-4: Stimulation response videos
     make_functional_example_stim_video(pre_stim="walk", overwrite=False,
         subtract_pre=True, show_centers=False, show_mask=False, show_beh=True,
-        make_fig=True, make_vid=False, select_group_of_flies="presentation", trigger="laser_start")
+        make_fig=True, make_vid=True, select_group_of_flies="presentation", trigger="laser_start")
 
     # Video 5: Comparing optogenetic DNp09 stimulation with natural walking
     make_DNp09_natbeh_video()
@@ -485,4 +487,3 @@ if __name__ == "__main__":
     make_aDN2_natbeh_video()
     # Video 7: Comparing optogenetic MDN stimulation with natural backward walking on the wheel
     make_MDN_natbeh_video()
-   

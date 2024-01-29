@@ -389,7 +389,9 @@ def get_neural_responses(twop_df, trigger, neural_regex=params.default_response_
             print(f"Warning: could not find return_var in twop_df: {return_var}")
     return stim_responses, to_return
 
-def get_beh_responses(beh_df, trigger, trials, beh_var="v_forw", stim_p=[10,20], response_t_params=params.response_t_params_beh):
+
+def get_beh_responses(beh_df, trigger, trials, beh_var="v_forw", stim_p=[10,20], 
+                      response_t_params=params.response_t_params_beh, baseline_zero=False):
     """
     Retrieves behavioral responses to stimulation from beh_df.
 
@@ -407,6 +409,8 @@ def get_beh_responses(beh_df, trigger, trials, beh_var="v_forw", stim_p=[10,20],
         Laser stimulation power levels to consider.
     response_t_params : array, optional
         Parameters specifying the response time window.
+    baseline_zero: bool, optional
+        Set the response to zero at the stimulation onset.
 
     Returns
     -------
@@ -449,6 +453,10 @@ def get_beh_responses(beh_df, trigger, trials, beh_var="v_forw", stim_p=[10,20],
     i_1 = int(response_t_params[1]+response_t_params[2])
     for i_start, stim_start in enumerate(starts):
         beh_out[:,i_start] = beh_df[beh_var][stim_start+i_0:stim_start+i_1]
+        if baseline_zero:
+            # substract the baseline from the response, i.e. the value at the 
+            # beginning of the stimulation period
+            beh_out[:,i_start] -= beh_df[beh_var].iloc[stim_start]
     return beh_out
 
 def get_beh_class_responses(beh_df, trigger, trials=None, stim_p=[10,20], response_t_params=params.response_t_params_beh):

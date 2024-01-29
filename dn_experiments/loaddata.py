@@ -135,17 +135,27 @@ def get_beh_df_with_me(fly_dir, all_trial_dirs, q_me=params.q_me, add_sleap=True
     beh_df = pd.concat(beh_dfs).fillna(0)
 
     # fix velocities for wheel trials and when something went wrong with fictrac
+    no_tracking = False
     if "v_forw" not in beh_df.keys() and "delta_rot_lab_forward" in beh_df.keys():
         v_forw = fictrac.filter_fictrac(beh_df["delta_rot_lab_forward"], 5, 10)
         beh_df["v_forw"] = v_forw
-    elif "v_forw" not in beh_df.keys():  # wheel trials
+    elif "v_forw" not in beh_df.keys() and hasattr(beh_df, 'v'):  # wheel trials
         v = beh_df.v.values
         v_forw = v.copy()
         v = np.abs(v_forw)
         beh_df["v_forw"] = v_forw
         beh_df["v"] = v
 
-    if add_me:
+    elif "v_forw" not in beh_df.keys() and not hasattr(beh_df, 'v'):  # no ball trials
+        beh_df["v_forw"] = np.zeros(beh_df.shape[0])
+        beh_df["v"] = np.zeros(beh_df.shape[0])
+        print(f"Warning: missing 'v' and 'v_forw' in fly {fly_dir} with trials {all_trial_dirs}")
+        no_tracking = True
+
+    # integrate v_forw to get the displacement 'd_forw'
+    beh_df["d_forw"] = np.cumsum(beh_df["v_forw"].values) / params.fs_beh
+
+    if add_me and not no_tracking:
         beh_df["me_front_q"] = utils.normalise_quantile(beh_df["me_front"].values, q=q_me)
         beh_df["me_back_q"] = utils.normalise_quantile(beh_df["me_back"].values, q=q_me)
         beh_df["me_mid_q"] = utils.normalise_quantile(beh_df["me_mid"].values, q=q_me)
@@ -154,10 +164,12 @@ def get_beh_df_with_me(fly_dir, all_trial_dirs, q_me=params.q_me, add_sleap=True
                                                 beh_df["me_all_q"] < params.thres_silent_me_all,
                                                 beh_df["v"] < params.thres_silent_v))
         beh_df["fast"] = beh_df["me_all_q"] > params.thres_fast_me_all
+
     return beh_df
 
 
-def load_process_data(fly_dir, all_trial_dirs, twop_df_save_name=params.twop_df_save_name, beh_df_save_name=params.beh_df_save_name, load_twop=True):
+def load_process_data(fly_dir, all_trial_dirs, twop_df_save_name=params.twop_df_save_name, beh_df_save_name=params.beh_df_save_name, load_twop=True,
+                      add_sleap=True, add_me=True, vnccut_mode=False):
     """
     Load and process data for a fly's data directory, including 2P data and behavior data.
     Low level interface only to be used internally.
@@ -168,29 +180,35 @@ def load_process_data(fly_dir, all_trial_dirs, twop_df_save_name=params.twop_df_
         twop_df_save_name (str): Filename for saving the filtered 2P data.
         beh_df_save_name (str): Filename for saving the behavior data.
         load_twop (bool): Whether to load 2P data of beh_df only.
+        add_sleap (bool): Whether to add sleap data to beh_df.
+        add_me (bool): Whether to add motion energy data to beh_df
+        vnccut_mode (bool): Whether to treat data as coming from vnccut experiments.
 
     Returns:
         twop_df (pandas.DataFrame): Filtered 2P data DataFrame.
         beh_df (pandas.DataFrame): Behavior data DataFrame.
     """
     if load_twop:
-        beh_df = get_beh_df_with_me(fly_dir=fly_dir, all_trial_dirs=all_trial_dirs, add_sleap=True, add_me=True)
+        beh_df = get_beh_df_with_me(fly_dir=fly_dir, all_trial_dirs=all_trial_dirs, add_sleap=add_sleap, add_me=add_me)
         twop_df = get_filtered_twop_df(fly_dir=fly_dir, all_trial_dirs=all_trial_dirs)
         twop_df = stimulation.fix_stim_power_signal(twop_df)
-        twop_df = behaviour.get_beh_info_in_twop_df(beh_df, twop_df)
+        if not vnccut_mode:
+            twop_df = behaviour.get_beh_info_in_twop_df(beh_df, twop_df)
     else:
         beh_df = get_beh_df_with_me(fly_dir=fly_dir, all_trial_dirs=all_trial_dirs, add_sleap=True)
         twop_df = None
     beh_df = stimulation.fix_stim_power_signal(beh_df)
-
-    twop_df, beh_df = behaviour.add_beh_class_to_dfs(twop_df, beh_df)
-    twop_df, beh_df = behaviour.get_beh_trigger_into_dfs(twop_df, beh_df, beh="back")
-    twop_df, beh_df = behaviour.get_beh_trigger_into_dfs(twop_df, beh_df, beh="walk")
-    twop_df, beh_df = behaviour.get_beh_trigger_into_dfs(twop_df, beh_df, beh="rest")
-    twop_df, beh_df = behaviour.get_beh_trigger_into_dfs(twop_df, beh_df, beh="groom")
+    if not vnccut_mode:
+        twop_df, beh_df = behaviour.add_beh_class_to_dfs(twop_df, beh_df)
+        twop_df, beh_df = behaviour.get_beh_trigger_into_dfs(twop_df, beh_df, beh="back")
+        twop_df, beh_df = behaviour.get_beh_trigger_into_dfs(twop_df, beh_df, beh="walk")
+        twop_df, beh_df = behaviour.get_beh_trigger_into_dfs(twop_df, beh_df, beh="rest")
+        twop_df, beh_df = behaviour.get_beh_trigger_into_dfs(twop_df, beh_df, beh="groom")
     
-    if load_twop:
+    if load_twop and not vnccut_mode:
         twop_df = baselines.get_baseline_in_twop_df(twop_df)
+    elif load_twop:
+        twop_df = baselines.get_baseline_in_twop_df(twop_df, normalisation_type=["qmin_qmax"], exclude_stim_low_high=[False,False])
 
     # TODO: get backwards start in twop_df
     if load_twop and twop_df_save_name is not None:
@@ -202,7 +220,7 @@ def load_process_data(fly_dir, all_trial_dirs, twop_df_save_name=params.twop_df_
     else:
         return beh_df
 
-def load_data(fly_dir, all_trial_dirs, overwrite=False):
+def load_data(fly_dir, all_trial_dirs, overwrite=False, add_sleap=True, add_me=True, vnccut_mode=False):
     """
     Load 2P and behavior data for a fly's data directory.
     High level interface also for external use.
@@ -211,6 +229,9 @@ def load_data(fly_dir, all_trial_dirs, overwrite=False):
         fly_dir (str): The directory containing the fly's data.
         all_trial_dirs (list): List of trial directories.
         overwrite (bool): Whether to overwrite existing data files.
+        add_sleap (bool): Whether to add sleap data to beh_df.
+        add_me (bool): Whether to add motion energy data to beh_df
+        vnccut_mode (bool): Whether to treat data as coming from vnccut experiments.
 
     Returns:
         twop_df (pandas.DataFrame): Filtered 2P data DataFrame.
@@ -221,7 +242,7 @@ def load_data(fly_dir, all_trial_dirs, overwrite=False):
         twop_df = None
         beh_df = None
     else:
-        return load_process_data(fly_dir, all_trial_dirs, load_twop=True)
+        return load_process_data(fly_dir, all_trial_dirs, load_twop=True, add_sleap=add_sleap, add_me=add_me, vnccut_mode=vnccut_mode)
 
 def load_beh_data_only(fly_dir, all_trial_dirs, overwrite=False):
     """
