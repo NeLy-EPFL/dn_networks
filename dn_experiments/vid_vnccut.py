@@ -27,9 +27,7 @@ def make_vnc_cut_example_stim_video(trial_dirs, overwrite=False, subtract_pre=Tr
                                        show_centers=False, show_mask=False, show_beh=False,
                                        make_fig=False, make_vid=True, trigger="laser_start"):
     """
-    Generate functional example stimulation video.
-    Can also be used to generate natural behaviour videos.
-    Also used to generate plots in Figure 2b
+    Generate functional example stimulation video for a VNCcut fly.
 
     Args:
         pre_stim (str): Pre-stimulation condition ("walk", "rest", "not_walk", None).
@@ -253,6 +251,19 @@ def make_vnc_cut_example_stim_video(trial_dirs, overwrite=False, subtract_pre=Tr
 
 
 def assemble_vnc_cut_videos(fly_names, genotypes=["DNp09", "control"], video_name="vnc_cut_summary.mp4", fps=params.fs_2p):
+    """
+    Assemble VNC cut videos for different genotypes and fly names.
+
+    Args:
+        fly_names (list): List of lists containing fly names for different genotypes.
+        genotypes (list): List of genotypes corresponding to fly names.
+        video_name (str): Name of the output video file.
+        fps (int): Frames per second for the output video.
+
+    Returns:
+        None
+    """
+
     def crop_generator(generator, size):
         for i, item in enumerate(generator):
             yield item[:size[0], :size[1], :]
@@ -287,38 +298,54 @@ def assemble_vnc_cut_videos(fly_names, genotypes=["DNp09", "control"], video_nam
     generator = videos.utils_video.generators.stack(all_generators, axis=1)
     videos.make_video(os.path.join(out_dir, video_name), generator, fps=fps, n_frames=-1)
 
+def make_vnc_cut_video(out_dir=None, data_base_dir=None):
+    """
+    Generate VNC cut example stimulation videos.
 
-if __name__ == "__main__":
+    Args:
+        out_dir (str): Output directory for generated videos.
+        data_base_dir (str): Base directory containing imaging data.
+
+    Returns:
+        None
     """
+    if out_dir is None:
+        out_dir = os.path.join(params.video_base_dir, "presentation")
+    if data_base_dir is None:
+        data_base_dir = imaging_data_dir
     make_vnc_cut_example_stim_video(
-        trial_dirs = ["/mnt/nas2/JB/231025_DfdxGCaMP6s_DNp09xCsChrimson/Fly1/002_xz_cc_p10_vnccut",
+        trial_dirs = [os.path.join(data_base_dir, "231025_DfdxGCaMP6s_DNp09xCsChrimson/Fly1/002_xz_cc_p10_vnccut"),
                       ]
     )
     make_vnc_cut_example_stim_video(
-        trial_dirs = ["/mnt/nas2/JB/231025_DfdxGCaMP6s_DNp09xCsChrimson/Fly2/001_xz_cc_p10_vnccut",
+        trial_dirs = [os.path.join(data_base_dir, "231025_DfdxGCaMP6s_DNp09xCsChrimson/Fly2/001_xz_cc_p10_vnccut"),
                       ]
     )
     
     make_vnc_cut_example_stim_video(
-        trial_dirs = ["/mnt/nas2/JB/231114_DfdxGCaMP6s_DNp09xCsChrimson/Fly1/001_xz_cc_p10_vnccut",
+        trial_dirs = [os.path.join(data_base_dir, "231114_DfdxGCaMP6s_DNp09xCsChrimson/Fly1/001_xz_cc_p10_vnccut"),
                       ]
     )
     
     make_vnc_cut_example_stim_video(
-        trial_dirs = ["/mnt/nas2/JB/240109_DfdxGCaMP6s_PRxCsChrimson/Fly1/001_xz_cc_p10_vnccut",
+        trial_dirs = [os.path.join(data_base_dir, "240109_DfdxGCaMP6s_PRxCsChrimson/Fly1/001_xz_cc_p10_vnccut"),
                       ]
     )
     make_vnc_cut_example_stim_video(
-        trial_dirs = ["/mnt/nas2/JB/240109_DfdxGCaMP6s_PRxCsChrimson/Fly2/001_xz_cc_p10_vnccut",
+        trial_dirs = [os.path.join(data_base_dir, "240109_DfdxGCaMP6s_PRxCsChrimson/Fly2/001_xz_cc_p10_vnccut"),
                       ]
     )
     make_vnc_cut_example_stim_video(
-        trial_dirs = ["/mnt/nas2/JB/240109_DfdxGCaMP6s_PRxCsChrimson/Fly3/001_xz_cc_p10_vnccut",
+        trial_dirs = [os.path.join(data_base_dir, "240109_DfdxGCaMP6s_PRxCsChrimson/Fly3/001_xz_cc_p10_vnccut"),
                       ]
     )
-    """
+    
     fly_names = [
         ["231025_DfdxGCaMP6s_DNp09xCsChrimson_Fly1", "231025_DfdxGCaMP6s_DNp09xCsChrimson_Fly2", "231114_DfdxGCaMP6s_DNp09xCsChrimson_Fly1"],
         ["240109_DfdxGCaMP6s_PRxCsChrimson_Fly1", "240109_DfdxGCaMP6s_PRxCsChrimson_Fly2", "240109_DfdxGCaMP6s_PRxCsChrimson_Fly3"]
     ]
     assemble_vnc_cut_videos(fly_names=fly_names, genotypes=["DNp09", "control"])
+
+if __name__ == "__main__":
+    make_vnc_cut_video(out_dir=out_dir, data_base_dir="/mnt/nas2/JB")
+    
