@@ -169,7 +169,7 @@ def test_stats_beh_control(
     return
 
 def revisions_stat_test(overwrite=True,per_fly_avg=False):
-    stats_file_summary = os.path.join(params.predictionsdata_base_dir, "stats.txt")
+    stats_file_summary = os.path.join(params.predictionsdata_base_dir, "stats_headless.txt")
     if overwrite:
         with open(stats_file_summary, "w") as f:
             f.write("")
@@ -374,5 +374,5 @@ def dofs_stat_test(overwrite=True,per_fly_avg=False):
 
 if __name__ == "__main__":
     #headless_stat_test()
-    #revisions_stat_test(per_fly_avg=True)
-    dofs_stat_test(per_fly_avg=True)
+    revisions_stat_test(per_fly_avg=True)
+    #dofs_stat_test(per_fly_avg=True)

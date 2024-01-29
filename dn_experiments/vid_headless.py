@@ -1,3 +1,7 @@
+"""
+This module generates videos comparing intact and headless flies behavioural respones
+Author: jonas.braun@epfl.ch
+"""
 import os
 import sys
 
@@ -17,6 +21,13 @@ from twoppp import load
 
 
 def make_headless_example_stim_videos(walkon="ball"):
+    """
+    Generate example video comparing headless and intact flies.
+    Generate video for one trial intact and one trial headless only.
+
+    Args:
+        walkon (str): whether fly is on ball or not, default is "ball".
+    """
     out_dir = os.path.join(params.video_base_dir, "presentation")
     n_frames = params.n_s_beh_10s + params.n_s_beh_2s
     fly_dicts = [
@@ -56,6 +67,12 @@ def make_headless_example_stim_videos(walkon="ball"):
 
 
 def make_headless_summary_stim_videos(walkon="ball"):
+    """
+    Create headless summary stimulus videos.
+
+    Args:
+        walkon (str): Whether the fly is on the ball or flailing in the air, default is "ball".
+    """
     out_dir = os.path.join(params.video_base_dir, "presentation")
     n_stim = 3
     n_frames = params.n_s_beh_15s * n_stim
@@ -120,7 +137,285 @@ def make_headless_summary_stim_videos(walkon="ball"):
         videos.make_video(os.path.join(out_dir, f"headless_summary_{genotype}.mp4"), generator, params.fs_beh, n_frames=n_frames)
 
 
+def make_prediction_stim_videos():
+    """
+    Create headless videos for prediction flies.
+    """
+    out_dir = os.path.join(params.video_base_dir, "presentation")
+    n_stim = 3
+    n_frames = params.n_s_beh_25s * n_stim
+
+    df = summarydf.get_predictions_df()
+
+    genotype_generators = {
+        "DNa01": [],
+        "DNa02": [],
+        "DNb02": [],
+        "aDN1": [],
+        "DNg14": [],
+        "mute": [],
+        # "web": [],
+        # "DNp24": [],
+        # "DNg30": [],
+    }
+    N_fly = {
+        "DNa01": 1,
+        "DNa02": 1,
+        "DNb02": 1,
+        "aDN1": 1,
+        "DNg14": 1,
+        "mute": 1,
+        # "web": 1,
+        # "DNp24": 1,
+        # "DNg30": 1,
+    }
+
+    genotype_fly_ids = {
+        "DNa01": [206,209,210],
+        "DNa02": [297,299,306],
+        "DNb02": [281,282,283],
+        "aDN1": [[217,233,233],[231,260,260],[232,263,263]],
+        "DNg14": [276,277,310],
+        "mute": [313,[289,272,272],[314,271,314]],
+    }
+    
+    shape = (480, 960, 3)
+    black_image = np.zeros(shape, dtype=np.uint8)
+
+    for genotype, this_genotype_fly_ids in genotype_fly_ids.items():
+        genotpye_df = df[df.CsChrimson == genotype]
+        n_fly = 0
+        prev_fly_id = -1
+        prev_fly_id_2 = -1
+        for replicate in this_genotype_fly_ids:
+            replicate_generator_list = [videos.utils_video.generators.static_image(black_image),
+                                        videos.utils_video.generators.static_image(black_image),
+                                        videos.utils_video.generators.static_image(black_image)]
+            if isinstance(replicate, int):
+                replicate = [replicate, replicate, replicate]
+
+            for i_trial, fly_id in enumerate(replicate):
+                fly_df = genotpye_df[genotpye_df.fly_id == fly_id]
+                head = np.logical_or.reduce((fly_df["head"].values == "True", fly_df["head"].values == "TRUE", fly_df["head"].values == "1", fly_df["head"].values == True))
+
+                if i_trial == 0:
+                    trial_df = fly_df[np.logical_and(head, fly_df.walkon == "ball")]
+                elif i_trial == 1:
+                    trial_df = fly_df[np.logical_and(np.logical_not(head), fly_df.walkon == "ball")]
+                elif i_trial == 2:
+                    trial_df = fly_df[np.logical_and(np.logical_not(head), np.logical_not(fly_df.walkon == "ball"))]
+                else:
+                    raise NotImplementedError
+
+                trial_df = trial_df.iloc[-1]  # make sure only one trial is used. Use the last one available by default
+
+                trial_dir = trial_df.trial_dir
+                beh_df = pd.read_pickle(os.path.join(trial_dir, load.PROCESSED_FOLDER, "beh_df.pkl"))
+                video_dir = os.path.join(trial_dir, "behData", "images", "camera_5.mp4")
+
+                stim_starts = np.array(stimulation.get_laser_stim_starts_all(beh_df))  # [:n_stim]
+                video_start = stim_starts[0] - params.n_s_beh_5s
+                stim_starts = stim_starts - video_start
+                stim_starts = stim_starts[stim_starts < n_frames - params.n_s_beh_5s]
+                generator = videos.generator_video(video_dir, start=video_start, stop=video_start+n_frames, size=(240, -1))
+                generator = videos.stimulus_dot_generator(generator, start_stim=list(stim_starts), stop_stim=list(stim_starts + params.n_s_beh_5s))
+
+                prev_fly_id_2 = prev_fly_id
+                if fly_id != prev_fly_id and fly_id == prev_fly_id_2:
+                    n_fly -= 1
+                    prev_fly_id = fly_id
+                elif fly_id != prev_fly_id:
+                    n_fly += 1
+                    prev_fly_id = fly_id
+                replicate_generator_list[i_trial] = videos.utils_video.generators.add_text(generator, text=f"Fly {n_fly}", pos=(10,70))  # ID {fly_id}
+            
+            generator = videos.utils_video.generators.stack(replicate_generator_list, axis=0)
+            genotype_generators[genotype].append(generator)
+
+        generator = videos.utils_video.generators.stack(genotype_generators[genotype], axis=1)
+        videos.make_video(os.path.join(out_dir, f"prediction_summary_{genotype}.mp4"), generator, params.fs_beh, n_frames=n_frames)
+
+def make_revisions_stim_videos():
+    """
+    Create headless videos for prediction flies.
+    """
+    out_dir = os.path.join(params.video_base_dir, "presentation")
+    if not os.path.exists(out_dir):
+        os.makedirs(out_dir)
+    n_stim = 3
+    n_frames = params.n_s_beh_25s * n_stim
+
+    df = summarydf.get_predictions_df()
+
+    genotype_generators = {
+        #"DNg11": [],
+        "DNp42": [],
+        "oviDN": [],
+    }
+
+    genotype_fly_ids = {
+        "DNp42": [[140,140], [141,141],[142,142]],
+        "oviDN": [[143,143],[144,144],[145,145]],
+        
+    }
+    
+    shape = (480, 960, 3)
+    black_image = np.zeros(shape, dtype=np.uint8)
+
+    for genotype, this_genotype_fly_ids in genotype_fly_ids.items():
+        genotpye_df = df[df.CsChrimson == genotype]
+        n_fly = 0
+        prev_fly_id = -1
+        prev_fly_id_2 = -1
+        for replicate in this_genotype_fly_ids:
+            replicate_generator_list = [videos.utils_video.generators.static_image(black_image),
+                                        videos.utils_video.generators.static_image(black_image)]
+            if isinstance(replicate, int):
+                replicate = [replicate, replicate]
+
+            for i_trial, fly_id in enumerate(replicate):
+                fly_df = genotpye_df[genotpye_df.fly_id == fly_id]
+                head = np.logical_or.reduce((fly_df["head"].values == "True", fly_df["head"].values == "TRUE", fly_df["head"].values == "1", fly_df["head"].values == True))
+
+                if i_trial == 0:
+                    trial_df = fly_df[np.logical_and(head, fly_df.walkon == "ball")]
+                elif i_trial == 1:
+                    trial_df = fly_df[np.logical_and(np.logical_not(head), fly_df.walkon == "ball")]
+                elif i_trial == 2:
+                    trial_df = fly_df[np.logical_and(np.logical_not(head), np.logical_not(fly_df.walkon == "ball"))]
+                else:
+                    raise NotImplementedError
+
+                trial_df = trial_df.iloc[-1]  # make sure only one trial is used. Use the last one available by default
+
+                trial_dir = trial_df.trial_dir
+                beh_df = pd.read_pickle(os.path.join(trial_dir, load.PROCESSED_FOLDER, "beh_df.pkl"))
+                video_dir = os.path.join(trial_dir, "behData", "images", "camera_5.mp4")
+
+                stim_starts = np.array(stimulation.get_laser_stim_starts_all(beh_df))  # [:n_stim]
+                video_start = stim_starts[0] - params.n_s_beh_5s
+                stim_starts = stim_starts - video_start
+                stim_starts = stim_starts[stim_starts < n_frames - params.n_s_beh_5s]
+                generator = videos.generator_video(video_dir, start=video_start, stop=video_start+n_frames, size=(240, -1))
+                generator = videos.stimulus_dot_generator(generator, start_stim=list(stim_starts), stop_stim=list(stim_starts + params.n_s_beh_5s))
+
+                prev_fly_id_2 = prev_fly_id
+                if fly_id != prev_fly_id and fly_id == prev_fly_id_2:
+                    n_fly -= 1
+                    prev_fly_id = fly_id
+                elif fly_id != prev_fly_id:
+                    n_fly += 1
+                    prev_fly_id = fly_id
+                replicate_generator_list[i_trial] = videos.utils_video.generators.add_text(generator, text=f"Fly {n_fly}", pos=(10,70))  # ID {fly_id}
+
+            generator = videos.utils_video.generators.stack(replicate_generator_list, axis=0)
+            genotype_generators[genotype].append(generator)
+
+        generator = videos.utils_video.generators.stack(genotype_generators[genotype], axis=1)
+        videos.make_video(os.path.join(out_dir, f"prediction_summary_{genotype}.mp4"), generator, params.fs_beh, n_frames=n_frames)
+
+def make_leg_amputation_stim_videos():
+    """
+    Create headless videos for prediction flies.
+    """
+    out_dir = os.path.join(params.video_base_dir, "presentation")
+    if not os.path.exists(out_dir):
+        os.makedirs(out_dir)
+    n_stim = 3
+    n_frames = params.n_s_beh_25s * n_stim
+
+    df = summarydf.get_predictions_df()
+
+    genotype_generators = {
+        #"DNg11": [],
+        "MDN_HL": [],
+        "DNp09_HL": [],
+        "DNp09_ML": [],
+        "DNp09_FL": [],
+    }
+
+    genotype_fly_ids = {
+        "MDN_HL":{
+            'genotype': 'MDN',
+            'flies': [[157,157],[171,159],[172,49]],
+            'legs': 'HL'
+        },
+        "DNp09_HL": {
+            'genotype': 'DNp09',
+            'flies': [[10,146],[11,151],[12,154]],
+            'legs': 'HL',
+        },  
+        "DNp09_ML": {
+            'genotype': 'DNp09',
+            'flies': [[10,148],[11,155],[12,149]],
+            'legs': 'ML',
+        },
+        "DNp09_FL": {
+            'genotype': 'DNp09',
+            'flies': [[10,156],[11,153],[12,150]],
+            'legs': 'FL',
+        },
+    }
+    
+    shape = (480, 960, 3)
+    black_image = np.zeros(shape, dtype=np.uint8)
+
+    for genotype_ in genotype_fly_ids.keys():
+        genotype = genotype_fly_ids[genotype_]['genotype']
+        this_genotype_fly_ids = genotype_fly_ids[genotype_]['flies']
+        genotpye_df = df[df.CsChrimson == genotype]
+        n_fly = 0
+        prev_fly_id = -1
+        prev_fly_id_2 = -1
+        for replicate in this_genotype_fly_ids:
+            replicate_generator_list = [videos.utils_video.generators.static_image(black_image),
+                                        videos.utils_video.generators.static_image(black_image)]
+            if isinstance(replicate, int):
+                replicate = [replicate, replicate]
+
+            for i_trial, fly_id in enumerate(replicate):
+                fly_df = genotpye_df[genotpye_df.fly_id == fly_id]
+                legs = np.logical_or.reduce((fly_df["leg_amp"].values == "False", fly_df["leg_amp"].values == "FALSE", fly_df["leg_amp"].values == False))
+
+                if i_trial == 0:
+                    trial_df = fly_df[np.logical_and(legs, fly_df.walkon == "ball")]
+                elif i_trial == 1:
+                    trial_df = fly_df[np.logical_and(np.logical_not(legs), fly_df.walkon == "ball")]
+                else:
+                    raise NotImplementedError
+
+                trial_df = trial_df.iloc[-1]  # make sure only one trial is used. Use the last one available by default
+
+                trial_dir = trial_df.trial_dir
+                beh_df = pd.read_pickle(os.path.join(trial_dir, load.PROCESSED_FOLDER, "beh_df.pkl"))
+                video_dir = os.path.join(trial_dir, "behData", "images", "camera_5.mp4")
+
+                stim_starts = np.array(stimulation.get_laser_stim_starts_all(beh_df))  # [:n_stim]
+                video_start = stim_starts[0] - params.n_s_beh_5s
+                stim_starts = stim_starts - video_start
+                stim_starts = stim_starts[stim_starts < n_frames - params.n_s_beh_5s]
+                generator = videos.generator_video(video_dir, start=video_start, stop=video_start+n_frames, size=(240, -1))
+                generator = videos.stimulus_dot_generator(generator, start_stim=list(stim_starts), stop_stim=list(stim_starts + params.n_s_beh_5s))
+
+                prev_fly_id_2 = prev_fly_id
+                if fly_id != prev_fly_id and fly_id == prev_fly_id_2:
+                    n_fly -= 1
+                    prev_fly_id = fly_id
+                elif fly_id != prev_fly_id:
+                    n_fly += 1
+                    prev_fly_id = fly_id
+                replicate_generator_list[i_trial] = videos.utils_video.generators.add_text(generator, text=f"Fly {n_fly}", pos=(10,70))  # ID {fly_id}
+
+            generator = videos.utils_video.generators.stack(replicate_generator_list, axis=0)
+            genotype_generators[genotype_].append(generator)
+
+        generator = videos.utils_video.generators.stack(genotype_generators[genotype_], axis=1)
+        videos.make_video(os.path.join(out_dir, f"prediction_summary_{genotype_}.mp4"), generator, params.fs_beh, n_frames=n_frames)
+
 
 if __name__ == "__main__":
     # make_headless_example_stim_videos()
-    make_headless_summary_stim_videos()
+    #make_headless_summary_stim_videos()
+    #make_prediction_stim_videos()
+    #make_revisions_stim_videos()
+    make_leg_amputation_stim_videos()

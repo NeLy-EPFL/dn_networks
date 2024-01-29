@@ -75,6 +75,7 @@ n_s_beh_2_5s = int(fs_beh * 2.5)
 n_s_beh_5s = int(fs_beh * 5)
 n_s_beh_10s = int(fs_beh * 10)
 n_s_beh_15s = int(fs_beh * 15)
+n_s_beh_25s = int(fs_beh * 25)
 
 
 ## neuronal processing

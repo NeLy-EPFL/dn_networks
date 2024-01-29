@@ -325,5 +325,5 @@ if __name__ == "__main__":
         filter_pre_stim_beh=None,  # 'rest'
         zero_baseline=True,
         stats_period=(999,1000),
-        #ylim=[-2,40]
+        ylim=[-8,0.5]
     )

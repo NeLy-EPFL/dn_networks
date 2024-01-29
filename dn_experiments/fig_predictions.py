@@ -55,6 +55,7 @@ def load_data_one_genotype(
             fly_data["fly_dir"] = np.unique(fly_df.fly_dir)[0]
             fly_data["trial_names"] = fly_df.trial_name.values
             headless_trial_exists = False
+            intact_trial_exists = False
             for index, trial_df in fly_df.iterrows():
                 if (
                     not trial_df.walkon == "ball"
@@ -69,6 +70,7 @@ def load_data_one_genotype(
                     else:
                         beh_key = "beh_responses_post"
                         beh_class_key = "beh_class_responses_post"
+                        intact_trial_exists = True
                 beh_df = loaddata.load_beh_data_only(
                     fly_data["fly_dir"], all_trial_dirs=[trial_df.trial_name]
                 )
@@ -131,6 +133,24 @@ def load_data_one_genotype(
             elif not headless_trial_exists:
                 del fly_data
                 continue
+
+            if (
+                not intact_trial_exists
+                and figure_params["accept_intact_only_flies"]
+            ):
+                fly_data["beh_responses_post"] = (
+                    np.zeros_like(fly_data["beh_responses_pre"]) * np.nan
+                )
+                fly_data["beh_class_responses_post"] = (
+                    np.zeros_like(fly_data["beh_class_responses_pre"]) * np.nan
+                )
+                print(
+                    f"WARNING: Setting headless behavioural response to NaN because no data for fly {fly_data['fly_dir']}"
+                )
+            elif not intact_trial_exists:
+                del fly_data
+                continue
+    
 
             # filter data if needed
             if figure_params["filter_pre_stim_beh"] is not None:
@@ -214,6 +234,7 @@ def summarise_predictions_one_genotype(
     data_save_location=params.predictionsdata_base_dir,
     plot_save_location=params.predictionsplot_base_dir,
     accept_headless_only_flies=True,
+    accept_intact_only_flies=True,
     include_noball_data=False,
     filter_pre_stim_beh=None,
     zero_baseline=False,
@@ -287,6 +308,7 @@ def summarise_predictions_one_genotype(
         "allflies_only": allflies_only,
         "ylim": ylim,
         "accept_headless_only_flies": accept_headless_only_flies,
+        "accept_intact_only_flies": accept_intact_only_flies,
         "filter_pre_stim_beh": filter_pre_stim_beh,
         "include_noball_data": include_noball_data,
         "zero_baseline":zero_baseline,
@@ -313,12 +335,13 @@ def summarise_predictions_one_genotype(
 
 if __name__ == "__main__":
     fig = summarise_predictions_one_genotype(
-        "DNg11",
+        "CantonS",
         beh_name="groom",
-        return_var='frtita_y',#'frtita_y',#'ovum_y',  # "me_front",
+        return_var='ovum_y',#'frtita_y',#'ovum_y',  # "me_front",
         return_var_ylabel=r'y_{frTiTa}', #r'y_{frTiTa}', #r'$y_{ovum}$',#r"$v_{||}$ (mm/s)",
         overwrite=True,
         accept_headless_only_flies=False,
+        accept_intact_only_flies=False,
         return_var_flip=False,
         include_noball_data=False,
         filter_pre_stim_beh=None,  # 'rest'
