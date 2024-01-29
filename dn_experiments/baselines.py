@@ -246,6 +246,18 @@ def get_baseline_in_twop_df(twop_df, baseline_exclude_stim_range=params.baseline
         twop_df = add_baseline_to_df(twop_df, baseline_sub=f0_rest, baseline_div=f0_qmax - f0_rest, fstring="dff_rest_qmax_filt")
         all_baselines["rest_baseline"] = f0_rest
         all_baselines["qmax"] = f0_qmax
+    if "qmin_qmax" in normalisation_type:
+        if exclude_stim_low_high[0]:
+            f0_qmin = np.quantile(neurons_for_baseline[no_stim,:], q=1-qmax, axis=0)
+        else:
+            f0_qmin = np.quantile(neurons_for_baseline, q=1-qmax, axis=0)
+        if exclude_stim_low_high[1]:
+            f0_qmax = np.quantile(neurons_for_baseline[no_stim,:], q=qmax, axis=0)
+        else:
+            f0_qmax = np.quantile(neurons_for_baseline, q=qmax, axis=0)
+        twop_df = add_baseline_to_df(twop_df, baseline_sub=f0_qmin, baseline_div=f0_qmax - f0_qmin, fstring="dff_qmin_qmax_filt")
+        all_baselines["qmin"] = f0_qmin
+        all_baselines["qmax"] = f0_qmax
     if "trough_qmax" in normalisation_type:
         if exclude_stim_low_high[0]:
             f0_trough = get_trough_baselines(neurons_for_baseline[no_stim,:])

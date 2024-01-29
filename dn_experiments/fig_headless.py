@@ -417,7 +417,7 @@ def headless_stat_test(tmpdata_path=None):
         None
     """
     if tmpdata_path is None:
-        tmpdata_path = params.predictionsdata_base_dir
+        tmpdata_path = params.plotdata_base_dir
     headless_files = {
         "MDN": os.path.join(tmpdata_path, "headless_MDN3.pkl"),
         "DNp09": os.path.join(tmpdata_path, "headless_DNp09.pkl"),
