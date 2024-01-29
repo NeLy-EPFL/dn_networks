@@ -113,6 +113,7 @@ def copy_all_imaging_trials(overwrite=False):
     fly_ids_PR = [8,10,65,11]  # the last one is only used in stimulation power control.
     fly_ids_ball = fly_ids_DNp09 + fly_ids_aDN2 + fly_ids_MDN + fly_ids_PR
     fly_id_natbeh_wheel = 72
+    fly_ids_VNC_cut = [89,90,91] + [95,96,97]  # DNp09 + PR flies
 
     selected_trials = np.zeros((len(df)), dtype=bool)
     for fly_id in fly_ids_ball:
@@ -121,6 +122,10 @@ def copy_all_imaging_trials(overwrite=False):
 
     new_trials = np.logical_and(df.walkon.values == "wheel", df.fly_id.values == fly_id_natbeh_wheel)
     selected_trials = np.logical_or(selected_trials, new_trials)
+
+    for fly_id in fly_ids_VNC_cut:
+        new_trials = np.logical_and(df.walkon.values == "no", df.fly_id.values == fly_id)
+        selected_trials = np.logical_or(selected_trials, new_trials)
 
     df = df[selected_trials]
 
@@ -131,6 +136,8 @@ def copy_all_imaging_trials(overwrite=False):
     df["exclude"] = nan
     df["comment"] = nan
 
+    old_df = df.copy()
+
     for index, row in df.iterrows():
         old_trial_dir = row.trial_dir
         new_trial_dir = convert_trial_dir(old_trial_dir, imaging=True)
@@ -139,6 +146,7 @@ def copy_all_imaging_trials(overwrite=False):
         df["fly_dir"].iloc[df.index == index] = new_fly_dir
 
     df.to_csv(os.path.join(IMAGING_DIR, "imaging_summary_df.csv"), index=False)
+    df = old_df
 
     for i_fly, (fly_id, fly_df) in enumerate(df.groupby("fly_id")):
         trial_dirs = fly_df.trial_dir.values
@@ -164,13 +172,17 @@ def copy_all_headless_trials(overwrite=False):
     nan  = df["exclude"].iloc[0]
     df["comment"] = nan
     df.to_csv(os.path.join(HEADLESS_DIR, "headless_summary_df.csv"), index=False)
+    df = summarydf.get_headless_df()  # make sure to use old directory structure to copy
 
     for i_fly, (fly_id, fly_df) in enumerate(df.groupby("fly_id")):
         trial_dirs = list(fly_df.trial_dir.values)
-        for trial_dir in trial_dirs:
-            if "noball" in trial_dir and not "nohead" in trial_dir:
-                trial_dirs.remove(trial_dir)
-        copy_one_fly(trial_dirs, imaging=False, overwrite=overwrite)
+        if any(fly_df.plot_appendix == "imaging"):  # copy all files needed for imaging, but put it in the headless data nonetheless
+            copy_one_fly(trial_dirs, imaging=True, overwrite=overwrite, base_dir=HEADLESS_DIR)
+        else:
+            for trial_dir in trial_dirs:
+                if "noball" in trial_dir and not "nohead" in trial_dir:
+                    trial_dirs.remove(trial_dir)
+            copy_one_fly(trial_dirs, imaging=False, overwrite=overwrite)
 
 
 def copy_all_predictions_trials(genotypes=["DNa01", "DNa02", "DNb02", "aDN1", "DNg14", "mute"], overwrite=False):
@@ -183,6 +195,7 @@ def copy_all_predictions_trials(genotypes=["DNa01", "DNa02", "DNb02", "aDN1", "D
     """
     df = summarydf.get_predictions_df()
     df = summarydf.get_selected_df(df, select_dicts=[{"CsChrimson": genotype} for genotype in genotypes])
+    df_old = df.copy()
 
     for index, row in df.iterrows():
         old_trial_dir = row.trial_dir
@@ -194,6 +207,7 @@ def copy_all_predictions_trials(genotypes=["DNa01", "DNa02", "DNb02", "aDN1", "D
     nan  = df["exclude"].iloc[0]
     df["comment"] = nan
     df.to_csv(os.path.join(HEADLESS_DIR, "predictions_summary_df.csv"), index=False)
+    df = df_old
 
     for i_fly, (fly_id, fly_df) in enumerate(df.groupby("fly_id")):
         trial_dirs = list(fly_df.trial_dir.values)
@@ -211,8 +225,18 @@ def copy_stim_control_trials(overwrite=False):
         overwrite (bool): Whether to overwrite existing files. Defaults to False.
     """
     fly_dirs = [
-        "/mnt/nas2/JB/220816_MDN3xCsChrimson/Fly5",
-        "/mnt/nas2/JB/230125_BPNxCsChrimson/Fly1"
+        # "/mnt/nas2/JB/220816_MDN3xCsChrimson/Fly5",
+        # "/mnt/nas2/JB/230125_BPNxCsChrimson/Fly1",
+        "/mnt/nas2/JB/230914_MDN3xCsChrimson/Fly1",
+        "/mnt/nas2/JB/230914_MDN3xCsChrimson/Fly2",
+        "/mnt/nas2/JB/230914_BPNxCsChrimson/Fly3",
+        "/mnt/nas2/JB/230914_BPNxCsChrimson/Fly4",
+        "/mnt/nas2/JB/230915_MDN3xCsChrimson/Fly11",
+        "/mnt/nas2/JB/230921_BPNxCsChrimson/Fly5",
+        "/mnt/nas2/JB/230921_BPNxCsChrimson/Fly6",
+        "/mnt/nas2/JB/231115_DfdxGtACR1/Fly1",
+        "/mnt/nas2/JB/231115_DfdxGtACR1/Fly2",
+        "/mnt/nas2/JB/231115_DfdxGtACR1/Fly3"
     ]
     for i_fly, fly_dir in enumerate(fly_dirs):
         trial_dirs = [os.path.join(fly_dir, folder) for folder in os.listdir(fly_dir) \
@@ -341,19 +365,25 @@ def compress_headless_predictions(overwrite=False, keep_videos=False):
     fly_names = os.listdir(".")
     fly_names = [fly_name for fly_name in fly_names if os.path.isdir(os.path.join(HEADLESS_DIR,fly_name))]
 
-    for fly_name in fly_names:
-        if keep_videos:
-            source_folder = [fly_name]
-            tar_file = os.path.join(HEADLESS_ZIP_DIR, fly_name+".tar.gz")
+    for i_fly, fly_name in enumerate(fly_names):
+        if "GCaMP6s_tdTom_CsChrimson" in fly_name:  # imaging in headless flies
+            if os.path.isdir(os.path.join(HEADLESS_DIR, fly_name)):
+                print(datetime.now().strftime('%Y-%m-%d %H:%M:%S'), i_fly, "out of", len(fly_names), fly_name)
+                compress_one_fly_imaging(os.path.join(HEADLESS_DIR, fly_name), out_dir=HEADLESS_ZIP_DIR,
+                                         overwrite=overwrite, keep_videos=keep_videos)
         else:
-            source_folder = []
-            for path, subdirs, files in os.walk(os.path.join(HEADLESS_DIR, fly_name)):
-                for name in files:
-                    if not name.startswith("camera_") and not name.startswith("."):
-                        source_folder.append(os.path.relpath(os.path.join(path, name),start=HEADLESS_DIR))
-            tar_file = os.path.join(HEADLESS_ZIP_DIR, fly_name+"_novideo.tar.gz")
-        if not os.path.isfile(tar_file) or overwrite:
-            compress(tar_file, source_folder)
+            if keep_videos:
+                source_folder = [fly_name]
+                tar_file = os.path.join(HEADLESS_ZIP_DIR, fly_name+".tar.gz")
+            else:
+                source_folder = []
+                for path, subdirs, files in os.walk(os.path.join(HEADLESS_DIR, fly_name)):
+                    for name in files:
+                        if not name.startswith("camera_") and not name.startswith("."):
+                            source_folder.append(os.path.relpath(os.path.join(path, name),start=HEADLESS_DIR))
+                tar_file = os.path.join(HEADLESS_ZIP_DIR, fly_name+"_novideo.tar.gz")
+            if not os.path.isfile(tar_file) or overwrite:
+                compress(tar_file, source_folder)
     
     os.chdir(old_wd)
 
@@ -384,8 +414,18 @@ def compress_stim_control(overwrite=False, keep_videos=False):
     old_wd = os.getcwd()
     os.chdir(OTHER_DIR)
     fly_names = [
-        "220816_MDN3xCsChrimson_Fly5",
-        "230125_BPNxCsChrimson_Fly1"
+        # "220816_MDN3xCsChrimson_Fly5",
+        # "230125_BPNxCsChrimson_Fly1"
+        "230914_MDN3xCsChrimson_Fly1",
+        "230914_MDN3xCsChrimson_Fly2",
+        "230914_BPNxCsChrimson_Fly3",
+        "230914_BPNxCsChrimson_Fly4",
+        "230915_MDN3xCsChrimson_Fly11",
+        "230921_BPNxCsChrimson_Fly5",
+        "230921_BPNxCsChrimson_Fly6",
+        "231115_DfdxGtACR1_Fly1",
+        "231115_DfdxGtACR1_Fly2",
+        "231115_DfdxGtACR1_Fly3"
     ]
     for fly_name in fly_names:
         if keep_videos:
@@ -569,9 +609,32 @@ def decompress_headless_predictions(headless_predictions_data_dir):
     all_files = os.listdir(headless_predictions_data_dir)
     compressed_files = [this_file for this_file in all_files if this_file.endswith("tar.gz")]
     makedirs_safe(os.path.join(headless_predictions_data_dir, "compressed"))
+    compressed_imaging_files = []
     for compressed_file in compressed_files:
+        if "processed" in compressed_file or "xz_t1" in compressed_file:
+            compressed_imaging_files.append(compressed_file)
+            continue
         decompress(tar_file=compressed_file, path=headless_predictions_data_dir)
         shutil.move(compressed_file, os.path.join("compressed", compressed_file))
+
+    # handle the headless flies that also have imaging data
+    trial_files = [this_file for this_file in compressed_imaging_files if this_file.endswith("novideo.tar.gz")]
+    processed_files = [this_file for this_file in compressed_imaging_files if this_file.endswith("processed.tar.gz")]
+    for compressed_file in processed_files:
+        fly_name, processed = compressed_file.split("__")
+        new_fly_dir = os.path.join(imaging_data_dir, fly_name)
+        makedirs_safe(new_fly_dir)
+        decompress(tar_file=compressed_file, path=new_fly_dir)
+        shutil.move(compressed_file, os.path.join("compressed", compressed_file))
+
+    for compressed_file in trial_files:
+        fly_name, trial_name = compressed_file.split("__")
+        trial_name = trial_name.replace("_novideo.tar.gz", "")
+        new_trial_dir = os.path.join(imaging_data_dir, fly_name, trial_name)
+        makedirs_safe(new_trial_dir)
+        decompress(tar_file=compressed_file, path=new_trial_dir)
+        shutil.move(compressed_file, os.path.join("compressed", compressed_file))
+
     os.chdir(old_wd)
 
     update_summary_df(df_path=os.path.join(headless_predictions_data_dir, "headless_summary_df.csv"), base_dir=headless_predictions_data_dir)
@@ -685,9 +748,16 @@ if __name__ == "__main__":
 
     copy_all_predictions_trials()
     copy_all_headless_trials()
-    compress_headless_predictions(keep_videos=False)
+    compress_headless_predictions(keep_videos=False)  # TODO: check how compression of MDN > CsChrimson, GCaMP compression works
     
     copy_all_imaging_trials()
     compress_imaging(keep_videos=False)
+
+    ##### TO DECOMPRESS THE DATA UNCOMMENT THE FOLLOWING
+    """
+    decompress_imaging("PATH/TO/THE/DATAVERSE/DOWNLOADS/FROM/Optogenetics_Dfd_population_imaging")
+    decompress_headless_predictions("PATH/TO/THE/DATAVERSE/DOWNLOADS/FROM/Optogenetics_headless_behaviour")
+    decompress_other("PATH/TO/THE/DATAVERSE/DOWNLOADS/FROM/Supplementary_Data")
+    """
      
 
