@@ -14,8 +14,16 @@ import seaborn as sns
 import plot_params
 
 from loaddata import load_graph_and_matrices
-from connectivity_stats import connectivity_stats, prepare_table
+from connectivity_stats import connectivity_stats, prepare_table, r2_score
 from graph_plot_utils import make_nice_spines
+
+def r2_score(y_true, y_pred):
+    """
+    Compute the R2 score between two arrays.
+    """
+    return 1 - np.sum((y_true - y_pred) ** 2) / np.sum(
+        (y_true - np.mean(y_true)) ** 2
+    )
 
 
 def get_avg_degree(graph_):
@@ -37,15 +45,6 @@ def get_random_graph_degree_seq(graph_):
         (d for _, d in random_graph.degree()), reverse=True
     )
     return degree_sequence_random
-
-
-def r2_score(y_true, y_pred):
-    """
-    Compute the R2 score between two arrays.
-    """
-    return 1 - np.sum((y_true - y_pred) ** 2) / np.sum(
-        (y_true - np.mean(y_true)) ** 2
-    )
 
 
 def get_fit(

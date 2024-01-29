@@ -37,6 +37,20 @@ def replace_ticks_with_names(
     return ax
 
 
+def draw_matrix_plots_subsets(unn_matrix, subset_indices, equiv_index_rootid):
+    """
+    Draw the matrix of the subset of the network.
+    """
+    matrix_subset = select_subset_matrix(unn_matrix, subset_indices)
+    ax = plot_matrix_simple(matrix_subset)  # , savefig=savedir)
+    make_nice_spines(ax)
+    replace_ticks_with_names(
+        ax, equiv_index_rootid, subset_indices, neuron_params.KNOWN_DNS
+    )
+    plt.tight_layout()
+    return ax
+
+
 def make_matrix_plots_subsets(
     unn_matrix, communities, equiv_index_rootid, folder
 ):
@@ -47,15 +61,10 @@ def make_matrix_plots_subsets(
 
     for i, subset_indices in enumerate(communities):
         savedir = os.path.join(folder, f"cluster_{i+1}.pdf")
-
-        matrix_subset = select_subset_matrix(unn_matrix, subset_indices)
-        ax = plot_matrix_simple(matrix_subset)  # , savefig=savedir)
-        make_nice_spines(ax)
-        ax.set_title(f"Cluster {i+1}")
-        replace_ticks_with_names(
-            ax, equiv_index_rootid, subset_indices, neuron_params.KNOWN_DNS
+        ax = draw_matrix_plots_subsets(
+            unn_matrix, subset_indices, equiv_index_rootid
         )
-        plt.tight_layout()
+        ax.set_title(f"Cluster {i+1}")
         plt.savefig(savedir, dpi=300)
 
 

@@ -17,6 +17,8 @@ DARKORANGE = "#d17c04"
 DARKPURPLE = "#730d71"
 LIGHTGREY = "#c3c3c3"
 DARKPINK = "#C20C6D"
+LIGHTGREEN = "#7FC97F"
+DARKYELLOW = "#FFB200"
 
 INHIB_COLOR = "navy"
 EXCIT_COLOR = "darkred"
@@ -30,12 +32,15 @@ NT_TYPES = {
     "OCT": {"color": LIGHTGREY, "linestyle": "-"},
 }
 
+NODE_GENETIC_COLORS = ['k', LIGHTGREY] # colours between neurons likely to have a genetic label or not
+DEFAULT_NODE_COLOR = "k"
+
 # --- Plotting parameters for the flower plots --- #
 FLOWER_PLOT_PARAMS = {}
 FLOWER_PLOT_PARAMS["folder"] = os.path.join(
     params.FIGURES_DIR,
     "network_visualisations",
-    "flower_plots",
+    "flower_plots_direct_edge_norm_noname",
 )
 FLOWER_PLOT_PARAMS["direct_layout_args"] = {
     "level": 1,
@@ -45,6 +50,7 @@ FLOWER_PLOT_PARAMS["direct_layout_args"] = {
     "include_legend": True,
     "feedback_direct_plot": False,
     "feedback_downstream_plot": False,
+    "normalise_edges_separately": True,
 }
 FLOWER_PLOT_PARAMS["indirect_layout_args"] = {
     "level": 2,
@@ -54,8 +60,10 @@ FLOWER_PLOT_PARAMS["indirect_layout_args"] = {
     "include_legend": True,
     "feedback_direct_plot": False,
     "feedback_downstream_plot": True,
+    "normalise_edges_separately": False,
 }
-FLOWER_PLOT_PARAMS["plot_each_neuron"] = False
+FLOWER_PLOT_PARAMS["plot_each_neuron"] = True # False for paper
+FLOWER_PLOT_PARAMS["display_names"] = False
 
 # --- Plotting parameters for the clustering --- #
 CLUSTERING_ARGS = {}
@@ -69,6 +77,10 @@ CLUSTERING_ARGS["folder"] = os.path.join(
     "whole_network",
     "louvain",
 )
+CLUSTERING_ARGS["drawings_folder"] = os.path.join(
+    CLUSTERING_ARGS["folder"],
+    "cluster_drawings",
+)
 CLUSTERING_ARGS["data_folder"] = os.path.join(
     CLUSTERING_ARGS["folder"],
     "data",
@@ -81,6 +93,22 @@ CLUSTERING_ARGS["confusion_mat_values"] = "relative"
 CLUSTERING_ARGS["confusion_mat_size_threshold"] = 10
 CLUSTERING_ARGS["confusion_mat_count_synpases"] = True
 CLUSTERING_ARGS["confusion_mat_normalise"] = True
+# Define a list of 12 colors for the clusters, comment the effective colors for user readability
+CLUSTERING_ARGS["cluster_colors"] = [
+    "#bcbd22", # yellow
+    "#9467bd", # purple
+    "#2ca02c", # green
+    "#d62728", # red
+    "#17becf", # cyan
+    "#e377c2", # pink
+    "#7f7f7f", # grey
+    "#ffbb78", # light orange
+    "#1f77b4", # blue
+    "#ff7f0e", # orange
+    "#8c564b", # brown
+    "#aec7e8", # light blue
+]
+
 
 META_GRAPH = {}
 META_GRAPH["edge_normalisation"] = 5
@@ -114,3 +142,32 @@ NETWORK_STATS_ARGS["method"] = "median"
 NETWORK_STATS_ARGS["all_lines"] = True
 NETWORK_STATS_ARGS["extend_lines"] = True
 NETWORK_STATS_ARGS["overlay_method"] = True
+
+# --- Interneuron influence stats --- #
+INTERNEURON_STATS_ARGS = {}
+INTERNEURON_STATS_ARGS["folder"] = os.path.join(
+    params.FIGURES_DIR,
+    "statistics",
+    "interneuron_influence",
+)
+INTERNEURON_STATS_ARGS["measured_feature"] = 'inputs' # 'outputs', 'inputs'
+INTERNEURON_STATS_ARGS["connection_type"] = 'all' # 'inhibitory', 'excitatory', 'all'
+INTERNEURON_STATS_ARGS["reference_sorting"] = 'direct' # 'direct', 'indirect', 'all_interneurons'
+INTERNEURON_STATS_ARGS['color_schema'] = 'copper' # 'bone, "RdBu", 'pink'
+
+
+# --- Network-wide representation --- #
+NETWORK_PLOT_ARGS = {}
+NETWORK_PLOT_ARGS["folder"] = os.path.join(
+    params.FIGURES_DIR,
+    "network_visualisations",
+    "whole_network",
+    #"cluster_detail"
+    "network_plot",
+)
+NETWORK_PLOT_ARGS["restricted_nodes"] = 'known_only' #None, 'known_only'
+NETWORK_PLOT_ARGS["restricted_clusters"] = [10] #None, [3,5,9]
+NETWORK_PLOT_ARGS["restricted_connections"] = None # 'inhibitory', 'excitatory', None
+NETWORK_PLOT_ARGS["position_reference"] = 'all' # 'inhibitory', 'excitatory', 'all'
+NETWORK_PLOT_ARGS["node_size"] = 40  #20
+NETWORK_PLOT_ARGS["fig_size"] =  (6,6) #(6,6) (8,4)

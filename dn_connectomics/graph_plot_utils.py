@@ -15,6 +15,8 @@ import seaborn as sns
 from collections import Counter
 from tqdm import tqdm
 
+from loaddata import get_name_from_rootid
+
 import plot_params
 
 NT_TYPES = plot_params.NT_TYPES
@@ -144,6 +146,68 @@ def sort_existing_pos(
     return pos
 
 
+def positions_by_degree(graph):
+    """
+    Define graph node positions based on the degree of the nodes, i.e. place the
+    nodes with the highest degree in the center of the graph, input nodes at the
+    top and output nodes at the bottom.
+
+    Parameters
+    ----------
+    graph : nx.MultiDiGraph
+        Graph to define the positions for.
+
+    Returns
+    -------
+    dict
+        Dictionary of positions for each node.
+    """
+    # for each edge, add an attribute 'abs_weight' that is the absolute value of the weight
+    for edge in graph.edges:
+        graph.edges[edge]["abs_weight"] = np.abs(graph.edges[edge]["weight"])
+
+    # identify the input and output nodes
+    input_nodes = [node for node, degree in graph.in_degree() if degree == 0]
+    output_nodes = [node for node, degree in graph.out_degree() if degree == 0]
+
+    # define the positions of the remaining nodes based on their degree
+    remaining_nodes = [
+        node
+        for node in graph.nodes()
+        if node not in input_nodes + output_nodes
+    ]
+    central_graph = graph.subgraph(remaining_nodes)
+    central_pos = nx.circular_layout(central_graph)  # , weight="abs_weight")
+
+    # define the positions of the input and output nodes
+    def lin_mapping(x, n, a=-1, b=1):
+        return ((x / n) - (0.5 - (a + b) / 2)) * (b - a)
+
+    ymin = min([y for _, y in central_pos.values()])
+    ymax = max([y for _, y in central_pos.values()])
+    xmin, xmax = min([x for x, _ in central_pos.values()]), max(
+        [x for x, _ in central_pos.values()]
+    )
+
+    input_positions = {
+        node: (lin_mapping(i, len(input_nodes), a=xmin, b=xmax), ymax + 0.5)
+        for i, node in enumerate(input_nodes)
+    }
+
+    output_positions = {
+        node: (lin_mapping(i, len(output_nodes), a=xmin, b=xmax), ymin - 0.5)
+        for i, node in enumerate(output_nodes)
+    }
+
+    # combine the positions
+    positions = {
+        **input_positions,
+        **output_positions,
+        **central_pos,
+    }
+    return positions
+
+
 def add_edge_legend(
     ax: plt.Axes,
     normalized_weights: list,
@@ -155,7 +219,9 @@ def add_edge_legend(
     """
     color = Counter(color_list).most_common(1)[0][0]
     lines = []
-    edges_weight_list = sorted(normalized_weights)
+    edges_weight_list = sorted(
+        [np.abs(w) for w in normalized_weights if w != 0], reverse=True
+    )
     for _, width in enumerate(edges_weight_list):
         lines.append(Line2D([], [], linewidth=width, color=color))
     # keep only 3 legend entries, evenly spaced, including the first and last
@@ -188,6 +254,8 @@ def plot_downstream_network(
     first_layer_opaque: bool = False,
     other_layer_visible: bool = False,
     arrow_norm: float = 0.1,
+    display_names: bool = False,
+    normalise_edges_separately: bool = False,
 ) -> dict:
     """
     Make a circular plot where the refernce neurons are in the center, and their
@@ -237,28 +305,34 @@ def plot_downstream_network(
     G.remove_edges_from(network_2["edges"])
 
     # Add the labels for the edges
-    all_weights = np.concatenate(
-        (normalized_weights, network_2["weights"] * arrow_norm)
-    )
-    all_colors = np.concatenate(
-        (network_1["edge_colors"], network_2["edge_colors"])
-    )
-    ax = add_edge_legend(ax, all_weights, all_colors, arrow_norm)
+    if not normalise_edges_separately:
+        all_weights = np.concatenate(
+            (normalized_weights, network_2["weights"] * arrow_norm)
+        )
+        all_colors = np.concatenate(
+            (network_1["edge_colors"], network_2["edge_colors"])
+        )
+        ax = add_edge_legend(ax, all_weights, all_colors, arrow_norm)
+    else:
+        ax = add_edge_legend(
+            ax, normalized_weights, network_1["edge_colors"], arrow_norm
+        )
+        
 
     nx.draw(
         G,
         pos,
         nodelist=network_1["lookup"].values(),
-        with_labels=False,
-        # labels=network_1["node_labels"],
+        with_labels=display_names,
+        labels=network_1["node_labels"] if display_names else None,
         width=normalized_weights,
         alpha=alpha_1,
         node_size=node_size,
         node_color=network_1["node_colors"],
         edge_color=network_1["edge_colors"],
         style=network_1["edge_linestyle"],
-        # font_size=5,
-        # font_color="black",
+        font_size=5,
+        font_color="black",
         connectionstyle="arc3,rad=0.1",
         arrowstyle="->",
         arrowsize=10,
@@ -279,8 +353,8 @@ def plot_downstream_network(
         G,
         pos,
         nodelist=network_2["lookup"].values(),
-        # with_labels=True,
-        # labels=network_2["node_labels"],
+        with_labels=display_names,
+        labels=network_2["node_labels"] if display_names else None,
         width=normalized_weights,
         alpha=alpha_2,
         node_size=node_size,
@@ -288,8 +362,8 @@ def plot_downstream_network(
         edge_color=network_2["edge_colors"],
         style=network_2["edge_linestyle"],
         connectionstyle="arc3,rad=0.1",
-        # font_size=5,
-        # font_color="black",
+        font_size=5,
+        font_color="black",
         ax=ax,
     )
 
@@ -343,6 +417,17 @@ def get_downstream_specs(
 
     layer1_df = connectivity_df[mask]
 
+    if layer1_df.empty: # Return empty networks if no connections
+        network_1 = get_network_specs(
+            layer1_df, neurons_of_interest=neurons_of_interest, root_id_indexing=True
+            )   
+        network_2 = get_network_specs(
+            layer1_df,
+            neurons_of_interest=neurons_of_interest,  # table_connected_dns,
+            root_id_indexing=True,
+        )
+        return network_1, network_2
+
     # Collapse the connectivity table to sum the number of synapses between
     # the same neurons. Here the input group 'neurons_of_interest' is understood
     # as one unit and therefore connections are also summed
@@ -366,7 +451,11 @@ def get_downstream_specs(
     if named_dns is not None:
         table_connected_dns = {
             root_id: (
-                {"root_id": root_id, "color": "k", "name": "DN"}
+                {
+                    "root_id": root_id,
+                    "color": "k",
+                    "name": get_name_from_rootid(root_id, empty_type= 'DN')
+                }
                 if root_id not in named_dns.keys()
                 else named_dns[root_id]
             )
@@ -374,7 +463,11 @@ def get_downstream_specs(
         }
     else:
         table_connected_dns = {
-            root_id: {"root_id": root_id, "color": "k", "name": "DN"}
+            root_id: {
+                        "root_id": root_id,
+                        "color": "k",
+                        "name": get_name_from_rootid(root_id, empty_type= 'DN')
+                    }
             for root_id in list_layer_2_dns
         }
 
@@ -1289,6 +1382,135 @@ def plot_communities_graphs(
             ax.set_title(f"Community {d+1}")
             plot_indivual_community_graphs(H, ax)
     return ax
+
+def get_ring_pos_sorted_alphabetically(node_list, graph, radius=3, center=(0,0)):
+    """
+    Define the positions of the nodes in a circular layout, sorted alphabetically.
+    """
+    if center is None:
+        center = (0,0)
+    subgraph = graph.subgraph(node_list)
+    raw_pos = nx.circular_layout(subgraph, scale=radius, center=center)
+    ordered_nodes = sorted(
+        subgraph.nodes,
+        key=lambda x: subgraph.nodes[x]["node_label"],
+    )
+    pos = {node_: pos_ for node_,pos_ in zip(ordered_nodes,list(raw_pos.values()))}
+    return pos
+
+
+
+def draw_graph_selfstanding(
+    graph: nx.DiGraph, ax: plt.Axes = None, edge_norm: float = None, pos=None, center=None, radius_scaling=1, output='graph'
+):
+    """
+    Draw a graph with the nodes and edges attributes based on the
+    nx.draw_networkx function and the properties of the graph itself.
+
+    Parameters
+    ----------
+    graph : nx.DiGraph
+        The graph to draw
+    ax : plt.Axes, optional
+        The axes to plot on, by default None
+    edge_norm : float, optional
+        The normalisation factor for the edge width, by default None
+    pos : dict, optional
+        The positions of the nodes, by default None
+    center : tuple, optional
+        The center of the graph, by default None
+    output : str, optional
+        Whether to return the figure 'graph' or the positions 'pos', by default 'graph'
+    """
+    
+
+    # prune network: if a an edge has weight 0, remove it
+    graph = graph.copy()
+    edges_to_remove = []
+    for u, v, data in graph.edges(data=True):
+        if data["weight"] == 0:
+            edges_to_remove.append((u, v))
+    graph.remove_edges_from(edges_to_remove)
+
+    # outer ring: nodes that don't output to other nodes
+    outer_ring = [
+        n for n in graph.nodes if len(list(graph.successors(n))) == 0
+    ]
+    pos_outer = get_ring_pos_sorted_alphabetically(outer_ring, graph, radius=radius_scaling*3, center=center)
+
+    # inner ring: nodes that only output to other nodes
+    input_only_nodes = [
+        n for n in graph.nodes if len(list(graph.predecessors(n))) == 0 and len(list(graph.successors(n))) > 0
+        ]
+    pos_inner = get_ring_pos_sorted_alphabetically(input_only_nodes, graph, radius=radius_scaling*1, center=center)
+
+    # central ring: nodes that both input and output to other nodes
+    central_ring = graph.nodes - set(outer_ring) - set(input_only_nodes)
+    pos_central = get_ring_pos_sorted_alphabetically(central_ring, graph, radius=radius_scaling*2, center=center)
+
+    # merge the positions
+    pos = {**pos_outer, **pos_inner, **pos_central}
+
+    # define the colors of the nodes
+    node_colors = [
+        graph.nodes[n]["node_color"]
+        if "node_color" in graph.nodes[n].keys()
+        else "k"
+        for n in graph.nodes
+    ]
+
+    node_labels = {
+        n: graph.nodes[n]["node_label"]
+        if "node_label" in graph.nodes[n].keys()
+        else ""
+        for n in graph.nodes
+    }
+
+    # define the colors and widths of the edges based on the weights
+    if edge_norm is None:
+        try:
+            edge_norm = max([np.abs(graph.edges[e]["weight"]) for e in graph.edges]) / 5
+        except ValueError:
+            edge_norm = 1
+    widths = [np.abs(graph.edges[e]["weight"]) / edge_norm for e in graph.edges]
+    edges_colors = [
+        plot_params.EXCIT_COLOR
+        if graph.edges[e]["weight"] > 0
+        else plot_params.INHIB_COLOR
+        for e in graph.edges
+    ]
+
+    if output == 'graph':
+        if ax is None:
+            fig, ax = plt.subplots(figsize=(10, 8), dpi=120)
+        # Plot graph
+        nx.draw(
+            graph,
+            pos,
+            nodelist=graph.nodes,
+            with_labels=True,
+            labels=node_labels,
+            alpha=0.5,
+            node_size=100,
+            node_color=node_colors,
+            edge_color=edges_colors,
+            width=widths,
+            connectionstyle="arc3,rad=0.1",
+            font_size=5,
+            font_color="black",
+            ax=ax,
+        )
+        if len(widths) > 0:
+            add_edge_legend(
+                ax,
+                normalized_weights=widths,
+                color_list=edges_colors,
+                arrow_norm=1 / edge_norm,
+            )
+        return ax
+    elif output == 'pos':
+        return pos
+    
 
 
 def make_nice_spines(ax, linewidth=2):

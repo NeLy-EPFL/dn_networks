@@ -635,6 +635,48 @@ def draw_louvain_custering():
     run_louvain_custering()
     run_louvain_custering(control=True)
 
+def load_communities(
+    path: str,
+    return_type: str = "set",
+    threshold: int = 2,
+    data_type: str = "node_index",
+):
+    """
+    Load the communities from a file.
+
+    Parameters
+    ----------
+    path : str
+        The path to the file containing the communities.
+    return_type : str
+        The type of the return value. Can be either "set" or "list".
+
+    Returns
+    -------
+    communities : list[return_type[int]]
+        The list of communities.
+    """
+    df = pd.read_csv(os.path.join(path, "clustering.csv"))
+    if data_type not in df.columns:
+        data_type = "node_index"
+    if return_type == "set":
+        communities_ = [
+            set(df[df["cluster"] == cluster][data_type].values)
+            for cluster in df["cluster"].unique()
+        ]
+    elif return_type == "list":
+        communities_ = [
+            df[df["cluster"] == cluster][data_type].values
+            for cluster in df["cluster"].unique()
+        ]
+    else:
+        raise ValueError("return_type must be either set or list")
+
+    communities_ = [
+        community for community in communities_ if len(community) > threshold
+    ]
+    return communities_
+
 
 if __name__ == "__main__":
     mp.set_start_method("spawn")

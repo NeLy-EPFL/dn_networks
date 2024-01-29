@@ -337,7 +337,7 @@ def get_neural_responses(twop_df, trigger, neural_regex=params.default_response_
     Returns
     -------
     stim_responses : array
-        Array containing neural responses to stimulation.
+        Array containing neural responses to stimulation. Format: time x neurons x trials.
     to_return : array or None, optional
         Array containing additional, potentially behavioural, data specified by `return_var` if provided.
     """

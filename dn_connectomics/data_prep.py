@@ -270,6 +270,9 @@ edge_info["eff_weight_norm"] = edge_info["eff_weight"] / edge_info["in_total"]
 edge_info = edge_info.drop(columns=["in_total"])
 
 # Build full graph
+## !!!!! WARNING: THIS EXCLUDES NEURONS THAT ARE NOT CONNECTED TO ANYTHING
+## VOLUNTARILY KEPT THIS WAY BECUASE IT MIGHT BE DUE TO PROOFREADING ISSUES
+## TOTAL NUMBER OF NEURONS LOWER THAN IN THE NODES LIST
 g_all = nx.from_pandas_edgelist(
     edge_info,
     source="pre_root_id",
@@ -345,6 +348,7 @@ nx_graphs = {
 }
 graphs = {}  # nx graphs, sparse matrices, and index lookup for the matrices
 for name, graph in nx_graphs.items():
+    print(name, graph.number_of_nodes())
     nodelist = sorted(list(graph.nodes()))
     mat_norm = nx.to_scipy_sparse_array(
         graph, nodelist=nodelist, weight="eff_weight_norm", format="csr"

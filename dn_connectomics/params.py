@@ -25,6 +25,7 @@ FIGURES_DIR = os.path.join(Path(__file__).absolute().parent, "figures")
 NT_WEIGHTS = {"ACH": +1, "GABA": -1, "GLUT": -1, "SER": 0, "DA": 0, "OCT": 0}
 # nb: GLUT being inhibitory is still unclear, you can change it here before
 # running the data preparation script
+SYNAPSE_CUTOFF = 5 # number of synapses to consider a connection
 
 # --- Location of Supplementary File 2 --- # 
 SUPP_FILE_2 = os.path.join(RAW_DATA_DIR, "Supporting_Information_File_2.xlsx")

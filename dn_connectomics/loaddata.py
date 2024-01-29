@@ -120,3 +120,24 @@ def get_rootids_from_name(name: str):
     if len(root_id) == 0:
         return np.NaN
     return root_id.root_id.values
+
+def get_list_neurons_from_type(type:str = 'descending'):
+    """
+    Get the list of neurons from the type.
+    To find the match the names dataframe is loaded based on the preset
+    parameters.
+
+    Parameters
+    ----------
+    type : str
+        The type of the neuron.
+
+    Returns
+    -------
+    list_neurons : list[int]
+        The list of neuron root ids.
+    """
+    nodes, _ = load_nodes_and_edges()
+    list_neurons = nodes["root_id"][nodes["super_class"] == type].values
+    return list_neurons
+
