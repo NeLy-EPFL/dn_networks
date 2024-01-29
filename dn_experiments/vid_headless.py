@@ -415,7 +415,7 @@ def make_leg_amputation_stim_videos():
 
 if __name__ == "__main__":
     # make_headless_example_stim_videos()
-    #make_headless_summary_stim_videos()
-    #make_prediction_stim_videos()
-    #make_revisions_stim_videos()
+    make_headless_summary_stim_videos()
+    make_prediction_stim_videos()
+    make_revisions_stim_videos()
     make_leg_amputation_stim_videos()

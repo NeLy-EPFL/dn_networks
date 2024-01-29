@@ -1,3 +1,7 @@
+"""
+Module to analyse stimulations. e.g., getting stimulation starts, aligning variables around stimulation, ...
+Author: jonas.braun@epfl.ch
+"""
 import os
 import sys
 import numpy as np
@@ -11,18 +15,17 @@ import params
 
 def fix_stim_power_signal(df):
     """
-    fixes backwards incompatibility of code.
-    Old version of twoppp did not create a 'laser_power_uW' signal.
+    Fixes a backwards incompatibility issue where the 'laser_power_uW' signal was missing in older versions of `twoppp`.
 
     Parameters
     ----------
-    df : [type]
-        [description]
+    df : DataFrame
+        The DataFrame containing the data.
 
     Returns
     -------
-    [type]
-        [description]
+    df : DataFrame
+        The DataFrame with the 'laser_power_uW' signal added or modified.
     """
     if "laser_power_uW" not in df.keys():
         if "laser_power_mW" in df.keys():
@@ -37,6 +40,29 @@ def fix_stim_power_signal(df):
     return df
 
 def get_stim_starts(df, stim_signals, stim_levels, stim_level_signals, return_stops=False):
+    """
+    Retrieves the stimulation start times based on specified stimulation signals and levels.
+
+    Parameters
+    ----------
+    df : DataFrame
+        The DataFrame containing the data.
+    stim_signals : str or list of str
+        Stimulation signal(s) to detect.
+    stim_levels : int, list of int, or None
+        Stimulation level(s) to consider. Use None if not applicable.
+    stim_level_signals : str, list of str, or None
+        Stimulation level signal(s) to consider. Use None if not applicable.
+    return_stops : bool, optional
+        Whether to also return the stimulation stop times.
+
+    Returns
+    -------
+    stim_starts : array
+        Array containing the stimulation start times.
+    stim_stops : array, optional
+        Array containing the stimulation stop times if return_stops=True.
+    """
     if not isinstance(stim_signals, list):
         stim_signals = [stim_signals]
     if not isinstance(stim_level_signals, list):
@@ -64,41 +90,257 @@ def get_stim_starts(df, stim_signals, stim_levels, stim_level_signals, return_st
         return stim_starts
 
 def get_olfac_stim_starts(df, return_stops=False):
+    """
+    Retrieves the start times of olfactory stimulation.
+
+    Parameters
+    ----------
+    df : DataFrame
+        The DataFrame containing the data.
+    return_stops : bool, optional
+        Whether to also return the olfactory stimulation stop times.
+
+    Returns
+    -------
+    olfac_stim_starts : array
+        Array containing the olfactory stimulation start times.
+    olfac_stim_stops : array, optional
+        Array containing the olfactory stimulation stop times if return_stops=True.
+    """
     return get_stim_starts(df, stim_signals=["olfac_stim"], stim_levels=[None], stim_level_signals=None, return_stops=return_stops)
 
 def get_laser_stim_starts(df, stim_levels, return_stops=False):
+    """
+    Retrieves the start times of laser stimulation with specified power levels.
+
+    Parameters
+    ----------
+    df : DataFrame
+        The DataFrame containing the data.
+    stim_levels : int or list of int
+        Laser stimulation power levels to consider.
+    return_stops : bool, optional
+        Whether to also return the laser stimulation stop times.
+
+    Returns
+    -------
+    laser_stim_starts : array
+        Array containing the laser stimulation start times.
+    laser_stim_stops : array, optional
+        Array containing the laser stimulation stop times if return_stops=True.
+    """
     return get_stim_starts(df, stim_signals=["laser_stim"], stim_levels=[stim_levels], stim_level_signals=["laser_power_uW"], return_stops=return_stops)
 
 def get_laser_stim_starts_10uW(df, return_stops=False):
+    """
+    Retrieves the start times of laser stimulation with 10uW power.
+
+    Parameters
+    ----------
+    df : DataFrame
+        The DataFrame containing the data.
+    return_stops : bool, optional
+        Whether to also return the laser stimulation stop times.
+
+    Returns
+    -------
+    laser_stim_starts : array
+        Array containing the laser stimulation start times.
+    laser_stim_stops : array, optional
+        Array containing the laser stimulation stop times if return_stops=True.
+    """
     return get_stim_starts(df, stim_signals=["laser_stim"], stim_levels=[[10]], stim_level_signals=["laser_power_uW"], return_stops=return_stops)
 
 def get_laser_stim_starts_20uW(df, return_stops=False):
+    """
+    Retrieves the start times of laser stimulation with 20uW power.
+
+    Parameters
+    ----------
+    df : DataFrame
+        The DataFrame containing the data.
+    return_stops : bool, optional
+        Whether to also return the laser stimulation stop times.
+
+    Returns
+    -------
+    laser_stim_starts : array
+        Array containing the laser stimulation start times.
+    laser_stim_stops : array, optional
+        Array containing the laser stimulation stop times if return_stops=True.
+    """
     return get_stim_starts(df, stim_signals=["laser_stim"], stim_levels=[[20]], stim_level_signals=["laser_power_uW"], return_stops=return_stops)
 
 def get_laser_stim_starts_10_20uW(df, return_stops=False):
+    """
+    Retrieves the start times of laser stimulation with 10 or 20uW power.
+
+    Parameters
+    ----------
+    df : DataFrame
+        The DataFrame containing the data.
+    return_stops : bool, optional
+        Whether to also return the laser stimulation stop times.
+
+    Returns
+    -------
+    laser_stim_starts : array
+        Array containing the laser stimulation start times.
+    laser_stim_stops : array, optional
+        Array containing the laser stimulation stop times if return_stops=True.
+    """
     return get_stim_starts(df, stim_signals=["laser_stim"], stim_levels=[[10, 20]], stim_level_signals=["laser_power_uW"], return_stops=return_stops)
 
 def get_laser_stim_starts_all(df, return_stops=False):
+    """
+    Retrieves the start times of laser stimulation irrespective of power level.
+
+    Parameters
+    ----------
+    df : DataFrame
+        The DataFrame containing the data.
+    return_stops : bool, optional
+        Whether to also return the laser stimulation stop times.
+
+    Returns
+    -------
+    laser_stim_starts : array
+        Array containing the laser stimulation start times.
+    laser_stim_stops : array, optional
+        Array containing the laser stimulation stop times if return_stops=True.
+    """
     return get_stim_starts(df, stim_signals=["laser_stim"], stim_levels=[None], stim_level_signals=[None], return_stops=return_stops)
 
 def get_all_stim_starts(df, return_stops=False):
+    """
+    Retrieves all start times of laser stimulation and olfactory stimulation.
+
+    Parameters
+    ----------
+    df : DataFrame
+        The DataFrame containing the data.
+    return_stops : bool, optional
+        Whether to also return the laser stimulation stop times.
+
+    Returns
+    -------
+    laser_stim_starts : array
+        Array containing the laser stimulation start times.
+    laser_stim_stops : array, optional
+        Array containing the laser stimulation stop times if return_stops=True.
+    """
     return get_stim_starts(df, stim_signals=["laser_stim", "olfac_stim"], stim_levels=[None, None], stim_level_signals=[None, None], return_stops=return_stops)
 
 def get_backwalk_starts(df, return_stops=False):
+    """
+    Retrieves the start times of spontaneous backward walking.
+
+    Parameters
+    ----------
+    df : DataFrame
+        The DataFrame containing the data.
+    return_stops : bool, optional
+        Whether to also return the backward walking stop times.
+
+    Returns
+    -------
+    backwalk_starts : array
+        Array containing the backward walking start times.
+    backwalk_stops : array, optional
+        Array containing the backward walking  stop times if return_stops=True.
+    """
     return get_stim_starts(df, stim_signals=["back_trig",], stim_levels=[None], stim_level_signals=[None], return_stops=return_stops)
 
 def get_walk_starts(df, return_stops=False):
+    """
+    Retrieves the start times of spontaneous walking.
+
+    Parameters
+    ----------
+    df : DataFrame
+        The DataFrame containing the data.
+    return_stops : bool, optional
+        Whether to also return the walking stop times.
+
+    Returns
+    -------
+    walk_starts : array
+        Array containing the walking start times.
+    walk_stops : array, optional
+        Array containing the walking stop times if return_stops=True.
+    """
     return get_stim_starts(df, stim_signals=["walk_trig",], stim_levels=[None], stim_level_signals=[None], return_stops=return_stops)
 
 def get_rest_starts(df, return_stops=False):
+    """
+    Retrieves the start times of spontaneus resting.
+
+    Parameters
+    ----------
+    df : DataFrame
+        The DataFrame containing the data.
+    return_stops : bool, optional
+        Whether to also return the resting stop times.
+
+    Returns
+    -------
+    rest_starts : array
+        Array containing the resting start times.
+    rest_stops : array, optional
+        Array containing the resting stop times if return_stops=True.
+    """
     return get_stim_starts(df, stim_signals=["rest_trig",], stim_levels=[None], stim_level_signals=[None], return_stops=return_stops)
 
 def get_groom_starts(df, return_stops=False):
+    """
+    Retrieves the start times of spontaneous grooming.
+
+    Parameters
+    ----------
+    df : DataFrame
+        The DataFrame containing the data.
+    return_stops : bool, optional
+        Whether to also return the grooming stop times.
+
+    Returns
+    -------
+    groom_starts : array
+        Array containing the grooming start times.
+    groom_stops : array, optional
+        Array containing the grooming stop times if return_stops=True.
+    """
     return get_stim_starts(df, stim_signals=["groom_trig",], stim_levels=[None], stim_level_signals=[None], return_stops=return_stops)
 
 
 def get_neural_responses(twop_df, trigger, neural_regex=params.default_response_regex, trials=None, stim_p=[10,20], return_var=None,
                   response_t_params=params.response_t_params_2p):
+    """
+    Retrieves neural responses to stimulation from twop_df.
+
+    Parameters
+    ----------
+    twop_df : DataFrame
+        The DataFrame containing the neural data.
+    trigger : str
+        The trigger for stimulation detection.
+    neural_regex : str, optional
+        Regular expression for neural signal column selection.
+    trials : list of str or None, optional
+        List of trial identifiers to filter data by trial names.
+    stim_p : list of int, optional
+        Laser stimulation power levels to consider.
+    return_var : str or None, optional
+        The variable to return along with the neural responses, for example a synchronised behavioural variable.
+    response_t_params : array, optional
+        Parameters specifying the response time window.
+
+    Returns
+    -------
+    stim_responses : array
+        Array containing neural responses to stimulation.
+    to_return : array or None, optional
+        Array containing additional, potentially behavioural, data specified by `return_var` if provided.
+    """
     if trigger == "laser_start":
         starts = get_laser_stim_starts(twop_df, stim_levels=stim_p)
     elif trigger == "olfac_start":
@@ -147,15 +389,34 @@ def get_neural_responses(twop_df, trigger, neural_regex=params.default_response_
             print(f"Warning: could not find return_var in twop_df: {return_var}")
     return stim_responses, to_return
 
-def get_beh_responses(
-        beh_df,
-        trigger,
-        trials,
-        beh_var="v_forw",
-        stim_p=[10,20],
-        response_t_params=params.response_t_params_beh,
-        baseline_zero=False,
-        ):
+
+def get_beh_responses(beh_df, trigger, trials, beh_var="v_forw", stim_p=[10,20], 
+                      response_t_params=params.response_t_params_beh, baseline_zero=False):
+    """
+    Retrieves behavioral responses to stimulation from beh_df.
+
+    Parameters
+    ----------
+    beh_df : DataFrame
+        The DataFrame containing the behavioral data.
+    trigger : str
+        The trigger for stimulation detection.
+    trials : list of str
+        List of trial identifiers to filter data by trial names.
+    beh_var : str, optional
+        The behavioral variable to retrieve.
+    stim_p : list of int, optional
+        Laser stimulation power levels to consider.
+    response_t_params : array, optional
+        Parameters specifying the response time window.
+    baseline_zero: bool, optional
+        Set the response to zero at the stimulation onset.
+
+    Returns
+    -------
+    beh_out : array
+        Array containing behavioral responses to stimulation.
+    """
     if trigger == "laser_start":
         starts = get_laser_stim_starts(beh_df, stim_levels=stim_p)
     elif trigger == "olfac_start":
@@ -199,50 +460,60 @@ def get_beh_responses(
     return beh_out
 
 def get_beh_class_responses(beh_df, trigger, trials=None, stim_p=[10,20], response_t_params=params.response_t_params_beh):
+    """
+    Retrieves behavioral class responses to stimulation.
+
+    Parameters
+    ----------
+    beh_df : DataFrame
+        The DataFrame containing the behavioral data.
+    trigger : str
+        The trigger for stimulation detection.
+    trials : list of str or None, optional
+        List of trial identifiers to filter data by trial names.
+    stim_p : list of int, optional
+        Laser stimulation power levels to consider.
+    response_t_params : array, optional
+        Parameters specifying the response time window.
+
+    Returns
+    -------
+    beh_class_responses : array
+        Array containing behavioral class responses to stimulation.
+    """
     return get_beh_responses(beh_df, beh_var="beh_class", trigger=trigger, trials=trials, stim_p=stim_p,
     response_t_params=response_t_params)
-"""
-    if trigger == "laser_start":
-        starts = get_laser_stim_starts(beh_df, stim_levels=stim_p)
-    elif trigger == "olfac_start":
-        starts = get_olfac_stim_starts(beh_df)
-    elif trigger == "back_trig_start":
-        starts, stops = get_backwalk_starts(beh_df, return_stops=True)  # TODO: process stops
-    elif trigger == "walk_trig_start":
-        starts, stops = get_walk_starts(beh_df, return_stops=True)  # TODO: process stops
-    elif trigger == "rest_trig_start":
-        starts, stops = get_rest_starts(beh_df, return_stops=True)  # TODO: process stops
-    elif trigger == "groom_trig_start":
-        starts, stops = get_groom_starts(beh_df, return_stops=True)  # TODO: process stops
-    else:
-        raise NotImplementedError(f"'trigger' must be either 'laser_start' 'olfac_start', 'back_trig_start', 'walk_trig_start', 'rest_trig_start', 'groom_trig_start', but was {trigger}")
 
-    # reject starts that are too close to the beginning or end of a trial
-    # stops = [stop for start, stop in zip(starts, stops)
-    #               if all([start - response_t_params[0] > 0,
-    #                       start+np.sum(response_t_params[1:]) < len(beh_df),
-    #                       ])]
-    starts = [start for start in starts
-                  if all([start - response_t_params[0] > 0,
-                          start+np.sum(response_t_params[1:]) < len(beh_df),
-                          ])]
-
-    # check whether stimulation happens in selected trials
-    if trials is not None:
-        starts = [start for start in starts
-                  if any([beh_df.iloc[start].name[3].startswith(trial[:3])
-                          for trial in trials])]
-
-    beh_class = np.zeros((int(np.sum(response_t_params)), len(starts)))
-    i_0 = int(-response_t_params[0])
-    i_1 = int(response_t_params[1]+response_t_params[2])
-    for i_start, stim_start in enumerate(starts):
-        beh_class[:,i_start] = beh_df["beh_class"][stim_start+i_0:stim_start+i_1]
-    return beh_class
-"""
 def summarise_responses(stim_responses, n_avg=params.response_n_avg, only_confident=params.response_n_confident,
                         n_baseline=params.response_n_baseline, n_latest_max=params.response_n_latest_max,
                         response_t_params=params.response_t_params_2p, return_conf_int=False):
+    """
+    Summarizes neural responses to stimulation and compute stimulation response values.
+
+    Parameters
+    ----------
+    stim_responses : array
+        Array containing neural responses over time to stimulation.
+    n_avg : int, optional
+        Number of samples to average around the maximum response.
+    only_confident : int, optional
+        Minimum number of confident responses required.
+    n_baseline : int, optional
+        Number of samples to consider as the baseline.
+    n_latest_max : int, optional
+        Maximum number of samples to consider to find the maximum response after stimulus onset.
+    response_t_params : array, optional
+        Parameters specifying the response time window.
+    return_conf_int : bool, optional
+        Whether to return confidence intervals.
+
+    Returns
+    -------
+    response_values : array
+        Array containing summarized response values.
+    response_conf_ints : array, optional
+        Array containing confidence intervals if return_conf_int=True.
+    """
     n_avg = n_avg // 2
     if np.sum(np.isnan(stim_responses)):
         print(f"PROBLEM: some stim_responses are nan: {np.sum(np.isnan(stim_responses))}")

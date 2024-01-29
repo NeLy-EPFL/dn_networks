@@ -1,3 +1,7 @@
+"""
+Module to create and interact with a DataFrame that summarises data from all recordings.
+Author: jonas.braun@epfl.ch
+"""
 import os
 import sys
 from glob import glob
@@ -18,18 +22,21 @@ from utils2p import find_seven_camera_metadata_file
 sys.path.append(os.path.dirname(__file__))
 import params
 
+def find_genotyp_dirs(nas_base_dir="/mnt/nas2/JB", min_date: int=None, max_date: int=None, contains=None, exclude=None):
+    """
+    Find genotype directories based on specified criteria.
 
-def find_genotyp_dirs(
-    nas_base_dir="/mnt/nas2/JB",
-    min_date: int = None,
-    max_date: int = None,
-    contains=None,
-    exclude=None,
-):
-    all_dirs = [
-        this_dir.split(os.sep)[-2]
-        for this_dir in glob(f"{nas_base_dir}/*/", recursive=True)
-    ]
+    Parameters:
+    - nas_base_dir (str): The base directory to start searching for genotype directories.
+    - min_date (int, optional): Minimum date (YYMMDD) for filtering directories. Default is None.
+    - max_date (int, optional): Maximum date (YYMMDD) for filtering directories. Default is None.
+    - contains (str, optional): String to check if it exists in directory names. Default is None.
+    - exclude (str, optional): String to check if it doesn't exist in directory names. Default is None.
+
+    Returns:
+    - List of strings: List of matching genotype directory paths.
+    """
+    all_dirs = [this_dir.split(os.sep)[-2] for this_dir in glob(f"{nas_base_dir}/*/", recursive = True)]
     all_dirs = [this_dir for this_dir in all_dirs if this_dir.startswith("2")]
     if min_date is not None:
         all_dirs = [this_dir for this_dir in all_dirs if int(this_dir[:6]) >= min_date]
@@ -74,10 +81,21 @@ def frame_count(video_path, manual=False):
     cap.release()
     return frames
 
+def add_flies_to_data_summary(genotype_dir, path=None, headless=False, predictions=False, revisions=False):
+    """
+    Add fly trial information to a data summary CSV file.
+    Select which file to add data to by choosing the 'headless' and 'predictions' flags.
 
-def add_flies_to_data_summary(
-    genotype_dir, path=None, headless=False, predictions=False, revisions=False
-):
+    Parameters:
+        genotype_dir (str or list of str): Genotype directory or list of genotype directories to process.
+        path (str, optional): Path to the data summary CSV file.
+        headless (bool, optional): Flag indicating whether to use the 'headless' CSV file.
+        predictions (bool, optional): Flag indicating whether to use the 'predictions' CSV file.
+        revisions (bool, optional): Flag indicating whether to use the 'revisions' CSV file.
+
+    Returns:
+        None
+    """
     if path is None and not headless and not predictions and not revisions:
         path = params.data_summary_csv_dir
     elif path is None and headless:
@@ -115,6 +133,17 @@ def add_flies_to_data_summary(
 
 
 def get_trial_info(base_df, all_trial_dirs, min_fly_id):
+    """
+    Get trial information and populate the summary DataFrame.
+
+    Parameters:
+        base_df (pd.DataFrame): Base DataFrame to use for populating trial information.
+        all_trial_dirs (list of str): List of trial directory paths.
+        min_fly_id (int): Minimum fly ID for assigning to new trials.
+
+    Returns:
+        list of pd.DataFrame: List of trial DataFrames.
+    """
     all_trial_dfs = []
     for i_fly, fly_trial_dirs in enumerate(all_trial_dirs):
         fly_dir = os.path.dirname(fly_trial_dirs[0])
@@ -201,6 +230,17 @@ def get_trial_info(base_df, all_trial_dirs, min_fly_id):
 
 
 def get_trial_info_headless(base_df, all_trial_dirs, min_fly_id):
+    """
+    Get trial information for headless experiments and populate the summary DataFrame.
+
+    Parameters:
+        base_df (pd.DataFrame): Base DataFrame to use for populating trial information.
+        all_trial_dirs (list of str): List of trial directory paths.
+        min_fly_id (int): Minimum fly ID for assigning to new trials.
+
+    Returns:
+        list of pd.DataFrame: List of trial DataFrames.
+    """
     all_trial_dfs = []
     for i_fly, fly_trial_dirs in enumerate(all_trial_dirs):
         fly_dir = os.path.dirname(fly_trial_dirs[0])
@@ -240,17 +280,10 @@ def get_trial_info_headless(base_df, all_trial_dirs, min_fly_id):
                 trial_df.walkon = "no"
             else:
                 trial_df.walkon = "ball"
-            # trial_df.image_type = "xz" if "xz" in trial_name else trial_name[4:]
-            # if "CO2" in trial_name or "co2" in trial_name:
-            #     trial_df.CO2 = True
-            # else:
-            #     trial_df.CO2 = True
             if "plevels" in trial_name or "p10" in trial_name or "p20" in trial_name:
                 trial_df.laser_stim = True
             else:
                 trial_df.laser_stim = False
-
-            # trial_df.olfac_stim = True if "olfac" in trial_name else False
             if "p10" in trial_name:
                 trial_df.laser_power = "10"
             elif "10_20" in trial_name:
@@ -311,31 +344,20 @@ def get_trial_info_headless(base_df, all_trial_dirs, min_fly_id):
             trial_df["n_trials"] = len(fly_trial_dirs)
             trial_df["fly_id"] = min_fly_id + i_fly
 
-            # if os.path.isfile(os.path.join(fly_dir, load.PROCESSED_FOLDER, "ROI_centers.txt")):
-            #     trial_df.roi_selection_done = True
-            #     roi_centers = rois.read_roi_center_file(os.path.join(fly_dir, load.PROCESSED_FOLDER, "ROI_centers.txt"))
-            #     trial_df.n_neurons = len(roi_centers)
-            # else:
-            #     trial_df.roi_selection_done = False
-            #     trial_df.n_neurons = 0
-
             all_trial_dfs.append(trial_df)
 
     return all_trial_dfs
 
 
 def load_data_summary(path=params.data_summary_csv_dir):
-    """load a dataframe with data summary from a csv file
+    """
+    Load a DataFrame with data summary from a CSV file.
 
-    Parameters
-    ----------
-    path : str, optional
-        location of csv file with data summary, by default data_summary_csv_dir
+    Parameters:
+        path (str, optional): Location of the CSV file with data summary.
 
-    Returns
-    -------
-    pd.DataFrame
-        data summary DataFrame
+    Returns:
+        pd.DataFrame: Data summary DataFrame.
     """
     return pd.read_csv(path)
 
@@ -349,25 +371,18 @@ def filter_data_summary(
     q_thres_stim=params.q_thres_stim,
 ):
     """
-    filter the summary data frame for trials that are not of interest or of bad quality
+    Filter the summary DataFrame for trials that are of interest and of good quality.
 
-    Parameters
-    ----------
-    df : pd.DataFrame
-    imaging_type : str, optional
-        filters the imag_type field if not None, by default "xz"
-    no_co2 : bool, optional
-        return only trials without CO2, by default True
-    q_thres_neural : int, optional
-        apply a threshold on the neural recording quality, by default 3
-    q_thres_beh : int, optional
-        apply a threshold on the behavioural recording quality, by default 3
-    q_thres_stim : int, optional
-        apply a threshold on stimulus response quality, by default 3
+    Parameters:
+        df (pd.DataFrame): Data summary DataFrame to filter.
+        imaging_type (str, optional): Filter for imaging type (e.g., "xz").
+        no_co2 (bool, optional): Filter for trials without CO2. By default, True
+        q_thres_neural (int, optional): Threshold for neural recording quality.
+        q_thres_beh (int, optional): Threshold for behavioral recording quality.
+        q_thres_stim (int, optional): Threshold for stimulus response quality.
 
-    Returns
-    -------
-    pd.DataFrame
+    Returns:
+        pd.DataFrame: Filtered data summary DataFrame.
     """
     df_copy = df.copy()
 
@@ -437,24 +452,60 @@ def get_selected_df(df, select_dicts):
 
 
 def get_olfac_df(df=None):
+    """
+    Get a DataFrame of trials with olfactory stimulation.
+
+    Parameters:
+        df (pd.DataFrame, optional): Data summary DataFrame to filter.
+
+    Returns:
+        pd.DataFrame: DataFrame containing trials with olfactory stimulation.
+    """
     if df is None:
         df = filter_data_summary(load_data_summary())
     return get_selected_df(df, [{"GCaMP": "Dfd", "olfac_stim": True}])
 
 
 def get_ball_df(df=None):
+    """
+    Get a DataFrame of trials with ball walking.
+
+    Parameters:
+        df (pd.DataFrame, optional): Data summary DataFrame to filter.
+
+    Returns:
+        pd.DataFrame: DataFrame containing trials with ball walking.
+    """
     if df is None:
         df = filter_data_summary(load_data_summary())
     return get_selected_df(df, [{"GCaMP": "Dfd", "walkon": "ball"}])
 
 
 def get_wheel_df(df=None):
+    """
+    Get a DataFrame of trials with wheel walking.
+
+    Parameters:
+        df (pd.DataFrame, optional): Data summary DataFrame to filter.
+
+    Returns:
+        pd.DataFrame: DataFrame containing trials with wheel walking.
+    """
     if df is None:
         df = filter_data_summary(load_data_summary())
     return get_selected_df(df, [{"GCaMP": "Dfd", "walkon": "wheel"}])
 
 
 def get_aDN2_olfac_df(df=None):
+    """
+    Get a DataFrame of trials with aDN2 genotype and olfactory stimulation.
+
+    Parameters:
+        df (pd.DataFrame, optional): Data summary DataFrame to filter.
+
+    Returns:
+        pd.DataFrame: DataFrame containing trials with aDN2 genotype and olfactory stimulation.
+    """
     if df is None:
         df = filter_data_summary(load_data_summary())
     df_aDN = get_selected_df(df, [{"GCaMP": "Dfd", "CsChrimson": "aDN2"}])
@@ -468,21 +519,45 @@ def get_aDN2_olfac_df(df=None):
 
 
 def get_stim_ball_df(df):
+    """
+    Get a DataFrame of stimulation trials with ball walking.
+
+    Parameters:
+        df (pd.DataFrame): Data summary DataFrame to filter.
+
+    Returns:
+        pd.DataFrame: DataFrame containing stimulation trials with ball walking.
+    """
     return get_selected_df(df, [{"laser_stim": True, "walkon": "ball"}])
 
 
 def get_stim_wheel_df(df):
+    """
+    Get a DataFrame of stimulation trials with wheel walking.
+
+    Parameters:
+        df (pd.DataFrame): Data summary DataFrame to filter.
+
+    Returns:
+        pd.DataFrame: DataFrame containing stimulation trials with wheel walking.
+    """
     return get_selected_df(df, [{"laser_stim": True, "walkon": "wheel"}])
 
+def get_new_flies_df(df=None, date=230401, no_co2=True, q_thres_neural=params.q_thres_neural, q_thres_beh=params.q_thres_beh, q_thres_stim=params.q_thres_stim):
+    """
+    Get a DataFrame of new flies based on specified filters.
 
-def get_new_flies_df(
-    df=None,
-    date=230401,
-    no_co2=True,
-    q_thres_neural=params.q_thres_neural,
-    q_thres_beh=params.q_thres_beh,
-    q_thres_stim=params.q_thres_stim,
-):
+    Parameters:
+        df (pd.DataFrame, optional): Data summary DataFrame to filter.
+        date (int, optional): Minimum date filter for new flies (YYMMDD format).
+        no_co2 (bool, optional): Filter for trials without CO2. Default, True.
+        q_thres_neural (int, optional): Threshold for neural recording quality.
+        q_thres_beh (int, optional): Threshold for behavioral recording quality.
+        q_thres_stim (int, optional): Threshold for stimulus response quality.
+
+    Returns:
+        pd.DataFrame: DataFrame containing new flies that meet the specified criteria.
+    """
     if df is None:
         df = filter_data_summary(
             df=load_data_summary(),
@@ -496,6 +571,16 @@ def get_new_flies_df(
 
 
 def get_genotype_dfs_of_interest(df=None):
+    """
+    Get DataFrames of interest based on genotype (MDN, DNp09, ...).
+
+    Parameters:
+        df (pd.DataFrame, optional): Data summary DataFrame to filter.
+
+    Returns:
+        list of pd.DataFrame: List of DataFrames for genotypes of interest.
+        list of str: List of corresponding genotype names.
+    """
     if df is None:
         df = filter_data_summary(load_data_summary())
     df_Dfd_MDN = get_selected_df(df, [{"GCaMP": "Dfd", "CsChrimson": "MDN3"}])
@@ -522,14 +607,23 @@ def get_genotype_dfs_of_interest(df=None):
     ]
     return dfs, df_names
 
+def get_headless_df(path=params.data_headless_summary_csv_dir, q_check=params.q_check_headless,
+                    q_thres_legs_intact=params.q_thres_headless_legs_intact,
+                    q_thres_beh=params.q_thres_headless_beh,
+                    q_thres_stim=params.q_thres_headless_stim):
+    """
+    Get a DataFrame for headless experiments.
 
-def get_headless_df(
-    path=params.data_headless_summary_csv_dir,
-    q_check=params.q_check_headless,
-    q_thres_legs_intact=params.q_thres_headless_legs_intact,
-    q_thres_beh=params.q_thres_headless_beh,
-    q_thres_stim=params.q_thres_headless_stim,
-):
+    Parameters:
+        path (str, optional): Path to the data summary CSV file.
+        q_check (bool, optional): Flag indicating whether to apply quality checks.
+        q_thres_legs_intact (int, optional): Threshold for leg integrity in headless experiments.
+        q_thres_beh (int, optional): Threshold for behavioral recording quality in headless experiments.
+        q_thres_stim (int, optional): Threshold for stimulus response quality in headless experiments.
+
+    Returns:
+        pd.DataFrame: DataFrame containing data from headless experiments.
+    """
     df = load_data_summary(path=path)
 
     df = df[np.logical_not(df.exclude == True)]
@@ -545,24 +639,38 @@ def get_headless_df(
         ]
     return df
 
+def get_predictions_df(path=params.data_predictions_summary_csv_dir, q_check=params.q_check_headless,
+                    q_thres_legs_intact=params.q_thres_headless_legs_intact,
+                    q_thres_beh=params.q_thres_headless_beh,
+                    q_thres_stim=params.q_thres_headless_stim):
+    """
+    Get a DataFrame for prediction experiments.
 
-def get_predictions_df(
-    path=params.data_predictions_summary_csv_dir,
-    q_check=params.q_check_headless,
-    q_thres_legs_intact=params.q_thres_headless_legs_intact,
-    q_thres_beh=params.q_thres_headless_beh,
-    q_thres_stim=params.q_thres_headless_stim,
-):
-    return get_headless_df(
-        path=path,
-        q_check=q_check,
-        q_thres_legs_intact=q_thres_legs_intact,
-        q_thres_beh=q_thres_beh,
-        q_thres_stim=q_thres_stim,
-    )
+    Parameters:
+        path (str, optional): Path to the data summary CSV file.
+        q_check (bool, optional): Flag indicating whether to apply quality checks.
+        q_thres_legs_intact (int, optional): Threshold for leg integrity in headless experiments.
+        q_thres_beh (int, optional): Threshold for behavioral recording quality in headless experiments.
+        q_thres_stim (int, optional): Threshold for stimulus response quality in headless experiments.
 
+    Returns:
+        pd.DataFrame: DataFrame containing data from prediction experiments.
+    """
+    return get_headless_df(path=path, q_check=q_check, q_thres_legs_intact=q_thres_legs_intact,
+                           q_thres_beh=q_thres_beh, q_thres_stim=q_thres_stim)
 
 def plot_trial_number_summary(dfs, df_names, plot_base_dir=params.data_summary_dir):
+    """
+    Plot summary statistics of trial numbers for different genotypes.
+
+    Parameters:
+        dfs (list of pd.DataFrame): List of DataFrames for different genotypes.
+        df_names (list of str): List of genotype names.
+        plot_base_dir (str): Base directory for saving the plot.
+
+    Returns:
+        None
+    """
     n_flies = np.array([len(np.unique(this_df.fly_dir)) for this_df in dfs])
     n_trials = np.array([len(this_df) for this_df in dfs])
     n_stim_trials = np.array([np.sum(df.laser_stim) for df in dfs])
@@ -591,42 +699,5 @@ def plot_trial_number_summary(dfs, df_names, plot_base_dir=params.data_summary_d
 
 
 if __name__ == "__main__":
-    genotype_dirs = find_genotyp_dirs(
-        nas_base_dir="/mnt/nas2/FH",
-        min_date=240120,
-        max_date=None,
-        contains="CsChrimson",
-        exclude="BAD",
-    )
-      # exclude = "headless"
-    add_flies_to_data_summary(
-        genotype_dir=genotype_dirs,
-        path=None,
-        headless=False,
-        predictions=False,
-        revisions=True,
-    )
-
-
-"""
-
-    df = load_data_summary()
-    df = filter_data_summary(df, imaging_type="xz", no_co2=False, q_thres_neural=params.q_thres_neural, q_thres_beh=params.q_thres_beh, q_thres_stim=params.q_thres_stim)
-    df = get_selected_df(df, [{"walkon": "wheel"}, {"walkon": "ball"}])
-    trial_dirs = df.trial_dir.values
-    image_dirs = [os.path.join(trial_dir, "behData", "images") for trial_dir in reversed(trial_dirs)]
-
-    with open('sleap_dirs.txt', 'w') as f:
-        for line in image_dirs: 
-            f.write(f"{line}\n")
-
-    # sleap script in  /mnt/labserver/BRAUN_Jonas/Other/sleap/data
-
-    df = get_headless_df()
-    trial_dirs = df.trial_dir.values
-    image_dirs = [os.path.join(trial_dir, "behData", "images").replace("nas2", "data2") for trial_dir in reversed(trial_dirs)]
-
-    with open('sleap_dirs_headless.txt', 'w') as f:
-        for line in image_dirs:
-            f.write(f"{line}\n")
-"""
+    genotype_dirs = find_genotyp_dirs(nas_base_dir="/mnt/nas2/FH", min_date=230728, max_date=None, contains="CsChrimson", exclude="headless")
+    add_flies_to_data_summary(genotype_dir=genotype_dirs, path=None, headless=False, predictions=True)

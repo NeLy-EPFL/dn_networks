@@ -1,3 +1,7 @@
+"""
+Module to plot effect of different stimulation powers on behaviour.
+Author: jonas.braun@epfl.ch
+"""
 import os
 import sys
 
@@ -18,14 +22,27 @@ from twoppp import plot as myplt
 from twoppp import utils
 
 
-def plot_stim_p_effect():
-    df = summarydf.load_data_summary()
-    df = summarydf.filter_data_summary(df, no_co2=True)  # , q_thres_neural=None)
-    df = summarydf.get_selected_df(df, [{"laser_power": "1_5_10_20", "GCaMP": "Dfd",
-                                         "walkon": "ball", "stim_location": "cc"}])
+def plot_stim_p_effect(figures_path=None):
+    """
+    Plot the effect of stimulation power levels on behavior.
 
+    Parameters:
+        figures_path (str, optional): Directory path to save generated figures.
+
+    Returns:
+        None
+    """
+    if figures_path is None:
+        figures_path = params.plot_base_dir
+
+    df = summarydf.load_data_summary()
+    df = summarydf.filter_data_summary(df, no_co2=True, imaging_type=None)  # , q_thres_neural=None)
+    df = summarydf.get_selected_df(df, [{"laser_power": "1_5_10_20", "GCaMP": "Dfd",
+                                         "walkon": "ball", "stim_location": "cc", "CO2": False}])
+    # df = df[np.logical_not(df.exclude == True)]
+    # df = df[np.nan_to_num(df.behaviour_quality.values) <= 3]
     p_levels = [1,5,10,20]
-    p_colors = [myplt.DARKBLUE, myplt.DARKGREEN, myplt.DARKYELLOW, myplt.DARKRED]
+    p_colors = [myplt.DARKGREEN, myplt.DARKYELLOW, myplt.DARKORANGE, myplt.DARKRED]
 
     base_fly_data = {
             "GAL4": None,
@@ -49,9 +66,6 @@ def plot_stim_p_effect():
             fly_data["GAL4"] = "DNp09"
 
         beh_df = loaddata.load_beh_data_only(fly_data["fly_dir"], all_trial_dirs=fly_data["trial_names"]) 
-        # beh_df = loaddata.get_beh_df_with_me(fly_dir=fly_data["fly_dir"], all_trial_dirs=fly_data["trial_names"], add_sleap=False)
-        # beh_df = stimulation.fix_stim_power_signal(beh_df)
-        # twop_df, beh_df = behaviour.add_beh_class_to_dfs(None, beh_df)
         beh_responses = []
         beh_class_responses = []
         for i_p, p in enumerate(p_levels):
@@ -116,8 +130,8 @@ def plot_stim_p_effect():
                                     x=x,colors=[myplt.WHITE, myplt.BLACK], ax=axs[0, i_g])
         axs[0, i_g].set_title(f"{genotype} {len(flies)} flies {beh_responses.shape[-1]} trials")
         axs[0, i_g].set_ylabel(r"$v_{||}$ (mm/s)")
-        axs[0, i_g].set_ylim([-2.5, 7.5])
-        axs[0, i_g].set_yticks([-2.5, 0, 2.5, 5, 7.5])
+        axs[0, i_g].set_ylim([-2.5, 10])
+        axs[0, i_g].set_yticks([-2.5, 0, 2.5, 5, 7.5, 10])
         axs[0, i_g].set_xticks([0,params.response_t_params_2p_label[1]])
         axs[0, i_g].set_xticklabels(["", ""])
         plotpanels.make_nice_spines(axs[0, i_g])
@@ -133,7 +147,7 @@ def plot_stim_p_effect():
         plotpanels.make_nice_spines(axs[1, i_g])
 
     fig.tight_layout()
-    fig.savefig(os.path.join(params.plot_base_dir, "supfig_stimp.pdf"), dpi=300)
+    fig.savefig(os.path.join(figures_path, "supfig_stimp.pdf"), dpi=300)
 
 
 if __name__ == "__main__":

@@ -1,5 +1,6 @@
 """
-Parameters used for analysis of 2p and behavioural data
+Parameters used for analysis of 2p and behavioural data.
+Author: jonas.braun@epfl.ch
 """
 import os
 import matplotlib.pyplot as plt
@@ -8,6 +9,8 @@ from datetime import date
 
 today = date.today().strftime("%y%m%d")
 
+"""
+# FH version
 
 # handling summary data of all recording
 data_summary_dir_JB = "/mnt/nas2/JB/_data_summary"
@@ -21,11 +24,23 @@ data_summary_csv_dir = os.path.join(
 data_headless_summary_csv_dir = os.path.join(
     data_summary_dir, "fly_selection_nohead_230406.csv"
 )
-plot_base_dir = os.path.join(data_summary_dir_FH, "plots")
-plotdata_base_dir = os.path.join(data_summary_dir_FH, "plotdata")
-# data_predictions_summary_csv_dir = os.path.join(data_summary_dir, "fly_selection_predictions_230712.csv")
-# plot_base_dir = os.path.join(data_summary_dir, "plots")
-# plotdata_base_dir = os.path.join(data_summary_dir, "plotdata")
+"""
+
+# ====================== CHANGE THIS PARAMETER TO THE FOLDER WHERE YOUR DOWNLOADED DATA IS ==============
+data_summary_dir = "/mnt/nas2/JB/_paper_data/DN_Networks"  # "/mnt/nas2/JB/_data_summary"
+# =======================================================================================================
+# ====================== VERIFY THAT THESE FOLDERS ARE CORRECT ==========================================
+imaging_data_dir = os.path.join(data_summary_dir, "Optogenetics_Dfd_population_imaging")
+headless_predictions_data_dir = os.path.join(data_summary_dir, "Optogenetics_headless_behavior")
+other_data_dir = os.path.join(data_summary_dir, "Supplementary_data")
+data_summary_csv_dir = os.path.join(imaging_data_dir, "imaging_summary_df.csv")  # os.path.join(data_summary_dir, "fly_selection_manual_230224.csv")
+data_headless_summary_csv_dir = os.path.join(headless_predictions_data_dir, "headless_summary_df.csv")  # os.path.join(data_summary_dir, "fly_selection_nohead_230406.csv")
+data_predictions_summary_csv_dir = os.path.join(headless_predictions_data_dir, "predictions_summary_df.csv")  # os.path.join(data_summary_dir, "fly_selection_predictions_230712.csv")
+# =======================================================================================================
+
+# output directories
+plot_base_dir = os.path.join(data_summary_dir, "plots")
+plotdata_base_dir = os.path.join(data_summary_dir, "plotdata")
 predictionsdata_base_dir = os.path.join(data_summary_dir, "predictionsdata")
 predictionsplot_base_dir = os.path.join(data_summary_dir, "predictionsplots")
 data_predictions_summary_csv_dir = os.path.join(
@@ -40,9 +55,10 @@ video_base_dir = os.path.join(data_summary_dir, "videos")
 twop_df_save_name = "twop_df_comp.pkl"
 beh_df_save_name = "beh_df_comp.pkl"
 
-q_thres_neural = 3
-q_thres_beh = 3
-q_thres_stim = 3
+# quality thresholds to accept a trial for processing
+q_thres_neural = None  # 3  # only selected data was uploaded
+q_thres_beh = None  # 3  # only selected data was uploaded
+q_thres_stim = None  # criterion was not applied
 q_check_headless = False
 q_thres_headless_legs_intact = 3
 q_thres_headless_beh = 3
@@ -75,8 +91,8 @@ n_s_beh_2_5s = int(fs_beh * 2.5)
 n_s_beh_5s = int(fs_beh * 5)
 n_s_beh_10s = int(fs_beh * 10)
 n_s_beh_15s = int(fs_beh * 15)
+n_s_beh_20s = int(fs_beh * 20)
 n_s_beh_25s = int(fs_beh * 25)
-
 
 ## neuronal processing
 # filtering
@@ -136,11 +152,13 @@ response_n_baseline = n_s_2p_1s  # number of samples before stimulation that are
 response_n_latest_max = n_s_2p_2_5s  # number of samples after stim start up to which the maximum response can occur  # TODO: check the effect of 2.5s vs 5s
 response_n_avg = n_s_2p_1s  # number of samples to average across after the maximum response location has been found
 response_n_confident = n_s_2p_0_5s  # number of samples with in the range defined above that have to be above the confidence interval.
+# data selection parameters
+min_n_resp_natbeh = 15
 
 ## behavioural data processing
 # motion energy processing
-me_cam = "camera_5.mp4"
-me_cam_mean = "camera_5_mean.jpg"
+me_cam = "camera_5.mp4"  # which camera to use for motion energy compuation
+me_cam_mean = "camera_5_mean.jpg"  # file name for the mean of that camera.
 q_me = 0.95  # quantile to which to normalise motion energy to
 thres_silent_me_front = 0.2  # front motion energy quantile has to be smaller than this to count into silent state
 thres_silent_me_all = 0.2  # total motion energy quantile has to be smaller than this to count into silent state
@@ -149,22 +167,22 @@ thres_silent_v = (
 )
 thres_fast_me_all = 0.8  # # total motion energy quantile has to be larger than this to count into fast state
 # sleap processing
-sleap_med_filt = 9
-sleap_sigma_gauss = 5
+sleap_med_filt = 9  # median filter with for sleap time traces
+sleap_sigma_gauss = 5 # gaussian filter width for sleap time traces
 joint_motion_energy_moving_average = n_s_beh_0_5s
 #  response computation and plotting
-pre_stim_n_samples_beh = n_s_beh_1s
-response_t_params_beh = [n_s_beh_5s, n_s_beh_5s, n_s_beh_5s]
+pre_stim_n_samples_beh = n_s_beh_1s  # length for pre stimulus period to compute relative responses to
+response_t_params_beh = [n_s_beh_5s, n_s_beh_5s, n_s_beh_5s]  # time windows for plotting: pre-, during, and post-stimulus
 # behaviour classification
-beh_class_method = "sleap"  # "motionenergy"
+beh_class_method = "sleap"  # "motionenergy"  # which method to use for behaviour classification
 # behaviour onset detection
-backwalk_min_dur = n_s_beh_1s
-backwalk_min_dist = -1  # mm
-walk_min_dur = n_s_beh_1s
-walk_min_dist = 1  # mm
-rest_min_dur = n_s_beh_1s
+backwalk_min_dur = n_s_beh_1s  # minimum duration for backward walking to be considered as natural behaviour onset
+backwalk_min_dist = -1  # mm  # minimum distance for backward walking to be considered as natural behaviour onset
+walk_min_dur = n_s_beh_1s  # minimum duration for forward walking to be considered as natural behaviour onset
+walk_min_dist = 1  # mm  # minimum distance for forward walking to be considered as natural behaviour onset
+rest_min_dur = n_s_beh_1s  # minimum duration for resting to be considered as natural behaviour onset
 rest_min_dist = None
-groom_min_dur = n_s_beh_1s
+groom_min_dur = n_s_beh_1s # minimum duration for grooming to be considered as natural behaviour onset
 groom_min_dist = None
 
 # plotting parameters for showing maps of data
@@ -183,11 +201,10 @@ background_key = "green_stds_raw"  # which image to show as background
 background_crop = [80, 80, 0, 0]  # how to show the std image in background
 background_med = 1  # parameter for median filter on background image
 background_sigma = 3  # how to smooth the background image
-
-map_min_dot_size = 10
-map_max_dot_size = 250
-map_min_dot_alpha = 0.5
-map_max_dot_alpha = 1
-map_cmap_dft = cmap_back
-map_crop_x = 40
-map_q_max = 0.96
+map_min_dot_size = 10  # minimum dot size to show response values
+map_max_dot_size = 250  # maximum dot size to show response values
+map_min_dot_alpha = 0.5  # minimum dot alpha to show response values
+map_max_dot_alpha = 1  # maximum dot alpha to show response values
+map_cmap_dft = cmap_back  # which colourmap to use for smoothed response map
+map_crop_x = 40  # how many pixels to crop in x direction for smoothed response map
+map_q_max = 0.96  # maximum quantile to show smoothed response map

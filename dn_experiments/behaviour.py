@@ -1,3 +1,8 @@
+"""
+module for behavioural processing with functions for behaviour classification and behaviour onset detection.
+Author: jonas.braun@epfl.ch
+"""
+
 import os
 
 import numpy as np
@@ -36,6 +41,17 @@ beh_cbounds = np.linspace(-0.5, n_beh-0.5, n_beh+1)
 beh_cnorm = mpl.colors.BoundaryNorm(beh_cbounds, ncolors=256)       
 
 def get_beh_color(beh_name):
+    """
+    Returns the color associated with a behavior label.
+    If not one of the following: [walk, back, groom, rest, olfac]
+    returns black
+
+    Args:
+        beh_name (str): The behavior label.
+
+    Returns:
+        str: The color code for the behavior label.
+    """
     if beh_name == "walk":
         beh_color = myplt.DARKGREEN
     elif beh_name == "back":
@@ -50,6 +66,18 @@ def get_beh_color(beh_name):
 
 def get_beh_info_in_twop_df(beh_df, twop_df, keys=["silent", "fast", "me_all"],
                             reduce_fns=[synchronisation.reduce_max_bool, synchronisation.reduce_max_bool, synchronisation.reduce_mean]):
+    """
+    Retrieves behavior information from beh_df and adds it to twop_df.
+
+    Args:
+        beh_df (DataFrame): DataFrame containing behavior information.
+        twop_df (DataFrame): DataFrame containing 2P imaging data.
+        keys (list): List of behavior keys to extract from beh_df.
+        reduce_fns (list): List of reduction functions to apply to behavior data.
+
+    Returns:
+        DataFrame: Updated twop_df with behavior information.
+    """
     for key in keys:
         if key not in twop_df.keys():
             twop_df.insert(loc=len(twop_df.columns), column=key, value=np.zeros((len(twop_df)), dtype=beh_df[key].dtype))
@@ -75,44 +103,31 @@ def get_beh_info_in_twop_df(beh_df, twop_df, keys=["silent", "fast", "me_all"],
 
     return twop_df
 
-"""
-def backwards_walking(v_forw, thres_back=-0.25, winsize=4): 
-    back_walk = gaussian_filter1d(v_forw, sigma=5) < thres_back
-    back_walk = np.logical_and(np.convolve(back_walk, np.ones(winsize)/winsize, mode="same") >= 0.75, back_walk)
-    return back_walk
 
-def backwards_walking_beh(v_forw, thres_back=-0.25, winsize=24):
-    return backwards_walking(v_forw, thres_back=thres_back, winsize=winsize)
-
-def walking(v_forw, thres_walk=0.75, winsize=4): 
-    walk = gaussian_filter1d(v_forw, sigma=5) > thres_walk
-    walk = np.logical_and(np.convolve(walk, np.ones(winsize)/winsize, mode="same") >= 0.75, walk)
-    return walk
-
-def walking_beh(v_forw, thres_walk=0.75, winsize=24):
-    return walking(v_forw, thres_walk=thres_walk, winsize=winsize)
-
-def resting(v, thres_rest=0.5, winsize=8, walk=None, back=None): 
-    rest = gaussian_filter1d(v, sigma=5) <= thres_rest
-    if walk is not None:
-        rest = np.logical_and(rest, np.logical_not(walk))
-    if back is not None:
-        rest = np.logical_and(rest, np.logical_not(back))
-    rest = np.logical_and(np.convolve(rest, np.ones(winsize)/winsize, mode="same") >= 0.75, rest)
-    return rest
-
-def resting_beh(v, thres_rest=0.5, winsize=48, walk=None, back=None):
-    return resting(v, thres_rest=thres_rest, winsize=winsize, walk=walk, back=back)
-"""
 def get_natural_beh_starts_trial(beh_df, beh="back", trial_name="", remove_laser=True, return_beh_prob=True, t_win=[-5,10], min_dur=params.backwalk_min_dur, min_dist=params.backwalk_min_dist):
+    """
+    Get the start and stop frames of natural behavior events within a beh_df.
+
+    Args:
+        beh_df (DataFrame): DataFrame containing behavior information for one or multiple trials.
+        beh (str): Behavior label of interest. Should be either of: back, walk, rest, groom, frub
+        trial_name (str): Name of the trial. Not used
+        remove_laser (bool): Whether to ignore spontaneous behaviours during laser stimulation events.
+        return_beh_prob (bool): Whether to return behavior probability.
+        t_win (list): Time window around behavior event extraction. Used when behaviour probability should be returned.
+        min_dur (int): Minimum duration of a spontaneous behavior event.
+        min_dist (int): Minimum distance between spontaneous behavior events.
+
+    Returns:
+        tuple: Tuple containing start and stop frames of behavior events.
+    """
     if "v_forw" in beh_df.keys():
         v_forw_beh_filt = beh_df.v_forw.values
     else:
         v_forw_beh_filt = beh_df.v.values
     t_beh = beh_df.t.values
-    fs_beh = params.fs_beh  # (1 / np.mean(np.diff(t_beh))) * 10 // 10
+    fs_beh = params.fs_beh
 
-    # back_beh = backwards_walking_beh(v_forw_beh_filt)
     if "back" in beh_df.keys() and "walk" in beh_df.keys() and "rest" in beh_df.keys() and "groom" in beh_df.keys() and "frub" in beh_df.keys():
         back_beh = beh_df.back.values
         rest_beh = beh_df.rest.values
@@ -148,7 +163,6 @@ def get_natural_beh_starts_trial(beh_df, beh="back", trial_name="", remove_laser
         beh_stops = beh_stops[to_keep]
 
     beh_dur = beh_stops - beh_starts
-    # back_beh_dur_s = back_beh_dur / fs_beh
     beh_cum = np.array([np.sum(v_forw_beh_filt[beh_start:beh_stop]/fs_beh) for beh_start, beh_stop in zip(beh_starts, beh_stops)])
     beh_pre = np.array([np.sum(beh_of_interest[beh_start-min_dur:beh_start-1]) for beh_start in beh_starts])
     if beh == "back":
@@ -164,8 +178,6 @@ def get_natural_beh_starts_trial(beh_df, beh="back", trial_name="", remove_laser
     twop_stops_filt_strict = beh_df.twop_index.values[beh_stops_filt_strict]
 
     max_twop_index = beh_df.twop_index.values.max()
-    # if beh_df.index.get_level_values("Date")[0] == 230201:
-    #     a = 0
 
     # remove the ones in the very beginning and end of the trial where the denoising as removed 2p data
     twop_stops_filt_strict = twop_stops_filt_strict[twop_starts_filt_strict >= -1*params.fs_int*t_win[0]+4]
@@ -203,6 +215,17 @@ def get_natural_beh_starts_trial(beh_df, beh="back", trial_name="", remove_laser
         return twop_starts_filt_strict, twop_stops_filt_strict, beh_starts_filt_strict, beh_stops_filt_strict
 
 def get_beh_trigger_into_dfs(twop_df, beh_df, beh="back"):
+    """
+    Add behavior trigger information to both twop_df and beh_df DataFrames.
+
+    Args:
+        twop_df (DataFrame): DataFrame containing 2P imaging data.
+        beh_df (DataFrame): DataFrame containing behavior information.
+        beh (str): Behavior label of interest.
+
+    Returns:
+        tuple: Updated twop_df and beh_df with behavior trigger information.
+    """
     if beh == "back":
         min_dur=params.backwalk_min_dur
         min_dist=params.backwalk_min_dist
@@ -253,9 +276,29 @@ def get_beh_trigger_into_dfs(twop_df, beh_df, beh="back"):
                 twop_df.loc[new_twop_df_index_start:new_twop_df_index_stop, f"{beh}_trig"] = True
     return twop_df, beh_df
 
-##########################
 
 def discriminate_beh(beh_df=None, v=None, v_forw=None, me_q=None, mef_q=None, mem_q=None, meb_q=None, method=params.beh_class_method):
+    """
+    Discriminates behavioral states such as 'walk', 'rest', 'back', 'groom', 'frub', and 'post' based on various features.
+    
+    Parameters:
+    - beh_df (DataFrame): DataFrame containing behavioral data (optional).
+    - v (numpy.ndarray): Velocity data (if beh_df is not provided).
+    - v_forw (numpy.ndarray): Forward velocity data (if beh_df is not provided).
+    - me_q (numpy.ndarray): Motion energy data (if beh_df is not provided).
+    - mef_q (numpy.ndarray): Front motion energy data (if beh_df is not provided).
+    - mem_q (numpy.ndarray): Mid motion energy data (if beh_df is not provided).
+    - meb_q (numpy.ndarray): Back motion energy data (if beh_df is not provided).
+    - method (str): Method for behavior discrimination, either "motionenergy" or "sleap" (default is params.beh_class_method).
+
+    Returns:
+    - walk (numpy.ndarray): Boolean array indicating 'walk' behavior.
+    - rest (numpy.ndarray): Boolean array indicating 'rest' behavior.
+    - back (numpy.ndarray): Boolean array indicating 'back' behavior.
+    - groom (numpy.ndarray): Boolean array indicating 'groom' behavior.
+    - frub (numpy.ndarray): Boolean array indicating 'frub' behavior.
+    - post (numpy.ndarray): Boolean array indicating 'post' behavior.
+    """
     wheel = False
     if beh_df is not None:
         v = beh_df.v.values
@@ -295,6 +338,22 @@ def discriminate_beh(beh_df=None, v=None, v_forw=None, me_q=None, mef_q=None, me
     return walk, rest, back, groom, frub, post
 
 def get_beh_me(v, v_forw, me_q, mef_q, mem_q, meb_q, thr, sign):
+    """
+    Determines behavioral states based on motion energy data and thresholds.
+
+    Parameters:
+    - v (numpy.ndarray): Velocity data.
+    - v_forw (numpy.ndarray): Forward velocity data.
+    - me_q (numpy.ndarray): Motion energy data.
+    - mef_q (numpy.ndarray): Front motion energy data.
+    - mem_q (numpy.ndarray): Mid motion energy data.
+    - meb_q (numpy.ndarray): Back motion energy data.
+    - thr (list): Threshold values for each feature.
+    - sign (list): Comparison functions for each feature (e.g., np.greater, np.less_equal).
+
+    Returns:
+    - beh (numpy.ndarray): Boolean array indicating behavioral states.
+    """
     beh = np.logical_and.reduce((sign[0](v, thr[0]),
                                   sign[1](v_forw, thr[1]),
                                   sign[2](me_q, thr[2]),
@@ -328,6 +387,22 @@ def get_post_me(v, v_forw, me_q, mef_q, mem_q, meb_q, thr=[1, 1, np.inf, 0.33, 0
     return get_beh_me(v, v_forw, me_q, mef_q, mem_q, meb_q, thr, sign)
 
 def get_beh_sleap(v, v_forw, frleg_height, mef_tita, mem_tita, meh_tita, thr, sign):
+    """
+    Determines behavioral states based on Sleap features and thresholds.
+
+    Parameters:
+    - v (numpy.ndarray): Velocity data.
+    - v_forw (numpy.ndarray): Forward velocity data.
+    - frleg_height (numpy.ndarray): Front leg height feature from Sleap.
+    - mef_tita (numpy.ndarray): Front leg motion energy feature from Sleap.
+    - mem_tita (numpy.ndarray): Mid leg motion energy feature from Sleap.
+    - meh_tita (numpy.ndarray): Hind leg motion energy feature from Sleap.
+    - thr (list): Threshold values for each feature.
+    - sign (list): Comparison functions for each feature (e.g., np.greater, np.less_equal).
+
+    Returns:
+    - beh (numpy.ndarray): Boolean array indicating behavioral states.
+    """
     beh = np.logical_and.reduce((sign[0](v, thr[0]),
                                   sign[1](v_forw, thr[1]),
                                   sign[2](frleg_height, thr[2]),
@@ -361,9 +436,33 @@ def get_post_sleap(v, v_forw, frleg_height, mef_tita, mem_tita, meh_tita, thr=[0
     return get_beh_sleap(v, v_forw, frleg_height, mef_tita, mem_tita, meh_tita, thr, sign)
 
 def reduce_behaviour_class(values, thres=0.67, default=0):
+    """
+    Reduces behavioral class values to the most frequent class within a time bin.
+
+    Parameters:
+    - values (numpy.ndarray): Array of behavioral class values.
+    - thres (float): Threshold for class reduction (default is 0.67).
+    - default: Default class value (default is 0).
+
+    Returns:
+    - reduced_class (int): Reduced behavioral class value.
+    """
     return synchronisation.reduce_most_freq(values=values, thres=thres, default=default)
 
-def add_beh_class_to_dfs(twop_df, beh_df):
+def add_beh_class_to_dfs(twop_df, beh_df, allow_exceptions=False):
+    """
+    Adds behavioral class information to twop_df and beh_df DataFrames.
+
+    Parameters:
+    - twop_df (DataFrame): 2-photon imaging data DataFrame.
+    - beh_df (DataFrame): Behavioral data DataFrame.
+    - allow_exceptions (bool): Whether to allow exceptions in behaviour classification.
+      If exception, replace all classifications by 0.
+
+    Returns:
+    - twop_df (DataFrame): Updated 2-photon imaging data DataFrame.
+    - beh_df (DataFrame): Updated behavioral data DataFrame.
+    """
     if twop_df is not None:
         if not "walk" in twop_df.keys():
             twop_df.insert(loc=len(twop_df.columns), column="walk", value=np.zeros((len(twop_df)), dtype=bool))
@@ -391,8 +490,20 @@ def add_beh_class_to_dfs(twop_df, beh_df):
         beh_df_index = beh_df.index.get_level_values("TrialName") == trial_name
         if twop_df is not None:
             twop_df_index = twop_df.index.get_level_values("TrialName") == trial_name
+        if allow_exceptions:
+            try:
+                walk, rest, back, groom, frub, post = discriminate_beh(beh_df=beh_df.loc[beh_df_index])
+            except AttributeError:
+                print("Warning: could not run behaviour classification")
+                walk = np.zeros(len(beh_df.loc[beh_df_index]))
+                rest = np.zeros(len(beh_df.loc[beh_df_index]))
+                back = np.zeros(len(beh_df.loc[beh_df_index]))
+                groom = np.zeros(len(beh_df.loc[beh_df_index]))
+                frub = np.zeros(len(beh_df.loc[beh_df_index]))
+                post = np.zeros(len(beh_df.loc[beh_df_index]))
+        else:
+            walk, rest, back, groom, frub, post = discriminate_beh(beh_df=beh_df.loc[beh_df_index])
 
-        walk, rest, back, groom, frub, post = discriminate_beh(beh_df=beh_df.loc[beh_df_index])
         beh_class = walk + 2*rest + 3*back + 4*groom + 5*frub + 6*post
 
         beh_df.loc[beh_df_index,"walk"] = walk
@@ -425,14 +536,43 @@ def add_beh_class_to_dfs(twop_df, beh_df):
         
     return twop_df, beh_df
 
-##############################
 
 def discriminate_walk_rest_pre_stim(v, v_forw, me_q, thr_rest=[1, 1, 0.33], thr_walk=[0, 1, 0]):
+    """
+    Discriminates 'walk' and 'rest' states before stimulation based on velocity and motion energy features.
+
+    Parameters:
+    - v (numpy.ndarray): Velocity data.
+    - v_forw (numpy.ndarray): Forward velocity data.
+    - me_q (numpy.ndarray): Motion energy data.
+    - thr_rest (list): Threshold values for 'rest' state discrimination (default is [1, 1, 0.33]).
+    - thr_walk (list): Threshold values for 'walk' state discrimination (default is [0, 1, 0]).
+
+    Returns:
+    - walk (numpy.ndarray): Boolean array indicating 'walk' state.
+    - rest (numpy.ndarray): Boolean array indicating 'rest' state.
+    """
     rest = np.logical_and.reduce((v <= thr_rest[0], v_forw <= thr_rest[1], me_q <= thr_rest[2]))
     walk = np.logical_and.reduce((v > thr_walk[0], v_forw > thr_walk[1], me_q > thr_walk[2]))
     return walk, rest
 
 def get_pre_stim_beh(beh_df, trigger="laser_start", stim_p=[10,20], n_pre_stim=100, trials=None, return_starts=False):  # TODO: look at behavioural classification instead
+    """
+    Obtains 'walk' and 'rest' states before stimulation based on behavioral data.
+
+    Parameters:
+    - beh_df (DataFrame): Behavioral data DataFrame.
+    - trigger (str): Trigger signal for stimulation (default is "laser_start").
+    - stim_p (list): List of stimulation powers (default is [10,20]).
+    - n_pre_stim (int): Number of time points before stimulation (default is 100).
+    - trials (list): List of trial names to consider (optional).
+    - return_starts (bool): Whether to return trigger indices (default is False).
+
+    Returns:
+    - walk_pre (numpy.ndarray): Boolean array indicating 'walk' state before stimulation.
+    - rest_pre (numpy.ndarray): Boolean array indicating 'rest' state before stimulation.
+    - beh_starts (list): List of trigger indices (if return_starts is True).
+    """
     fs_int = int(1 / np.mean(np.diff(beh_df.t.values[:1000])))
     if trigger in beh_df.keys():
         beh_starts = np.where(beh_df[trigger])[0]
