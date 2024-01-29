@@ -5,8 +5,27 @@ Author: jonas.braun@epfl.ch
 import os
 import matplotlib.pyplot as plt
 
+from datetime import date
+
+today = date.today().strftime("%y%m%d")
+
+"""
+# FH version
 
 # handling summary data of all recording
+data_summary_dir_JB = "/mnt/nas2/JB/_data_summary"
+data_summary_dir_FH = "/mnt/nas2/FH/_data_summary"
+data_summary_dir = data_summary_dir_FH
+
+# data_summary_csv_dir = os.path.join(data_summary_dir, "fly_selection_manual_230224.csv")
+data_summary_csv_dir = os.path.join(
+    data_summary_dir, "fly_selection_revisions_231222.csv"
+)
+data_headless_summary_csv_dir = os.path.join(
+    data_summary_dir, "fly_selection_nohead_230406.csv"
+)
+"""
+
 # ====================== CHANGE THIS PARAMETER TO THE FOLDER WHERE YOUR DOWNLOADED DATA IS ==============
 data_summary_dir = "/mnt/nas2/JB/_paper_data/DN_Networks"  # "/mnt/nas2/JB/_data_summary"
 # =======================================================================================================
@@ -24,10 +43,17 @@ plot_base_dir = os.path.join(data_summary_dir, "plots")
 plotdata_base_dir = os.path.join(data_summary_dir, "plotdata")
 predictionsdata_base_dir = os.path.join(data_summary_dir, "predictionsdata")
 predictionsplot_base_dir = os.path.join(data_summary_dir, "predictionsplots")
+data_predictions_summary_csv_dir = os.path.join(
+    data_summary_dir_FH, "fly_selection_revisions_231222.csv"
+)
+
+data_revisions_summary_dir = os.path.join(
+    data_summary_dir_FH, "fly_selection_revisions_231222.csv"
+)
 
 video_base_dir = os.path.join(data_summary_dir, "videos")
-twop_df_save_name="twop_df_comp.pkl"
-beh_df_save_name="beh_df_comp.pkl"
+twop_df_save_name = "twop_df_comp.pkl"
+beh_df_save_name = "beh_df_comp.pkl"
 
 # quality thresholds to accept a trial for processing
 q_thres_neural = None  # 3  # only selected data was uploaded
@@ -76,25 +102,52 @@ neurons_sigma = 3  # Gaussian filter applied to ROI signals
 neurons_sigma_xy = 2  # spatial Gaussian filter applied to raw data for visialisation
 neurons_filt_regex = "neuron_filt"  # how to call the filtered neurons in dataframe
 # baseline computation
-baseline_exclude_stim_range = [0, n_s_2p_5s]  # how long before and after a stimulation period to exclude data for baseline computation
-baseline_exclude_stim_low_high = [True, False]  # whether to apply the stimulus period exclusion to lower and/or upper normalisation point. Only used for normalisation that are calculated based on 2 points.
+baseline_exclude_stim_range = [
+    0,
+    n_s_2p_5s,
+]  # how long before and after a stimulation period to exclude data for baseline computation
+baseline_exclude_stim_low_high = [
+    True,
+    False,
+]  # whether to apply the stimulus period exclusion to lower and/or upper normalisation point. Only used for normalisation that are calculated based on 2 points.
 baseline_neurons_regex = "neuron_filt"  # which neural signal to load for dff compuation. could be "neuron_filt" (see above) or "neuron_denoised" from deepinterpolation.
 all_normalisation_types = ["dff", "std", "rest_qmax", "trough_qmax"]
 # "silent", "fastsilent", , "me_trough_qmax"  # (exclude motion energy based baselines)
 baseline_qmax = 0.95  # quantile used for upper limit normalisation
 rest_base_min_rest_s = 1  # how long a resting bout has to be in order to be considered for baseline computation
 rest_base_frac_rest = 0.75  # what the fraction of resting classification during this bout has to be at least
-rest_base_max_search_t_s = [-1,2]  # which time window around resting onset to look for the minimum
-trough_baseline_n_peaks = 10  # how many peaks (inverted troughs) to consider while computing trough baseline
-trough_baseline_min_height = 0.5 # minimum heights of standardised mean neural signal to consider a peak
+rest_base_max_search_t_s = [
+    -1,
+    2,
+]  # which time window around resting onset to look for the minimum
+trough_baseline_n_peaks = (
+    10  # how many peaks (inverted troughs) to consider while computing trough baseline
+)
+trough_baseline_min_height = (
+    0.5  # minimum heights of standardised mean neural signal to consider a peak
+)
 trough_baseline_min_distance = n_s_2p_2s  # minimum distance between peaks
-trough_baseline_n_samples_around = n_s_2p_1s  # how many samples around the peak to check for each individual neuron
-me_trough_baseline_min_height = 0.75  # minimum heights of standardised motion energy to consider a peak
-me_trough_baseline_sigma_me = 5  # smoothing coefficient before motion energy peak detection
+trough_baseline_n_samples_around = (
+    n_s_2p_1s  # how many samples around the peak to check for each individual neuron
+)
+me_trough_baseline_min_height = (
+    0.75  # minimum heights of standardised motion energy to consider a peak
+)
+me_trough_baseline_sigma_me = (
+    5  # smoothing coefficient before motion energy peak detection
+)
 # response computation and plotting
 default_response_regex = "dff_rest_qmax"  # which signals to look at as default
-response_t_params_2p = [n_s_2p_5s, n_s_2p_5s, n_s_2p_5s]  # defining number of pre, during, and post stimulus samples
-response_t_params_2p_label = [5, 5, 5]  # same as above but in seconds to be used as a label
+response_t_params_2p = [
+    n_s_2p_5s,
+    n_s_2p_5s,
+    n_s_2p_5s,
+]  # defining number of pre, during, and post stimulus samples
+response_t_params_2p_label = [
+    5,
+    5,
+    5,
+]  # same as above but in seconds to be used as a label
 response_n_baseline = n_s_2p_1s  # number of samples before stimulation that are used as baseline for relative stim responses
 response_n_latest_max = n_s_2p_2_5s  # number of samples after stim start up to which the maximum response can occur  # TODO: check the effect of 2.5s vs 5s
 response_n_avg = n_s_2p_1s  # number of samples to average across after the maximum response location has been found
@@ -109,7 +162,9 @@ me_cam_mean = "camera_5_mean.jpg"  # file name for the mean of that camera.
 q_me = 0.95  # quantile to which to normalise motion energy to
 thres_silent_me_front = 0.2  # front motion energy quantile has to be smaller than this to count into silent state
 thres_silent_me_all = 0.2  # total motion energy quantile has to be smaller than this to count into silent state
-thres_silent_v = 0.5  # absolut velocity has to be smaller than this to count into silent state
+thres_silent_v = (
+    0.5  # absolut velocity has to be smaller than this to count into silent state
+)
 thres_fast_me_all = 0.8  # # total motion energy quantile has to be larger than this to count into fast state
 # sleap processing
 sleap_med_filt = 9  # median filter with for sleap time traces
@@ -131,16 +186,21 @@ groom_min_dur = n_s_beh_1s # minimum duration for grooming to be considered as n
 groom_min_dist = None
 
 # plotting parameters for showing maps of data
-cmap_groom = plt.cm.get_cmap('PiYG_r')  # mpl.colors.ListedColormap(plt.cm.get_cmap('PiYG_r')(np.concatenate((np.linspace(0,0.375, 128), np.linspace(0.625,1,128)))))
-cmap_back = plt.cm.get_cmap('RdBu_r')  # mpl.colors.ListedColormap(plt.cm.get_cmap('RdBu_r')(np.concatenate((np.linspace(0,0.375, 128), np.linspace(0.625,1,128)))))
-cmap_walk = plt.cm.get_cmap('PuOr_r')  # mpl.colors.ListedColormap(plt.cm.get_cmap('PuOr_r')(np.concatenate((np.linspace(0,0.375, 128), np.linspace(0.625,1,128)))))
+cmap_groom = plt.cm.get_cmap(
+    "PiYG_r"
+)  # mpl.colors.ListedColormap(plt.cm.get_cmap('PiYG_r')(np.concatenate((np.linspace(0,0.375, 128), np.linspace(0.625,1,128)))))
+cmap_back = plt.cm.get_cmap(
+    "RdBu_r"
+)  # mpl.colors.ListedColormap(plt.cm.get_cmap('RdBu_r')(np.concatenate((np.linspace(0,0.375, 128), np.linspace(0.625,1,128)))))
+cmap_walk = plt.cm.get_cmap(
+    "PuOr_r"
+)  # mpl.colors.ListedColormap(plt.cm.get_cmap('PuOr_r')(np.concatenate((np.linspace(0,0.375, 128), np.linspace(0.625,1,128)))))
 cmap_ci = cmap_back
 
 background_key = "green_stds_raw"  # which image to show as background
-background_crop = [80,80,0,0]  # how to show the std image in background
-background_med = 1 # parameter for median filter on background image
-background_sigma = 3 # how to smooth the background image
-
+background_crop = [80, 80, 0, 0]  # how to show the std image in background
+background_med = 1  # parameter for median filter on background image
+background_sigma = 3  # how to smooth the background image
 map_min_dot_size = 10  # minimum dot size to show response values
 map_max_dot_size = 250  # maximum dot size to show response values
 map_min_dot_alpha = 0.5  # minimum dot alpha to show response values

@@ -8,6 +8,8 @@ import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 from scipy.ndimage import gaussian_filter
+from scipy.stats import mannwhitneyu
+
 
 from twoppp import plot as myplt
 from twoppp.plot import show3d
@@ -39,7 +41,17 @@ def make_nice_spines(ax):
     ax.spines["top"].set_linewidth(0)
     ax.spines["right"].set_linewidth(0)
 
-def plot_ax_behavioural_response(beh_responses, response_name=None, response_ylabel=None, ax=None, beh_responses_2=None, beh_response_2_color=myplt.BLACK, x="2p", ylim=None):
+def stat_test_sign(p):
+    if p < 0.001:
+        return '***'
+    elif p < 0.01:
+        return '**'
+    elif p < 0.05:
+        return '*'
+    else:
+        return 'ns'
+
+def plot_ax_behavioural_response(beh_responses, response_name=None, response_ylabel=None, ax=None, beh_responses_2=None, beh_response_2_color=myplt.BLACK, x="2p", ylim=None, period=[500,750]):
     """
     Plots behavioral response data on axis. Plots mean and 95% confidence interval.
 
@@ -52,6 +64,7 @@ def plot_ax_behavioural_response(beh_responses, response_name=None, response_yla
         beh_response_2_color (str, optional): Color for the second behavioral response. The first one will be black
         x (str, optional): Specifies the x-axis values, i.e. which time vector should be used ("2p" or "beh").
         ylim (list, optional): Limits for the y-axis.
+        period (list, optional): period over which to perform trial-to-trial statistical comparison
 
     Returns:
         matplotlib.axes.Axes: The axis on which the data is plotted.
@@ -76,6 +89,29 @@ def plot_ax_behavioural_response(beh_responses, response_name=None, response_yla
     if beh_responses_2 is not None:
         myplt.plot_mu_sem(mu=np.mean(beh_responses_2, axis=-1), err=utils.conf_int(beh_responses, axis=-1),
                             x=x, ax=ax, color=beh_response_2_color, linewidth=2*linewidth)
+ 
+    if (
+        beh_responses is not None
+        and beh_responses != []
+        and beh_responses_2 is not None
+        and beh_responses_2 != []
+        ):
+        # statistical test (Mann-Whitney U) between two conditions
+        p = mannwhitneyu(
+            np.mean(beh_responses[period[0]:period[1],:],axis=0),
+            np.mean(beh_responses_2[period[0]:period[1],:],axis=0)
+        )
+        # add text to plot with p-value
+        ax.text(
+            0.8,
+            0.95,
+            'p: ' + stat_test_sign(p.pvalue),
+            horizontalalignment='center',
+            verticalalignment='center',
+            transform=ax.transAxes,
+            fontsize=16
+        )
+         
             
     ax.set_xticks([0,params.response_t_params_2p_label[1]])
     ax.set_xticklabels(["", ""])
