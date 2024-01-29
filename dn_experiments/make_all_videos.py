@@ -7,6 +7,7 @@ Author: jonas.braun@epfl.ch
 
 from vid_functional import make_functional_example_stim_video, make_DNp09_natbeh_video, make_aDN2_natbeh_video, make_MDN_natbeh_video
 from vid_headless import make_headless_summary_stim_videos, make_prediction_stim_videos
+from vid_vnccut import make_vnc_cut_video
 if __name__ == "__main__":
     # Videos 1-4: Stimulation response videos
     # This function also generates the plots shown in Figure 2b.
@@ -21,8 +22,11 @@ if __name__ == "__main__":
     # Video 7: Comparing optogenetic MDN stimulation with natural backward walking on the wheel
     make_MDN_natbeh_video()
 
-    # Videos 8-11: comparing intact and headless stimulation response behaviours for DNp09, aDN2, MDN, wild type flies.
+    # Video 8: DNp09-driven and control trial-averaged GNG-DN population activity after resecting the T1 neuromere of the VNC.
+    make_vnc_cut_video()
+
+    # Videos 9-12: comparing intact and headless stimulation response behaviours for DNp09, aDN2, MDN, wild type flies.
     make_headless_summary_stim_videos()
-    # Vides 12-17: comparing intact and headless stimulation response behaviours for new DN lines
+    # Vides 13-21: comparing intact and headless stimulation response behaviours for new DN lines
     make_prediction_stim_videos()
    
