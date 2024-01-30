@@ -242,18 +242,19 @@ def make_revisions_stim_videos():
     out_dir = os.path.join(params.video_base_dir, "presentation")
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
-    n_stim = 3
+    n_stim = 10
     n_frames = params.n_s_beh_25s * n_stim
 
     df = summarydf.get_predictions_df()
 
     genotype_generators = {
-        #"DNg11": [],
+        "DNg11": [],
         "DNp42": [],
         "oviDN": [],
     }
 
     genotype_fly_ids = {
+        "DNg11": [[39,39],[33,42],[179,179]],
         "DNp42": [[140,140], [141,141],[142,142]],
         "oviDN": [[143,143],[144,144],[145,145]],
         
@@ -285,7 +286,7 @@ def make_revisions_stim_videos():
                     trial_df = fly_df[np.logical_and(np.logical_not(head), np.logical_not(fly_df.walkon == "ball"))]
                 else:
                     raise NotImplementedError
-
+                
                 trial_df = trial_df.iloc[-1]  # make sure only one trial is used. Use the last one available by default
 
                 trial_dir = trial_df.trial_dir
@@ -414,7 +415,7 @@ def make_leg_amputation_stim_videos():
 
 
 if __name__ == "__main__":
-    # make_headless_example_stim_videos()
+    make_headless_example_stim_videos()
     make_headless_summary_stim_videos()
     make_prediction_stim_videos()
     make_revisions_stim_videos()
