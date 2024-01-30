@@ -79,7 +79,7 @@ def load_data_one_genotype(exp_df, figure_params, predictions_save=None, overwri
                     elif trial_df["head"] == "False" or trial_df["head"] == "FALSE" or trial_df["head"] == "0" or trial_df["head"] == False:
                         beh_key = "beh_responses_post"
                         beh_class_key = "beh_class_responses_post"
-                        intact_trial_exists = True
+                        headless_trial_exists = True
                     else:
                         print(trial_df)
                         print("Error! Could not read 'head'.")
@@ -321,6 +321,8 @@ def summarise_predictions_one_genotype(
         df = summarydf.get_predictions_df()
     elif dataset == "headless":
         df = summarydf.get_headless_df()
+    elif dataset == "revisions":
+        df = summarydf.get_revisions_df()
     else:
         raise(NotImplementedError)
     df = summarydf.get_selected_df(df, select_dicts=[{"CsChrimson": GAL4}])
@@ -493,3 +495,19 @@ def make_all_predictions_figures(allflies_only=True, tmpdata_path=None, figures_
 if __name__ == "__main__":
     make_all_predictions_figures()
     predictions_stats_tests()
+
+    """
+    ### ===== TMP ===== ###
+    _ = summarise_predictions_one_genotype(
+        "DNg11",
+        #return_var_ylim=ylim_ovi_ext,
+        return_var="frtita_y",
+        return_var_ylabel=r"y_{frtita} (um)",
+        return_var_multiply=4.8,
+        accept_headless_only_flies=False,
+        accept_intact_only_flies=False,
+        zero_baseline=True,
+        dataset="revisions",
+        overwrite=True,
+        )
+    """

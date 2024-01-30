@@ -659,6 +659,26 @@ def get_predictions_df(path=params.data_predictions_summary_csv_dir, q_check=par
     return get_headless_df(path=path, q_check=q_check, q_thres_legs_intact=q_thres_legs_intact,
                            q_thres_beh=q_thres_beh, q_thres_stim=q_thres_stim)
 
+def get_revisions_df(path=params.data_revisions_summary_dir, q_check=0,
+                    q_thres_legs_intact=0,
+                    q_thres_beh=0,
+                    q_thres_stim=0):
+    """
+    Get a DataFrame for revision experiments.
+
+    Parameters:
+        path (str, optional): Path to the data summary CSV file.
+        q_check (bool, optional): Flag indicating whether to apply quality checks.
+        q_thres_legs_intact (int, optional): Threshold for leg integrity in headless experiments.
+        q_thres_beh (int, optional): Threshold for behavioral recording quality in headless experiments.
+        q_thres_stim (int, optional): Threshold for stimulus response quality in headless experiments.
+
+    Returns:
+        pd.DataFrame: DataFrame containing data from revision experiments.
+    """
+    return get_headless_df(path=path, q_check=q_check, q_thres_legs_intact=q_thres_legs_intact,
+                           q_thres_beh=q_thres_beh, q_thres_stim=q_thres_stim)
+
 def plot_trial_number_summary(dfs, df_names, plot_base_dir=params.data_summary_dir):
     """
     Plot summary statistics of trial numbers for different genotypes.
@@ -701,3 +721,8 @@ def plot_trial_number_summary(dfs, df_names, plot_base_dir=params.data_summary_d
 if __name__ == "__main__":
     genotype_dirs = find_genotyp_dirs(nas_base_dir="/mnt/nas2/FH/from_Jonas", min_date=230101, max_date=None, contains="MDN", exclude="headless")
     add_flies_to_data_summary(genotype_dir=genotype_dirs, path=None, headless=False, predictions=True)
+
+    """
+    genotype_dirs = find_genotyp_dirs(nas_base_dir="/mnt/nas2/FH", min_date=240125, max_date=None, exclude="BAD")
+    add_flies_to_data_summary(genotype_dir=genotype_dirs, path=None, headless=False, predictions=False, revisions=True)
+    """
