@@ -186,7 +186,7 @@ def copy_all_headless_trials(overwrite=False):
             copy_one_fly(trial_dirs, imaging=False, overwrite=overwrite)
 
 
-def copy_all_predictions_trials(genotypes=["DNa01", "DNa02", "DNb02", "aDN1", "DNg14", "mute"], overwrite=False):
+def copy_all_predictions_trials(genotypes=["DNa01", "DNa02", "DNb02", "aDN1", "DNg14", "mute", "DNg11", "oviDN", "DNp42", "CantonS"], overwrite=False):
     """
     Copy all prediction trials for specified genotypes to an external directory from where they can be uploaded to Harvard dataverse.
 
