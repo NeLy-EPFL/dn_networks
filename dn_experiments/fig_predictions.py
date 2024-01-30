@@ -132,14 +132,14 @@ def load_data_one_genotype(exp_df, figure_params, predictions_save=None, overwri
                 not headless_trial_exists
                 and figure_params["accept_headless_only_flies"]
             ):
-                fly_data["beh_responses_pre"] = (
-                    np.zeros_like(fly_data["beh_responses_post"]) * np.nan
+                fly_data["beh_responses_post"] = (
+                    np.zeros_like(fly_data["beh_responses_pre"]) * np.nan
                 )
-                fly_data["beh_class_responses_pre"] = (
-                    np.zeros_like(fly_data["beh_class_responses_post"]) * np.nan
+                fly_data["beh_class_responses_post"] = (
+                    np.zeros_like(fly_data["beh_class_responses_pre"]) * np.nan
                 )
                 print(
-                    f"WARNING: Setting intact behavioural response to NaN because no data for fly {fly_data['fly_dir']}"
+                    f"WARNING: Setting headless behavioural response to NaN because no data for fly {fly_data['fly_dir']}"
                 )
             elif not headless_trial_exists:
                 del fly_data
@@ -149,14 +149,14 @@ def load_data_one_genotype(exp_df, figure_params, predictions_save=None, overwri
                 not intact_trial_exists
                 and figure_params["accept_intact_only_flies"]
             ):
-                fly_data["beh_responses_post"] = (
-                    np.zeros_like(fly_data["beh_responses_pre"]) * np.nan
+                fly_data["beh_responses_pre"] = (
+                    np.zeros_like(fly_data["beh_responses_post"]) * np.nan
                 )
-                fly_data["beh_class_responses_post"] = (
-                    np.zeros_like(fly_data["beh_class_responses_pre"]) * np.nan
+                fly_data["beh_class_responses_pre"] = (
+                    np.zeros_like(fly_data["beh_class_responses_post"]) * np.nan
                 )
                 print(
-                    f"WARNING: Setting headless behavioural response to NaN because no data for fly {fly_data['fly_dir']}"
+                    f"WARNING: Setting intact behavioural response to NaN because no data for fly {fly_data['fly_dir']}"
                 )
             elif not intact_trial_exists:
                 del fly_data
@@ -504,10 +504,11 @@ if __name__ == "__main__":
         return_var="frtita_y",
         return_var_ylabel=r"y_{frtita} (um)",
         return_var_multiply=4.8,
-        accept_headless_only_flies=False,
-        accept_intact_only_flies=False,
+        accept_headless_only_flies=True,
+        accept_intact_only_flies=True,
         zero_baseline=True,
         dataset="revisions",
         overwrite=True,
         )
     """
+    
