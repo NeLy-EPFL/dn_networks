@@ -721,8 +721,8 @@ def compare_connectivity_stats(
 
 if __name__ == "__main__":
     compute_connectivity_stats()
-    #compare_connectivity_stats(
-    #    direction = plot_params.INTERNEURON_STATS_ARGS["measured_feature"],
-    #    connection = plot_params.INTERNEURON_STATS_ARGS["connection_type"],
-    #    reference_sorting = plot_params.INTERNEURON_STATS_ARGS["reference_sorting"],
-    #)
+    compare_connectivity_stats(
+        direction = plot_params.INTERNEURON_STATS_ARGS["measured_feature"],
+        connection = plot_params.INTERNEURON_STATS_ARGS["connection_type"],
+        reference_sorting = plot_params.INTERNEURON_STATS_ARGS["reference_sorting"],
+    )

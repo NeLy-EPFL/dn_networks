@@ -166,7 +166,7 @@ NETWORK_PLOT_ARGS["folder"] = os.path.join(
     "network_plot",
 )
 NETWORK_PLOT_ARGS["restricted_nodes"] = 'known_only' #None, 'known_only'
-NETWORK_PLOT_ARGS["restricted_clusters"] = [10] #None, [3,5,9]
+NETWORK_PLOT_ARGS["restricted_clusters"] = [2,3] #None, [3,5,9]
 NETWORK_PLOT_ARGS["restricted_connections"] = None # 'inhibitory', 'excitatory', None
 NETWORK_PLOT_ARGS["position_reference"] = 'all' # 'inhibitory', 'excitatory', 'all'
 NETWORK_PLOT_ARGS["node_size"] = 40  #20

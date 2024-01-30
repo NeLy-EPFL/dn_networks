@@ -408,7 +408,7 @@ def draw_network_organised_by_clusters(
 
 
 if __name__ == "__main__":
-    #draw_meta_network()
+    draw_meta_network()
     draw_network_organised_by_clusters(
         restricted_nodes = plot_params.NETWORK_PLOT_ARGS["restricted_nodes"],
         restricted_clusters = plot_params.NETWORK_PLOT_ARGS["restricted_clusters"],
