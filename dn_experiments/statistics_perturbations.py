@@ -178,11 +178,11 @@ def revisions_stat_test(overwrite=True,per_fly_avg=False):
         "DNp42": os.path.join(params.predictionsdata_base_dir, "predictions_DNp42_v_forw.pkl"),
         "DNb01": os.path.join(params.predictionsdata_base_dir, "predictions_DNb01_v_forw.pkl"),
         "DNg16": os.path.join(params.predictionsdata_base_dir, "predictions_DNg16_v_forw.pkl"),
-        "DNg11": os.path.join(params.predictionsdata_base_dir, "predictions_DNg11_frtita_y.pkl"),
+        "DNg11": os.path.join(params.predictionsdata_base_dir, "predictions_DNg11_ang_frtibia_neck.pkl"),
         "oviDN": os.path.join(params.predictionsdata_base_dir, "predictions_oviDN_ovum_y.pkl"),
         "CS_v_forw": os.path.join(params.predictionsdata_base_dir, "predictions_CantonS_v_forw.pkl"),
         "CS_ovum": os.path.join(params.predictionsdata_base_dir, "predictions_CantonS_ovum_y.pkl"),
-        "CS_frtita": os.path.join(params.predictionsdata_base_dir, "predictions_CantonS_frtita_y.pkl"),
+        "CS_ang_frtibia_neck": os.path.join(params.predictionsdata_base_dir, "predictions_CantonS_ang_frtibia_neck.pkl"),
     }
 
     with open(revision_files["DNp42"], "rb") as f:
@@ -199,8 +199,8 @@ def revisions_stat_test(overwrite=True,per_fly_avg=False):
         CS_v_forw = pickle.load(f)
     with open(revision_files["CS_ovum"], "rb") as f:
         CS_ovum = pickle.load(f)
-    with open(revision_files["CS_frtita"], "rb") as f:
-        CS_frtita = pickle.load(f)
+    with open(revision_files["CS_ang_frtibia_neck"], "rb") as f:
+        CS_ang_frtibia_neck = pickle.load(f)
 
     # Tests from intact to headless
     # Add a sentence to the summary file
@@ -209,21 +209,21 @@ def revisions_stat_test(overwrite=True,per_fly_avg=False):
     test_stats_pre_post(DNp42,i_beh=3,GAL4="DNp42",beh_name="back",measured="v_forw",file=stats_file_summary,per_fly_avg=per_fly_avg)
     test_stats_pre_post(DNb01,i_beh=1,GAL4="DNb01",beh_name="walk",measured="v_forw",file=stats_file_summary,per_fly_avg=per_fly_avg)
     test_stats_pre_post(DNg16,i_beh=1,GAL4="DNg16",beh_name="walk",measured="v_forw",file=stats_file_summary,per_fly_avg=per_fly_avg)
-    test_stats_pre_post(DNg11,i_beh=4,GAL4="DNg11",beh_name="groom",measured="y_frtita",file=stats_file_summary,per_fly_avg=per_fly_avg)
+    test_stats_pre_post(DNg11,i_beh=4,GAL4="DNg11",beh_name="groom",measured="ang_frtibia_neck",file=stats_file_summary,per_fly_avg=per_fly_avg)
     test_stats_pre_post(oviDN,i_beh=4,GAL4="oviDN",beh_name="groom",measured="y_ovum",file=stats_file_summary,per_fly_avg=per_fly_avg)
     test_stats_pre_post(CS_v_forw,i_beh=3,GAL4="CantonS",beh_name="back",measured="v_forw",file=stats_file_summary,per_fly_avg=per_fly_avg)
     test_stats_pre_post(CS_ovum,i_beh=4,GAL4="CantonS",beh_name="groom",measured="y_ovum",file=stats_file_summary,per_fly_avg=per_fly_avg)
-    test_stats_pre_post(CS_frtita,i_beh=4,GAL4="CantonS",beh_name="groom",measured="y_frtita",file=stats_file_summary,per_fly_avg=per_fly_avg)
+    test_stats_pre_post(CS_ang_frtibia_neck,i_beh=4,GAL4="CantonS",beh_name="groom",measured="ang_frtibia_neck",file=stats_file_summary,per_fly_avg=per_fly_avg)
 
     # Tests between experiment and control
     with open(stats_file_summary, "a") as f:
         f.write("\n")
         f.write("Tests from modified genotype to control on identical settings\n")
-    test_stats_beh_control(DNp42, CS_v_forw, GAL4="DNp42", beh_name="v_forw", i_0=500, i_1=750,file=stats_file_summary,per_fly_avg=per_fly_avg)
-    test_stats_beh_control(DNb01, CS_v_forw, GAL4="DNb01", beh_name="v_forw", i_0=500, i_1=750,file=stats_file_summary,per_fly_avg=per_fly_avg)
-    test_stats_beh_control(DNg16, CS_v_forw, GAL4="DNg16", beh_name="v_forw", i_0=500, i_1=750,file=stats_file_summary,per_fly_avg=per_fly_avg)
-    test_stats_beh_control(DNg11, CS_frtita, GAL4="DNg11", beh_name="y_frtita", i_0=500, i_1=750,file=stats_file_summary,per_fly_avg=per_fly_avg)
-    test_stats_beh_control(oviDN, CS_ovum, GAL4="oviDN", beh_name="y_ovum", i_0=500, i_1=750,file=stats_file_summary,per_fly_avg=per_fly_avg)
+    test_stats_beh_control(DNp42, CS_v_forw, GAL4="DNp42", beh_name="v_forw", i_0=500, i_1=750,file=stats_file_summary,per_fly_avg=per_fly_avg,identical_flies=False)
+    test_stats_beh_control(DNb01, CS_v_forw, GAL4="DNb01", beh_name="v_forw", i_0=500, i_1=750,file=stats_file_summary,per_fly_avg=per_fly_avg,identical_flies=False)
+    test_stats_beh_control(DNg16, CS_v_forw, GAL4="DNg16", beh_name="v_forw", i_0=500, i_1=750,file=stats_file_summary,per_fly_avg=per_fly_avg,identical_flies=False)
+    test_stats_beh_control(DNg11, CS_ang_frtibia_neck, GAL4="DNg11", beh_name="ang_frtibia_neck", i_0=500, i_1=750,file=stats_file_summary,per_fly_avg=per_fly_avg,identical_flies=False)
+    test_stats_beh_control(oviDN, CS_ovum, GAL4="oviDN", beh_name="y_ovum", i_0=500, i_1=750,file=stats_file_summary,per_fly_avg=per_fly_avg,identical_flies=False)
 
 
 

@@ -28,6 +28,7 @@ OPTOGENETICS_DIR = os.path.join(BASE_DIR, "optogenetics")
 HEADLESS_DIR = os.path.join(BASE_DIR, "headless")
 HEADLESS_ZIP_DIR = os.path.join(BASE_DIR, "headless_zip_novideo")
 OTHER_DIR = os.path.join(BASE_DIR, "other")
+OTHER_ZIP_DIR = os.path.join(BASE_DIR, "other_zip_novideo")
 
 
 def make_roi_center_annotation_file(fly_dir, quantile=0.99):
@@ -245,6 +246,76 @@ def copy_stim_control_trials(overwrite=False):
             if "led" in trial_dir:
                 trial_dirs.remove(trial_dir)
         copy_one_fly(trial_dirs, base_dir=OTHER_DIR, overwrite=overwrite, imaging=False)
+
+def copy_leg_cutting_trials(overwrite : bool =False, genotypes = ['MDN', 'DNp09', 'CantonS']):
+    """
+    Copy leg cutting trials to an external directory from where they can be uploaded to Harvard dataverse.
+    """
+    df = summarydf.get_predictions_df()
+    df = summarydf.get_selected_df(df, select_dicts=[{"CsChrimson": genotype} for genotype in genotypes])
+    # intact flies
+    df_intact = summarydf.get_selected_df(df, select_dicts=[{"leg_amp": 'FALSE', "head": True}])
+    # need to filter for flies that have had specific amputations, but keep the controls
+    df_target = summarydf.get_selected_df(
+        df, select_dicts=[{"joint_amp": 'TiTa'}]
+    )
+    df_target = summarydf.get_selected_df(
+        df_target, select_dicts=[{"leg_amp": leg_} for leg_ in ['FL', 'ML', 'HL']]
+    )
+    df = df[df.trial_dir.isin(df_target.trial_dir.unique()) | df.trial_dir.isin(df_intact.trial_dir.unique())]
+
+    # === Rewriting df
+    df_old = df.copy()
+    for index, row in df.iterrows():
+        old_trial_dir = row.trial_dir
+        new_trial_dir = convert_trial_dir(old_trial_dir, imaging=False)
+        new_fly_dir = os.path.dirname(new_trial_dir)
+        df["trial_dir"].iloc[df.index == index] = new_trial_dir
+        df["fly_dir"].iloc[df.index == index] = new_fly_dir
+
+    nan  = df["exclude"].iloc[0]
+    df["comment"] = nan
+    df.to_csv(os.path.join(HEADLESS_DIR, "predictions_summary_df.csv"), index=False)
+    df = df_old
+
+    for i_fly, (fly_id, fly_df) in enumerate(df.groupby("fly_id")):
+        trial_dirs = list(fly_df.trial_dir.values)
+        copy_one_fly(trial_dirs, base_dir=OTHER_DIR, overwrite=overwrite, imaging=False)
+
+
+def compress_leg_cutting(overwrite=False, keep_videos=False):
+    """
+    Compress leg cutting data.
+
+    Parameters:
+        overwrite (bool): Whether to overwrite existing files. Defaults to False.
+        keep_videos (bool): Whether to keep compressed video files. Defaults to False.
+    """
+    # check if the folder exists
+    if not os.path.isdir(OTHER_ZIP_DIR):
+        os.makedirs(OTHER_ZIP_DIR)
+    old_wd = os.getcwd()
+    os.chdir(OTHER_DIR)
+    fly_names = os.listdir(".")
+    fly_names = [fly_name for fly_name in fly_names if os.path.isdir(os.path.join(OTHER_DIR,fly_name))]
+
+    for i_fly, fly_name in enumerate(fly_names):
+        if keep_videos:
+            source_folder = [fly_name]
+            tar_file = os.path.join(OTHER_ZIP_DIR, fly_name+".tar.gz") 
+            tar_file_origin = os.path.join(OTHER_DIR, fly_name+".tar.gz") 
+        else:
+            source_folder = []
+            for path, subdirs, files in os.walk(os.path.join(OTHER_DIR, fly_name)):
+                for name in files:
+                    if not name.startswith("camera_") and not name.startswith("."):
+                        source_folder.append(os.path.relpath(os.path.join(path, name),start=OTHER_DIR))
+            tar_file = os.path.join(OTHER_ZIP_DIR, fly_name+"_novideo.tar.gz")
+            tar_file_origin = os.path.join(OTHER_DIR, fly_name+"_novideo.tar.gz")
+        if not (os.path.isfile(tar_file) or os.path.isfile(tar_file_origin)) or overwrite:
+            compress(tar_file, source_folder)
+    
+    os.chdir(old_wd)        
 
 
 def copy_one_fly(trial_dirs, imaging=True, overwrite=False, base_dir=None):
@@ -741,6 +812,7 @@ def decompress(tar_file, path, members=None):
     tar.close()
 
 if __name__ == "__main__":
+    ##### TO COMPRESS THE DATA UNCOMMENT THE FOLLOWING
     compress_sleap()
 
     copy_stim_control_trials()
@@ -752,6 +824,9 @@ if __name__ == "__main__":
     
     copy_all_imaging_trials()
     compress_imaging(keep_videos=False)
+
+    copy_leg_cutting_trials(overwrite=False)
+    compress_leg_cutting(overwrite=False, keep_videos=False)
 
     ##### TO DECOMPRESS THE DATA UNCOMMENT THE FOLLOWING
     """
