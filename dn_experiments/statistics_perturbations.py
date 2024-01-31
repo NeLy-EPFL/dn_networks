@@ -291,7 +291,7 @@ def headless_stat_test():
     test_stats_beh_control(aDN2_dist_tita, PR_dist_tita, GAL4="aDN2", beh_name="dist tita", i_0=500, i_1=750)
     test_stats_beh_control(aDN2_dist_feti, PR_dist_feti, GAL4="aDN2", beh_name="dist feti", i_0=500, i_1=750)
 
-def dofs_stat_test(overwrite=True,per_fly_avg=False):
+def dofs_stat_test(overwrite=True,per_fly_avg=True):
     '''
     Compute the statistics for the DOFs necessary during forward and backwards 
     locomotion. Verification of whether amputating bilateral legs has an effect
@@ -373,6 +373,6 @@ def dofs_stat_test(overwrite=True,per_fly_avg=False):
         
 
 if __name__ == "__main__":
-    #headless_stat_test()
+    headless_stat_test()
     revisions_stat_test(per_fly_avg=True)
-    #dofs_stat_test(per_fly_avg=True)
+    dofs_stat_test(per_fly_avg=True)

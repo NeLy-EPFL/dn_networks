@@ -8,6 +8,7 @@ from pathlib import Path
 import params, copy_data
 import fig_functional, fig_headless, fig_predictions, supfig_natbeh, supfig_bpn_mdn, supfig_stim_powers, 
 import supfig_dfd_inhibit, fig_antennacut, fig_headless_imaging, fig_vnccut
+import fig_dofs, statistics_perturbations
 
 
 if __name__ == "__main__":
@@ -64,6 +65,8 @@ if __name__ == "__main__":
     fig_predictions.make_all_predictions_figures(tmpdata_path=tmpdata_path, figures_path=figures_path, overwrite=False)
     fig_predictions.predictions_stats_tests(tmpdata_path=tmpdata_path)
 
+    # Supp. Figure 4: Backward locomotion depends on fewer degrees of freedom than forward locomotion.
+    fig_dofs.make_all_dof_panels()
 
     # Reviewer Figures
     # Reviewer Figure 1: Antennal grooming upon aDN2 stimulation with or without antennae.
@@ -72,3 +75,8 @@ if __name__ == "__main__":
 
     # Reviewer Figure 2: Simultaneous optogenetic stimulation and neural recordings from DNp09 and MDN in intact and headless animals.
     fig_headless_imaging.make_headless_imaging_figure(figures_path=figures_path)
+
+    # Statistics comparing the effect of perturbations on the different behaviors
+    statistics_perturbations.headless_stat_test()
+    statistics_perturbations.revisions_stat_test()
+    statistics_perturbations.dofs_stat_test()

@@ -310,20 +310,46 @@ def summarise_predictions_dofs(
         )
     return fig
 
+def make_standard_dof_panel(GAL4, specific_joint, default_params, ylim=None):
+    """
+    Generate a standard panel for a given genotype, joint and variable
+    """
+    _ = summarise_predictions_dofs(
+        GAL4,
+        specific_joint=specific_joint,
+        beh_name=default_params['beh_name'],
+        return_var=default_params['variable'],
+        return_var_ylabel=default_params['label'],
+        overwrite=True,
+        accept_amputated_only_flies=default_params['accept_amputated_only_flies'],
+        return_var_flip=default_params['return_var_flip'],
+        filter_pre_stim_beh=default_params['filter_pre_stim_beh'],
+        zero_baseline=default_params['zero_baseline'],
+        stats_period=default_params['stats_period'],
+        ylim=ylim
+    )
+
+def make_all_dof_panels():
+    """
+    Generate all panels for all genotypes, joints and legs
+    """
+    default_params = {
+        'joint' : "TiTa",
+        'variable' : "integrated_forward_movement",
+        'label' : r"$d_{forward}$",
+        'accept_amputated_only_flies':True,
+        'return_var_flip':False,
+        'filter_pre_stim_beh':None,
+        'zero_baseline':True,
+        'stats_period':(999,1000),
+        'beh_name':'walk',
+    }
+
+    make_standard_dof_panel('MDN', 'HL', default_params, ylim=[-7.5,0.5])
+    make_standard_dof_panel('DNp09', 'HL', default_params, ylim=[-2,40])
+    make_standard_dof_panel('DNp09', 'ML', default_params, ylim=[-2,40])
+    make_standard_dof_panel('DNp09', 'FL', default_params, ylim=[-2,40])
+
 
 if __name__ == "__main__":
-    fig = summarise_predictions_dofs(
-        "MDN",
-        specific_joint="TiTa",
-        specific_leg="HL",
-        beh_name="back",
-        return_var="integrated_forward_movement",
-        return_var_ylabel=r"$d_{forward}$", #r"$v_{||}$ (mm/s)",
-        overwrite=True,
-        accept_amputated_only_flies=True,
-        return_var_flip=False,
-        filter_pre_stim_beh=None,  # 'rest'
-        zero_baseline=True,
-        stats_period=(999,1000),
-        ylim=[-8,0.5]
-    )
+    make_all_dof_panels()

@@ -491,24 +491,28 @@ def make_all_predictions_figures(allflies_only=True, tmpdata_path=None, figures_
                                              return_var_ylim=ylim_ang_frti, overwrite=overwrite, beh_name="groom", return_var="ang_frtibia",
                                              return_var_ylabel="tibia angle (°)", return_var_baseline=[400,500], allflies_only=allflies_only)
     
+    _ = summarise_predictions_one_genotype("CantonS",return_var_ylim=[55,95],return_var='ang_frtibia_neck',return_var_ylabel=r"ang_{frtita}",
+                                            return_var_multiply=1, accept_headless_only_flies=False, accept_intact_only_flies=False,
+                                            zero_baseline=False, dataset="revisions", overwrite=True, allflies_only=allflies_only)
+    _ = summarise_predictions_one_genotype("CantonS",return_var_ylim=[-1.5,0.5],return_var='v_forw',
+                                            return_var_multiply=1, accept_headless_only_flies=False, accept_intact_only_flies=False,
+                                            zero_baseline=False, dataset="revisions", overwrite=True, allflies_only=allflies_only)
+    _ = summarise_predictions_one_genotype("CantonS",return_var_ylim=[-350,10],return_var='ovum_y',return_var_ylabel=r"ovum y",
+                                            return_var_multiply=4.8, accept_headless_only_flies=False, accept_intact_only_flies=False,
+                                            zero_baseline=True, dataset="revisions", overwrite=True, allflies_only=allflies_only)
+    _ = summarise_predictions_one_genotype("DNg11",return_var_ylim=[55,95],return_var='ang_frtibia_neck',return_var_ylabel=r"ang_{frtita}",
+                                            return_var_multiply=1, accept_headless_only_flies=True, accept_intact_only_flies=True,
+                                            zero_baseline=False, dataset="revisions", overwrite=True, allflies_only=allflies_only)
+    _ = summarise_predictions_one_genotype("DNp42",return_var_ylim=[-1.5,0.5],return_var='v_forw',
+                                            return_var_multiply=1, accept_headless_only_flies=False, accept_intact_only_flies=False,
+                                            zero_baseline=False, dataset="revisions", overwrite=True, allflies_only=allflies_only)
+    _ = summarise_predictions_one_genotype("oviDN",return_var_ylim=[-350,10],return_var='ovum_y',return_var_ylabel=r"ovum y",
+                                            return_var_multiply=4.8, accept_headless_only_flies=False, accept_intact_only_flies=False,
+                                            zero_baseline=True, dataset="revisions", overwrite=True, allflies_only=allflies_only)
+    
 
 if __name__ == "__main__":
     make_all_predictions_figures()
     predictions_stats_tests()
-
-    """
-    ### ===== TMP ===== ###
-    _ = summarise_predictions_one_genotype(
-        "DNg11",
-        #return_var_ylim=ylim_ovi_ext,
-        return_var="frtita_y",
-        return_var_ylabel=r"y_{frtita} (um)",
-        return_var_multiply=4.8,
-        accept_headless_only_flies=True,
-        accept_intact_only_flies=True,
-        zero_baseline=True,
-        dataset="revisions",
-        overwrite=True,
-        )
-    """
+    
     
