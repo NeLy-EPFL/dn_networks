@@ -51,7 +51,8 @@ def stat_test_sign(p):
     else:
         return 'ns'
 
-def plot_ax_behavioural_response(beh_responses, response_name=None, response_ylabel=None, ax=None, beh_responses_2=None, beh_response_2_color=myplt.BLACK, x="2p", ylim=None, period=[500,750]):
+def plot_ax_behavioural_response(beh_responses, response_name=None, response_ylabel=None, ax=None, beh_responses_2=None,
+                                 beh_response_2_color=myplt.BLACK, x="2p", ylim=None, period=[500,750], return_source=False):
     """
     Plots behavioral response data on axis. Plots mean and 95% confidence interval.
 
@@ -65,6 +66,7 @@ def plot_ax_behavioural_response(beh_responses, response_name=None, response_yla
         x (str, optional): Specifies the x-axis values, i.e. which time vector should be used ("2p" or "beh").
         ylim (list, optional): Limits for the y-axis.
         period (list, optional): period over which to perform trial-to-trial statistical comparison
+        return_source (bool, optional): whether to return sourcedata
 
     Returns:
         matplotlib.axes.Axes: The axis on which the data is plotted.
@@ -95,6 +97,7 @@ def plot_ax_behavioural_response(beh_responses, response_name=None, response_yla
         and beh_responses != []
         and beh_responses_2 is not None
         and beh_responses_2 != []
+        and period is not None
         ):
         # statistical test (Mann-Whitney U) between two conditions
         p = mannwhitneyu(
@@ -122,6 +125,12 @@ def plot_ax_behavioural_response(beh_responses, response_name=None, response_yla
         ax.set_ylim(ylim)
     make_nice_spines(ax)
     ax.spines['bottom'].set_position('zero')
+
+    if return_source:
+        if beh_responses_2 is not None:
+            return x, np.mean(beh_responses, axis=-1), utils.conf_int(beh_responses, axis=-1), np.mean(beh_responses_2, axis=-1), utils.conf_int(beh_responses_2, axis=-1)
+        else:
+            return x, np.mean(beh_responses, axis=-1), utils.conf_int(beh_responses, axis=-1)
 
 
 def plot_ax_allneurons_response(stim_responses, response_ylabel=None, ax=None):
@@ -155,7 +164,8 @@ def plot_ax_allneurons_response(stim_responses, response_ylabel=None, ax=None):
     ax.spines['bottom'].set_position('zero')
 
 
-def plot_ax_allneurons_confidence(stim_responses, clim=None, sort_ind=None, cmap=params.cmap_ci, ax=None, ylabel="Annotated neurons", title="|mean| > CI"):
+def plot_ax_allneurons_confidence(stim_responses, clim=None, sort_ind=None, cmap=params.cmap_ci, ax=None,
+        ylabel="Annotated neurons", title="|mean| > CI", return_source=False):
     """
     Plots a map showing neuronal responses over time of all neurons. Only shows 'confident' responses.
 
@@ -167,6 +177,7 @@ def plot_ax_allneurons_confidence(stim_responses, clim=None, sort_ind=None, cmap
         ax (matplotlib.axes.Axes, optional): The axis to plot on. If not provided, the current axis will be used.
         ylabel (str, optional): Label for the y-axis.
         title (str, optional): Title for the plot.
+        return_source (bool, optional): whether to return sourcedata
 
     Returns:
         matplotlib.axes.Axes: The axis on which the data is plotted.
@@ -194,6 +205,9 @@ def plot_ax_allneurons_confidence(stim_responses, clim=None, sort_ind=None, cmap
     ax.set_title(title)
     make_nice_spines(ax)
     ax.spines['left'].set_visible(False)
+
+    if return_source:
+        return rel_resp_conf.T[sort_ind]
     
 
 def plot_ax_cbar(fig, ax, clim, cmap=params.cmap_ci, clabel=None):
@@ -314,7 +328,7 @@ def plot_ax_response_summary(background_image, roi_centers, ax,
     return ax
 
 def plot_ax_multi_fly_response_density(roi_centers, response_values, background_image, ax, n_flies=None, clim=[-1,1],
-                                       cmap=params.map_cmap_dft, crop_x=params.map_crop_x):
+                                       cmap=params.map_cmap_dft, crop_x=params.map_crop_x, return_source=False):
     """
     Plots the smoothed response density of multiple flies.
 
@@ -327,6 +341,7 @@ def plot_ax_multi_fly_response_density(roi_centers, response_values, background_
         clim (list, optional): Color limits for the plot.
         cmap (matplotlib.colors.Colormap, optional): Colormap for the plot.
         crop_x (int, optional): Value for cropping the x-axis.
+        return_source (bool, optional): whether to return sourcedata
 
     Returns:
         matplotlib.axes.Axes: The axis on which the data is plotted.
@@ -355,6 +370,9 @@ def plot_ax_multi_fly_response_density(roi_centers, response_values, background_
     ax.set_xticks([])
     ax.set_yticks([])
     ax.set_ylabel("density")
+
+    if return_source:
+        return response_img_filt
 
 def plot_ax_behclass(labels, ax=None, cmap=behaviour.beh_cmap, cnorm=behaviour.beh_cnorm, dy=0.1, xlabel="Time (s)", ylabel=""):
     """
@@ -403,7 +421,8 @@ def plot_ax_behclass(labels, ax=None, cmap=behaviour.beh_cmap, cnorm=behaviour.b
     make_nice_spines(ax)
 
 def plot_ax_behprob(labels, ax=None, cmap=behaviour.beh_cmaplist.copy(), beh_mapping=behaviour.beh_mapping.copy(),
-                    collapse_groom=behaviour.collapse_groom, xlabel="Time (s)", ylabel="Behaviour\nprobability", labels_2=None, beh_2=None):
+                    collapse_groom=behaviour.collapse_groom, xlabel="Time (s)", ylabel="Behaviour\nprobability", labels_2=None, beh_2=None,
+                    return_source=False):
     """
     Plots behavioral probabilities over time.
 
@@ -417,6 +436,7 @@ def plot_ax_behprob(labels, ax=None, cmap=behaviour.beh_cmaplist.copy(), beh_map
         ylabel (str, optional): Label for the y-axis.
         labels_2 (numpy.ndarray, optional): Additional behavioral probabilities.
         beh_2 (numpy.ndarray, optional): Additional behavioral labels.
+        return_source (bool, optional): whether to return sourcedata
 
     Returns:
         matplotlib.axes.Axes: The axis on which the data is plotted.
@@ -459,8 +479,10 @@ def plot_ax_behprob(labels, ax=None, cmap=behaviour.beh_cmaplist.copy(), beh_map
 
         if beh_2 == "olfac":
             beh_2 = "groom"
-        ax.plot(x, beh_prob[:,beh_mapping.index(beh_2)], color=myplt.BLACK, linewidth=2*linewidth)
-        ax.plot(x, beh_prob_2[:,beh_mapping.index(beh_2)], color=cmap[beh_mapping.index(beh_2)], linewidth=2*linewidth)
+        beh_prob = beh_prob[:,beh_mapping.index(beh_2)]
+        ax.plot(x, beh_prob, color=myplt.BLACK, linewidth=2*linewidth)
+        beh_prob_2 = beh_prob_2[:,beh_mapping.index(beh_2)]
+        ax.plot(x, beh_prob_2, color=cmap[beh_mapping.index(beh_2)], linewidth=2*linewidth)
         
 
     ax.set_xticks([0,params.response_t_params_2p_label[1]])
@@ -469,6 +491,12 @@ def plot_ax_behprob(labels, ax=None, cmap=behaviour.beh_cmaplist.copy(), beh_map
     ax.set_ylabel(ylabel)
 
     make_nice_spines(ax)
+
+    if return_source:
+        if labels_2 is None or beh_2 is None:
+            return x, beh_prob
+        else:
+            return x, beh_prob, beh_prob_2
 
 
 def plot_vnccut(flydata, ax=None, mean="z", show_title=True):

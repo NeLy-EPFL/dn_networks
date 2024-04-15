@@ -15,9 +15,11 @@ from scipy.stats import mannwhitneyu
 import pickle
 from tqdm import tqdm
 
-import params, summarydf, loaddata, stimulation, behaviour, plotpanels
+import params, summarydf, loaddata, stimulation, behaviour, plotpanels, sourcedata
 
 from twoppp import plot as myplt
+from twoppp import utils
+
 presentation_flies = {
     "MDN": 50,
     "DNp09": 46,
@@ -168,7 +170,7 @@ def align_roi_centers(roi_centers, x_target=[50,736-50], y_target=[25,320-25]):
     
     return roi_centers_corr
 
-def get_one_fly_stim_resp_panel(fig, axd, fly_data, figure_params):
+def get_one_fly_stim_resp_panel(fig, axd, fly_data, figure_params, make_sourcedata=False):
     """
     Generates a panel of plots related to stimulation response for a single fly.
 
@@ -177,6 +179,7 @@ def get_one_fly_stim_resp_panel(fig, axd, fly_data, figure_params):
         axd (dict): A dictionary of axes for different subplots.
         fly_data (dict): Data for the fly.
         figure_params (dict): Parameters for configuring the figure.
+        make_sourcedata (bool): whether to export csv as sourcedata file
 
     Returns:
         None
@@ -218,8 +221,14 @@ def get_one_fly_stim_resp_panel(fig, axd, fly_data, figure_params):
             raise FileNotFoundError(f"Error: Could not find VNC images for fly {fly_name}.")
     
     # N: all neurons matrix with confidence interval
-    plotpanels.plot_ax_allneurons_confidence(fly_data["stim_responses"], ax=axd["N"],
-        clim=fly_data["clim"], sort_ind=fly_data["sort_ind"])
+    neuronstime = plotpanels.plot_ax_allneurons_confidence(fly_data["stim_responses"], ax=axd["N"],
+        clim=fly_data["clim"], sort_ind=fly_data["sort_ind"], return_source=True)
+
+    if make_sourcedata:
+        sourcedata.neuronstime_to_sourcedata(neuronstime=neuronstime,
+            figure_params=figure_params,
+            figure_number="2d",
+            base_dir=params.plot_base_dir)
 
     # L: legend colour bar
     plotpanels.plot_ax_cbar(fig=fig, ax=axd["L"], clim=clim, clabel=figure_params["clabel"])
@@ -232,6 +241,13 @@ def get_one_fly_stim_resp_panel(fig, axd, fly_data, figure_params):
         fly_name=fly_name,
         q_max=figure_params["response_q_max"], clim=clim,
         title=summary_title)
+    if make_sourcedata:
+        sourcedata.rois_to_sourcedata(
+            roi_centers=fly_data["roi_centers"],
+            response_values=fly_data["response_values"],
+            figure_params=figure_params,
+            figure_number="2c",
+            base_dir=params.plot_base_dir)
 
 def get_one_fly_nat_resp_panel(fig, axd, fly_data, figure_params):
     """
@@ -325,6 +341,9 @@ def summarise_stim_resp(exp_df, figure_params, stim_resp_save=None, overwrite=Fa
     if stim_resp_save is not None and os.path.isfile(stim_resp_save) and not overwrite:
         with open(stim_resp_save, "rb") as f:
             all_fly_data = pickle.load(f)
+        for fly_data in all_fly_data:
+            if not "vnccut" in fly_data.keys():
+                fly_data["vnccut"] = False
     else:
         # load data for all flies
         base_fly_data = {
@@ -370,8 +389,6 @@ def summarise_stim_resp(exp_df, figure_params, stim_resp_save=None, overwrite=Fa
                 twop_df, beh_df = loaddata.load_data(fly_data["fly_dir"], all_trial_dirs=fly_data["trial_names"],
                                                      add_sleap=False, add_me=False, vnccut_mode=True)
             else:
-                twop_df, beh_df = loaddata.load_data(fly_data["fly_dir"], all_trial_dirs=fly_data["trial_names"]) 
-            twop_df, beh_df = loaddata.load_data(fly_data["fly_dir"], all_trial_dirs=fly_data["trial_names"]) 
                 twop_df, beh_df = loaddata.load_data(fly_data["fly_dir"], all_trial_dirs=fly_data["trial_names"]) 
 
             all_stim_responses, all_beh_responses = stimulation.get_neural_responses(twop_df, figure_params["trigger"],
@@ -463,7 +480,10 @@ def summarise_stim_resp(exp_df, figure_params, stim_resp_save=None, overwrite=Fa
             continue
         i_plot += 1
         axd = axds[i_plot]
-        get_one_fly_stim_resp_panel(fig, axd, fly_data, figure_params)
+        if figure_params["mode"] == "presentation":
+            get_one_fly_stim_resp_panel(fig, axd, fly_data, figure_params, make_sourcedata=True)
+        else:
+            get_one_fly_stim_resp_panel(fig, axd, fly_data, figure_params, make_sourcedata=False)
 
     if figure_params["mode"] == "presentationsummary":
         axd_summary = axds[0]
@@ -488,14 +508,30 @@ def summarise_stim_resp(exp_df, figure_params, stim_resp_save=None, overwrite=Fa
     if not any([fly_data["vnccut"] for fly_data in all_fly_data]):
         # V: all fly volocity response
         beh_responses = np.concatenate([fly_data["beh_responses"] for fly_data in all_fly_data], axis=1)
-        plotpanels.plot_ax_behavioural_response(beh_responses, ax=axd_summary["V"],
-                response_name=f"N = {len(all_fly_data)} flies", response_ylabel=figure_params["beh_response_ylabel"],
-                ylim=figure_params["response_beh_lim"])
+        x, y, y_ci = plotpanels.plot_ax_behavioural_response(beh_responses, ax=axd_summary["V"],
+            response_name=f"N = {len(all_fly_data)} flies", response_ylabel=figure_params["beh_response_ylabel"],
+            ylim=figure_params["response_beh_lim"], return_source=True)
+
+        sourcedata.behaviour_to_sourcedata(
+            t=x,
+            var=y,
+            var_ci=y_ci,
+            varname=figure_params["return_var"],
+            figure_params=figure_params,
+            figure_number="2a",
+            base_dir=params.plot_base_dir)
         
         # B: all fly behavioural class
         beh_class_responses = np.concatenate([fly_data["beh_class_responses"] for fly_data in all_fly_data], axis=1)
-        plotpanels.plot_ax_behprob(beh_class_responses, ax=axd_summary["B"])
+        x, beh_class = plotpanels.plot_ax_behprob(beh_class_responses, ax=axd_summary["B"], return_source=True)
 
+        sourcedata.behclass_to_sourcedata(
+            t=x,
+            behclass=beh_class,
+            behclass_name=behaviour.beh_mapping_collapsed,
+            figure_params=figure_params,
+            figure_number="2a",
+            base_dir=params.plot_base_dir)
     
     # L: all fly legend colour bar
     plotpanels.plot_ax_cbar(fig=fig, ax=axd_summary["L"], clim=0.8, clabel=figure_params["clabel"])
@@ -512,13 +548,26 @@ def summarise_stim_resp(exp_df, figure_params, stim_resp_save=None, overwrite=Fa
         q_max=None, clim=0.8,
         min_dot_size=50, max_dot_size=50, min_dot_alpha=0.25,max_dot_alpha=0.5, crop_x=0)
 
-    plotpanels.plot_ax_multi_fly_response_density(
+    sourcedata.rois_to_sourcedata(
+        roi_centers=all_roi_centers,
+        response_values=all_response_values,
+        figure_params=figure_params,
+        figure_number="2e",
+        base_dir=params.plot_base_dir)
+
+    density = plotpanels.plot_ax_multi_fly_response_density(
         roi_centers=all_roi_centers,
         response_values=all_response_values,
         background_image=np.zeros_like(all_fly_data[0]["background_image"]),
         ax=ax_density,
         n_flies=len(all_n_response),
-        clim=0.8,)
+        clim=0.8, return_source=True)
+
+    sourcedata.density_to_sourcedata(
+        density=density,
+        figure_params=figure_params,
+        figure_number="2f",
+        base_dir=params.plot_base_dir)
 
     fig.suptitle(figure_params["suptitle"], fontsize=30, y=1-0.01*5/(len(subfigs)))
     return fig
@@ -752,6 +801,7 @@ def summarise_all_stim_resp(pre_stim="walk", overwrite=False, mode="pdf", natbeh
         "min_resp_2": 5,
         "mode": mode,
         "pres_fly": None,
+        "genotype": "",
     }
 
     if mode == "presentation":
@@ -770,6 +820,7 @@ def summarise_all_stim_resp(pre_stim="walk", overwrite=False, mode="pdf", natbeh
     # MDN
     df_Dfd_MDN = summarydf.get_selected_df(df, [{"GCaMP": "Dfd", "CsChrimson": "MDN3", "walkon": "ball"}])
     figure_params_MDN = figure_params.copy()
+    figure_params_MDN["genotype"] = "MDN"
     figure_params_MDN["suptitle"] = f"Backward walking DN (MDN) response after {pre_stim.replace('_', ' ') if pre_stim is not None else None}ing"
     figure_params_MDN["pres_fly"] = presentation_flies["MDN"]
     figure_params_MDN["response_beh_lim"] = response_beh_lims["MDN"] if "presentation" in mode else None
@@ -791,6 +842,7 @@ def summarise_all_stim_resp(pre_stim="walk", overwrite=False, mode="pdf", natbeh
     df_Dfd_DNp09 = summarydf.get_selected_df(df, [{"GCaMP": "Dfd", "CsChrimson": "DNp09", "walkon": "ball"},
                                       {"GCaMP": "Dfd", "CsChrimson": "DNP9" , "walkon": "ball"}])
     figure_params_DNp09 = figure_params.copy()
+    figure_params_DNp09["genotype"] = "DNp09"
     figure_params_DNp09["suptitle"] = f"Forward walking DN (DNp09) response after {pre_stim.replace('_', ' ') if pre_stim is not None else None}ing"
     figure_params_DNp09["pres_fly"] = presentation_flies["DNp09"]
     figure_params_DNp09["response_beh_lim"] = response_beh_lims["DNp09"] if "presentation" in mode else None
@@ -809,6 +861,7 @@ def summarise_all_stim_resp(pre_stim="walk", overwrite=False, mode="pdf", natbeh
     # aDN2
     df_Dfd_aDN2 = summarydf.get_selected_df(df, [{"GCaMP": "Dfd", "CsChrimson": "aDN2", "walkon": "ball"}])
     figure_params_aDN2 = figure_params.copy()
+    figure_params_aDN2["genotype"] = "aDN2"
     figure_params_aDN2["suptitle"] = f"Grooming DN (aDN2) response after {pre_stim.replace('_', ' ') if pre_stim is not None else None}ing"
     figure_params_aDN2["pres_fly"] = presentation_flies["aDN2"]
     figure_params_aDN2["response_beh_lim"] = response_beh_lims["aDN2"] if "presentation" in mode else None
@@ -828,6 +881,7 @@ def summarise_all_stim_resp(pre_stim="walk", overwrite=False, mode="pdf", natbeh
     # PR
     df_Dfd_PR = summarydf.get_selected_df(df, [{"GCaMP": "Dfd", "CsChrimson": "PR", "walkon": "ball"}])
     figure_params_PR = figure_params.copy()
+    figure_params_PR["genotype"] = "PR"
     figure_params_PR["suptitle"] = f"control (no GAL4) response after {pre_stim.replace('_', ' ') if pre_stim is not None else None}ing"
     figure_params_PR["pres_fly"] = presentation_flies["PR"]
     figure_params_PR["response_beh_lim"] = response_beh_lims["PR"] if "presentation" in mode else None

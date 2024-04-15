@@ -69,7 +69,7 @@ def get_beh_data(beh_df, var2, var2_rel=[400,500]):
 
 
 def get_headless_imaging_data(genotypes=["MDN", "DNp09"], special_vars=["meh_tita", "anus_dist"]):
-        """
+    """
     Extract headless imaging data for specified genotypes and conditions.
 
     Parameters:

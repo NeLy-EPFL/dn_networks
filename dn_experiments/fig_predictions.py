@@ -232,7 +232,7 @@ def plot_data_one_genotype(figure_params, all_fly_data):
     summary_fly_data["beh_class_responses_pre"] = concatenate(all_fly_data, "beh_class_responses_pre")
     summary_fly_data["beh_class_responses_post"] = concatenate(all_fly_data, "beh_class_responses_post")
     
-    fig_headless.get_one_fly_headless_panel(fig, axds[-1], summary_fly_data, figure_params)
+    fig_headless.get_one_fly_headless_panel(fig, axds[-1], summary_fly_data, figure_params, make_sourcedata=True, prediction=True)
 
     fig.suptitle(
         figure_params["suptitle"], fontsize=30, y=1 - 0.01 * 5 / (len(subfigs))

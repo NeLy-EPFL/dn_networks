@@ -14,7 +14,7 @@ import pickle
 from tqdm import tqdm
 from scipy.stats import mannwhitneyu, wilcoxon, ranksums
 
-import params, summarydf, loaddata, stimulation, behaviour, plotpanels
+import params, summarydf, loaddata, stimulation, behaviour, plotpanels, sourcedata
 
 from twoppp import plot as myplt
 
@@ -33,7 +33,7 @@ mosaic_headless_summary_panel = """
 ....
 """
 
-def get_one_fly_headless_panel(fig, axd, fly_data, figure_params, set_baseline_zero=True):
+def get_one_fly_headless_panel(fig, axd, fly_data, figure_params, set_baseline_zero=True, make_sourcedata=False, prediction=False):
 
     """
     Generate a panel for a single fly's behavioral response and add it to the figure.
@@ -44,6 +44,8 @@ def get_one_fly_headless_panel(fig, axd, fly_data, figure_params, set_baseline_z
         fly_data (dict): Data for a single fly.
         figure_params (dict): Parameters for configuring the panel's appearance.
         set_baseline_zero (bool, optional): set stimulation onset to zero
+        make_sourcedata (bool): whether to export csv as sourcedata file
+        prediction (bool): whether data is from prediction experiments
 
     Returns:
         None
@@ -61,7 +63,9 @@ def get_one_fly_headless_panel(fig, axd, fly_data, figure_params, set_baseline_z
     else:
         response_name = f"{fly_data['fly_df'].date.values[0]} {fly_data['fly_df'].CsChrimson.values[0]} Fly {fly_data['fly_df'].fly_number.values[0]}"
     # X: volocity response comparison
-    plotpanels.plot_ax_behavioural_response(
+    if "stats_period" not in figure_params.keys():
+        figure_params["stats_period"] = None
+    x, y, y_ci, y_post, y_post_ci = plotpanels.plot_ax_behavioural_response(
         fly_data["beh_responses_pre"],
         ax=axd["X"],
         x="beh",
@@ -70,7 +74,28 @@ def get_one_fly_headless_panel(fig, axd, fly_data, figure_params, set_baseline_z
         beh_responses_2=fly_data["beh_responses_post"],
         beh_response_2_color=behaviour.get_beh_color(figure_params["beh_name"]),
         period=figure_params["stats_period"],
-        ylim=figure_params["ylim"],)
+        ylim=figure_params["ylim"], return_source=True)
+
+    DNp09_anus_case = figure_params["return_var"] == "anus_dist" and ("DNp09" in response_name or "__" in response_name)
+    aDN2_frtita_case = figure_params["return_var"] == "frtita_neck_dist" and ("aDN2" in response_name or "__" in response_name)
+    if make_sourcedata and (figure_params["return_var"] == "v_forw" or DNp09_anus_case or aDN2_frtita_case or prediction):
+        if prediction:
+            figure_number = "5fg"
+        elif not DNp09_anus_case and not aDN2_frtita_case:
+            figure_number = "4bcde"
+        else:
+            figure_number = "4fg"
+        sourcedata.behaviour_to_sourcedata(
+            t=x,
+            var=y,
+            var_ci=y_ci,
+            var_post=y_post,
+            var_post_ci=y_post_ci,
+            varname=figure_params["return_var"],
+            figure_params=figure_params,
+            figure_number=figure_number,
+            base_dir=params.plot_base_dir)
+
 
     if not figure_params["allflies_only"]:
         # V: volocity response pre head cut
@@ -106,9 +131,20 @@ def get_one_fly_headless_panel(fig, axd, fly_data, figure_params, set_baseline_z
         plotpanels.plot_ax_behprob(fly_data["beh_class_responses_post"], ax=axd["C"], ylabel=None)
     
     # D: behavioural class
-    plotpanels.plot_ax_behprob(fly_data["beh_class_responses_pre"], ax=axd["D"],
-            labels_2=fly_data["beh_class_responses_post"], beh_2=figure_params["beh_name"],
-            ylabel=f"{figure_params['beh_name']}\nprobability" if figure_params["allflies_only"] else None)
+    x, beh_class, beh_class_post = plotpanels.plot_ax_behprob(fly_data["beh_class_responses_pre"], ax=axd["D"],
+        labels_2=fly_data["beh_class_responses_post"], beh_2=figure_params["beh_name"],
+        ylabel=f"{figure_params['beh_name']}\nprobability" if figure_params["allflies_only"] else None,
+        return_source=True)
+    PR_not_rest_case = figure_params["beh_name"] != "rest" and "__" in response_name
+    if make_sourcedata and figure_params["return_var"] == "v_forw" and not PR_not_rest_case and not prediction:
+        sourcedata.behclass_to_sourcedata(
+            t=x,
+            behclass=beh_class,
+            behclass_post=beh_class_post,
+            behclass_name=figure_params["beh_name"],
+            figure_params=figure_params,
+            figure_number="4bcde",
+            base_dir=params.plot_base_dir)
 
 
 def summarise_headless(exp_df, figure_params, headless_save=None, overwrite=False):
@@ -214,7 +250,7 @@ def summarise_headless(exp_df, figure_params, headless_save=None, overwrite=Fals
     summary_fly_data["beh_class_responses_pre"] = np.concatenate([fly_data["beh_class_responses_pre"] for fly_data in all_fly_data], axis=-1)
     summary_fly_data["beh_class_responses_post"] = np.concatenate([fly_data["beh_class_responses_post"] for fly_data in all_fly_data], axis=-1)
     
-    get_one_fly_headless_panel(fig, axds[-1], summary_fly_data, figure_params)
+    get_one_fly_headless_panel(fig, axds[-1], summary_fly_data, figure_params, make_sourcedata=True)
 
     fig.suptitle(figure_params["suptitle"])
     return fig
