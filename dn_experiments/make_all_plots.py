@@ -39,12 +39,12 @@ if __name__ == "__main__":
     # Supp. Figure 1e-f: Optogenetic stimulation strategy.
     bpn_mdn_control_fly_names = ["230914_MDN3xCsChrimson_Fly1", "230914_MDN3xCsChrimson_Fly2",
                                  "230914_BPNxCsChrimson_Fly3", "230914_BPNxCsChrimson_Fly4",
-                                 "230915_MDN3xCsChrimson_Fly11", "230921_BPNxCsChrimson_Fly5", "230921_BPNxCsChrimson_Fly6"]]
-    bpn_mdn_control_fly_dirs = [os.path.join(params.other_data_dir, fly_name), for fly_name in bpn_mdn_control_fly_names]
+                                 "230915_MDN3xCsChrimson_Fly11", "230921_BPNxCsChrimson_Fly5", "230921_BPNxCsChrimson_Fly6"]
+    bpn_mdn_control_fly_dirs = [os.path.join(params.other_data_dir, fly_name) for fly_name in bpn_mdn_control_fly_names]
     supfig_bpn_mdn.make_stim_loc_plots(figures_path=figures_path, fly_dirs=bpn_mdn_control_fly_dirs)
     # Supp. Figure 1g: Dfd inhibition drives grooming
     dfd_control_fly_dirs = [os.path.join(params.other_data_dir, "231115_DfdxGtACR1_Fly{i_fly}") for i_fly in range(1,4)]
-    supfig_dfd_inhibit.make_dfd_inhibit_stim_loc_plots(fly_dirs=dfd_control_fly_dirs, figures_path=figures_path):
+    supfig_dfd_inhibit.make_dfd_inhibit_stim_loc_plots(fly_dirs=dfd_control_fly_dirs, figures_path=figures_path)
     
     # Supp. Figure 2: Comparison of GNG-DN population neural activity during optogenetic stimulation versus corresponding natural behaviors.
     fig_functional.summarise_all_stim_resp(pre_stim=None, overwrite=False, mode="presentation", natbeh=True, figures_path=figures_path, tmpdata_path=tmpdata_path)
