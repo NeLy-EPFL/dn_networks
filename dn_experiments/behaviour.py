@@ -38,6 +38,16 @@ beh_mapping = [
     "leg rub",
     "posterior",
 ]
+beh_mapping_collapsed = [
+    "background",
+    "walk",
+    "rest",
+    "back",
+    "anterior",
+    "posterior",
+]
+
+
 collapse_groom = True
 n_beh = len(beh_mapping)
 # beh_cmaplist = [myplt.WHITE, myplt.DARKGREEN, myplt.DARKBLUE, myplt.DARKCYAN, myplt.DARKRED, myplt.DARKORANGE, myplt.DARKPINK]
