@@ -6,7 +6,7 @@ import os
 from pathlib import Path
 
 import params, copy_data
-import fig_functional, fig_headless, fig_predictions, supfig_natbeh, supfig_bpn_mdn, supfig_stim_powers, 
+import fig_functional, fig_headless, fig_predictions, supfig_natbeh, supfig_bpn_mdn, supfig_stim_powers
 import supfig_dfd_inhibit, fig_antennacut, fig_headless_imaging, fig_vnccut
 import fig_dofs, statistics_perturbations
 
