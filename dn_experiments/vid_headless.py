@@ -338,7 +338,7 @@ def make_leg_amputation_stim_videos():
     genotype_fly_ids = {
         "MDN_HL":{
             'genotype': 'MDN',
-            'flies': [[157,157],[171,159],[172,49]],
+            'flies': [[171,159],[172,49],[157,157]],
             'legs': 'HL'
         },
         "DNp09_HL": {
@@ -415,8 +415,8 @@ def make_leg_amputation_stim_videos():
 
 
 if __name__ == "__main__":
-    make_headless_example_stim_videos()
-    make_headless_summary_stim_videos()
-    make_prediction_stim_videos()
-    make_revisions_stim_videos()
+    #make_headless_example_stim_videos()
+    #make_headless_summary_stim_videos()
+    #make_prediction_stim_videos()
+    #make_revisions_stim_videos()
     make_leg_amputation_stim_videos()

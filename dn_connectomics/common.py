@@ -85,7 +85,7 @@ def connection_degree_n_hops(matrix, n, dn_indices=[]):
     return degree
 
 
-def cluster_matrix(matrix):
+def cluster_matrix_hierarchical(matrix):
     """
     inputs: scipy sparse correlation matrix
 

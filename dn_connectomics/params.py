@@ -19,7 +19,10 @@ EDGES_FILE = "edge_info.pkl"
 NAMES_FILE = "inferred_names.csv"
 
 # --- Figure storage --- #
-FIGURES_DIR = os.path.join(Path(__file__).absolute().parent, "figures")
+#FIGURES_DIR = os.path.join(Path(__file__).absolute().parent, "figures")
+FIGURES_DIR = os.path.join(Path(__file__).absolute().parent, "new_figures")
+os.makedirs(FIGURES_DIR, exist_ok=True)
+
 
 # --- Biological parameters --- #
 NT_WEIGHTS = {"ACH": +1, "GABA": -1, "GLUT": -1, "SER": 0, "DA": 0, "OCT": 0}

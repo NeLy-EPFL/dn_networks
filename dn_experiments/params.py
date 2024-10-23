@@ -9,7 +9,7 @@ from datetime import date
 
 today = date.today().strftime("%y%m%d")
 
-"""
+
 # FH version
 
 # handling summary data of all recording
@@ -24,6 +24,7 @@ data_summary_csv_dir = os.path.join(
 data_headless_summary_csv_dir = os.path.join(
     data_summary_dir, "fly_selection_nohead_230406.csv"
 )
+
 """
 
 # ====================== CHANGE THIS PARAMETER TO THE FOLDER WHERE YOUR DOWNLOADED DATA IS ==============
@@ -37,6 +38,7 @@ data_summary_csv_dir = os.path.join(imaging_data_dir, "imaging_summary_df.csv") 
 data_headless_summary_csv_dir = os.path.join(headless_predictions_data_dir, "headless_summary_df.csv")  # os.path.join(data_summary_dir, "fly_selection_nohead_230406.csv")
 data_predictions_summary_csv_dir = os.path.join(headless_predictions_data_dir, "predictions_summary_df.csv")  # os.path.join(data_summary_dir, "fly_selection_predictions_230712.csv")
 # =======================================================================================================
+"""
 
 # output directories
 plot_base_dir = os.path.join(data_summary_dir, "plots")
